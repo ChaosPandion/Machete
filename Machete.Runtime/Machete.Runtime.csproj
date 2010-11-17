@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Machete.Runtime</RootNamespace>
+    <AssemblyName>Machete.Runtime</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeContractsEnableRuntimeChecking>True</CodeContractsEnableRuntimeChecking>
+    <CodeContractsRuntimeOnlyPublicSurface>False</CodeContractsRuntimeOnlyPublicSurface>
+    <CodeContractsRuntimeThrowOnFailure>False</CodeContractsRuntimeThrowOnFailure>
+    <CodeContractsRuntimeCallSiteRequires>False</CodeContractsRuntimeCallSiteRequires>
+    <CodeContractsRunCodeAnalysis>True</CodeContractsRunCodeAnalysis>
+    <CodeContractsNonNullObligations>False</CodeContractsNonNullObligations>
+    <CodeContractsBoundsObligations>False</CodeContractsBoundsObligations>
+    <CodeContractsArithmeticObligations>False</CodeContractsArithmeticObligations>
+    <CodeContractsRedundantAssumptions>False</CodeContractsRedundantAssumptions>
+    <CodeContractsRunInBackground>True</CodeContractsRunInBackground>
+    <CodeContractsShowSquigglies>False</CodeContractsShowSquigglies>
+    <CodeContractsUseBaseLine>False</CodeContractsUseBaseLine>
+    <CodeContractsEmitXMLDocs>False</CodeContractsEmitXMLDocs>
+    <CodeContractsCustomRewriterAssembly />
+    <CodeContractsCustomRewriterClass />
+    <CodeContractsLibPaths />
+    <CodeContractsPlatformPath />
+    <CodeContractsExtraAnalysisOptions />
+    <CodeContractsBaseLineFile />
+    <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
+    <CodeContractsReferenceAssembly>%28none%29</CodeContractsReferenceAssembly>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Code.cs" />
+    <Compile Include="ExecutionContext.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\BObject.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CBoolean.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CDate.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CEvalError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CFunction.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CNumber.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CRangeError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CReferenceError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CRegExp.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CString.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CSyntaxError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CTypeError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CUriError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CObject.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PArray.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PBoolean.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PDate.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PEvalError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PFunction.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\BJson.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\BMath.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PNumber.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PRangeError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PReferenceError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PRegExp.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PString.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PSyntaxError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PTypeError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PUriError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PObject.cs" />
+    <Compile Include="NativeObjects\NArray.cs" />
+    <Compile Include="NativeObjects\NBoolean.cs" />
+    <Compile Include="NativeObjects\NDate.cs" />
+    <Compile Include="NativeObjects\NError.cs" />
+    <Compile Include="NativeObjects\NEvalError.cs" />
+    <Compile Include="NativeObjects\NFunction.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\BGlobal.cs" />
+    <Compile Include="NativeObjects\NNumber.cs" />
+    <Compile Include="NativeObjects\NRangeError.cs" />
+    <Compile Include="NativeObjects\NReferenceError.cs" />
+    <Compile Include="NativeObjects\NRegExp.cs" />
+    <Compile Include="NativeObjects\NString.cs" />
+    <Compile Include="NativeObjects\NSyntaxError.cs" />
+    <Compile Include="NativeObjects\NTypeError.cs" />
+    <Compile Include="NativeObjects\NUriError.cs" />
+    <Compile Include="RuntimeTypes\LanguageTypes\LBoolean.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SCompletion.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SDeclarativeEnvironmentRecord.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SEnvironmentRecord.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SLexicalEnvironment.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SList.cs" />
+    <Compile Include="RuntimeTypes\LanguageTypes\LNull.cs" />
+    <Compile Include="RuntimeTypes\LanguageTypes\LNumber.cs" />
+    <Compile Include="RuntimeTypes\LanguageTypes\LObject.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SObjectEnvironmentRecord.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SPropertyDescriptor.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SReference.cs" />
+    <Compile Include="RuntimeTypes\LanguageTypes\LString.cs" />
+    <Compile Include="RuntimeTypes\RType.cs" />
+    <Compile Include="RuntimeTypes\LanguageTypes\LUndefined.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RuntimeTypes\LanguageTypes\LType.cs" />
+    <Compile Include="RuntimeTypes\SpecificationTypes\SType.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
