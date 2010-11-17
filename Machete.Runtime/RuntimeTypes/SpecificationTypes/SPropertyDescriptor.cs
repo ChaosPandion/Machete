@@ -43,5 +43,16 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                 Configurable = Configurable
             };
         }
+
+        public static SPropertyDescriptor Create(LType value)
+        {
+            return new SPropertyDescriptor()
+            {
+                Value = value,
+                Writable = false,
+                Enumerable = false,
+                Configurable = false
+            };
+        }
     }
 }

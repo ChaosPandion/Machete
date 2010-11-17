@@ -11,20 +11,21 @@ namespace Machete.Runtime.NativeObjects
 {
     public sealed class NFunction : LObject
     {
-        private readonly string _identifier;
         private readonly string[] _formalParameterList;
         private readonly Lazy<Code> _code;
         private readonly SLexicalEnvironment _scope;
 
 
-        NFunction(string identifier, string[] formalParameterList, Func<Code> getCode, SLexicalEnvironment scope)
+        internal NFunction(string[] formalParameterList, Func<Code> getCode)
         {
-            Debug.Assert(identifier != null);
-            Debug.Assert(formalParameterList != null);
-            Debug.Assert(getCode != null);
-            Debug.Assert(scope != null);
-            _identifier = identifier;
-            _formalParameterList = formalParameterList;
+            _formalParameterList = formalParameterList ?? new string[0];
+            _code = new Lazy<Code>(getCode);
+            _scope = Engine.Instance.Value.GlobalEnvironment;
+        }
+
+        internal NFunction(string[] formalParameterList, Func<Code> getCode, SLexicalEnvironment scope)
+        {
+            _formalParameterList = formalParameterList ?? new string[0];
             _code = new Lazy<Code>(getCode);
             _scope = scope;
         }

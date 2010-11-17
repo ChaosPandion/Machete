@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Collections.Concurrent;
+using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+using Machete.Runtime.NativeObjects.BuiltinObjects;
 
 namespace Machete.Runtime
 {
@@ -12,6 +14,9 @@ namespace Machete.Runtime
         internal static readonly ThreadLocal<Engine> Instance = new ThreadLocal<Engine>();
         private readonly ConcurrentQueue<Tuple<string, BlockingCollection<object>>> _messageQueue;
         private readonly Thread _backingThread;
+
+
+        internal SLexicalEnvironment GlobalEnvironment { get; private set; }
 
 
         private Engine()
@@ -36,6 +41,7 @@ namespace Machete.Runtime
         private void ProcessScripts()
         {
             Instance.Value = this;
+            GlobalEnvironment = new SLexicalEnvironment(new SObjectEnvironmentRecord(BGlobal.Instance.Value, false), null);
 
             Tuple<string, BlockingCollection<object>> message;
             while (_messageQueue.TryDequeue(out message))
