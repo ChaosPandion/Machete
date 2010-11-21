@@ -19,7 +19,7 @@ namespace Machete.Runtime.RuntimeTypes
             }
             set
             {
-                CReferenceError.Instance.Value.Construct(SList.Empty).Op_Throw();
+                Engine.ThrowReferenceError();
             }
         }
     }

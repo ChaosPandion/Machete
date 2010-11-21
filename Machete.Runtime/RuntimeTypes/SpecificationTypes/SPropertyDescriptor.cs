@@ -30,6 +30,53 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             get { return !IsAccessorDescriptor && !IsDataDescriptor; }
         }
 
+        public bool IsEmpty
+        {
+            get { return Value == null && Writable == null && Get == null && Set == null && Enumerable == null && Configurable == null; }
+        }
+
+
+        public SPropertyDescriptor()
+        {
+
+        }
+
+        public SPropertyDescriptor(LType value)
+            : this(value, false, false, false)
+        {
+
+        }
+
+        public SPropertyDescriptor(LType value, bool? writable)
+            : this(value, writable, false, false)
+        {
+
+        }
+
+        public SPropertyDescriptor(LType value, bool? writable, bool? enumerable)
+            : this(value, writable, enumerable, false)
+        {
+
+        }
+
+        public SPropertyDescriptor(LType value, bool? writable, bool? enumerable, bool? configurable)
+        {
+            Value = value;
+            Writable = writable;
+            Enumerable = enumerable;
+            Configurable = configurable;
+        }
+
+
+        public bool Matches(SPropertyDescriptor other)
+        {
+            return Value == other.Value 
+                && Writable == other.Writable 
+                && Get == other.Get 
+                && Set == other.Set 
+                && Enumerable == other.Enumerable 
+                && Configurable == other.Configurable;
+        }
 
         public SPropertyDescriptor Copy()
         {

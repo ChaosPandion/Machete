@@ -9,6 +9,10 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
     {
         public static readonly LNull Value = new LNull();
 
+        public override LTypeCode TypeCode
+        {
+            get { return LTypeCode.LNull; }
+        }
 
         private LNull()
         {
@@ -206,7 +210,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             throw new NotImplementedException();
         }
 
-        public override LType ConvertToPrimitive()
+        public override LType ConvertToPrimitive(string preferredType)
         {
             throw new NotImplementedException();
         }

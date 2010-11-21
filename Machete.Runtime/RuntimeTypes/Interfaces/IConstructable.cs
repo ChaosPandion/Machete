@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
-using System.Threading;
 
-namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
+namespace Machete.Runtime.RuntimeTypes.Interfaces
 {
-    public sealed class PReferenceError : LObject
+    public interface IConstructable
     {
-
+        LObject Construct(SList args);
     }
 }

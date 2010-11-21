@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CReferenceError : BObject<CReferenceError>
+    public sealed class CReferenceError : LObject
     {
 
     }

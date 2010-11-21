@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
-    public sealed class PTypeError : BObject<PTypeError>
+    public sealed class PTypeError : LObject
     {
         
     }

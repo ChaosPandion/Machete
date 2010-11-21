@@ -6,86 +6,106 @@ using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public sealed class LBoolean : LType
+    public sealed class LBoolean : LType, IEquatable<LBoolean>
     {
+        private readonly bool _value;
         public static readonly LBoolean True = new LBoolean(true);
         public static readonly LBoolean False = new LBoolean(false);
         public static readonly LString TrueString = new LString("true");
         public static readonly LString FalseString = new LString("false");
+          
 
-        public bool Value { get; private set; }
-
-
-        public LBoolean(bool value)
+        private LBoolean(bool value)
         {
-            Value = value;
+            _value = value;
+        }
+
+
+        public override LTypeCode TypeCode
+        {
+            get { return LTypeCode.LBoolean; }
         }
 
 
         public override LType Op_LogicalOr(LType other)
         {
-            throw new NotImplementedException();
+            return _value ? this : other;
         }
 
         public override LType Op_LogicalAnd(LType other)
         {
-            throw new NotImplementedException();
+            return !_value ? this : other;
         }
 
         public override LType Op_BitwiseOr(LType other)
         {
-            throw new NotImplementedException();
+            return ConvertToInt32().Op_BitwiseOr(other);
         }
 
         public override LType Op_BitwiseXor(LType other)
         {
-            throw new NotImplementedException();
+            return ConvertToInt32().Op_BitwiseXor(other);
         }
 
         public override LType Op_BitwiseAnd(LType other)
         {
-            throw new NotImplementedException();
+            return ConvertToInt32().Op_BitwiseAnd(other);
         }
 
         public override LType Op_Equals(LType other)
         {
-            throw new NotImplementedException();
+            switch (other.TypeCode)
+            {
+                case LTypeCode.LBoolean:
+                    return (LBoolean)(this == other);
+                default:
+                    return ConvertToNumber().Op_Equals(other);
+            }
         }
 
-        public override LType Op_DoesNotEquals(LType other)
-        {
-            throw new NotImplementedException();
-        }
+        //public override LType Op_DoesNotEquals(LType other)
+        //{
+        //    return Op_Equals(other).Op_LogicalNot();
+        //}
 
         public override LType Op_StrictEquals(LType other)
         {
-            throw new NotImplementedException();
+            if (other.TypeCode == LTypeCode.LBoolean)
+            {
+                return (LBoolean)(this == other);
+            }
+            return LBoolean.False;
         }
 
-        public override LType Op_StrictDoesNotEquals(LType other)
-        {
-            throw new NotImplementedException();
-        }
+        //public override LType Op_StrictDoesNotEquals(LType other)
+        //{
+        //    return Op_StrictEquals(other).Op_LogicalNot();
+        //}
 
-        public override LType Op_Lessthan(LType other)
-        {
-            throw new NotImplementedException();
-        }
+        //public override LType Op_Lessthan(LType other)
+        //{
+        //    var r = RelationalComparison(true, other);
+        //    if (r.TypeCode == LTypeCode.LUndefined)
+        //    {
+        //        return LBoolean.False;
+        //    }
+        //    return r;
+        //}
 
-        public override LType Op_Greaterthan(LType other)
-        {
-            throw new NotImplementedException();
-        }
+        //public override LType Op_Greaterthan(LType other)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        public override LType Op_LessthanOrEqual(LType other)
-        {
-            throw new NotImplementedException();
-        }
+        //public override LType Op_LessthanOrEqual(LType other)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        public override LType Op_GreaterthanOrEqual(LType other)
-        {
-            throw new NotImplementedException();
-        }
+        //public override LType Op_GreaterthanOrEqual(LType other)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public override LType Op_Instanceof(LType other)
         {
@@ -212,7 +232,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             throw new NotImplementedException();
         }
 
-        public override LType ConvertToPrimitive()
+        public override LType ConvertToPrimitive(string preferredType)
         {
             throw new NotImplementedException();
         }
@@ -235,6 +255,36 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public override LObject ConvertToObject()
         {
             throw new NotImplementedException();
+        }
+        
+        public bool Equals(LBoolean other)
+        {
+            return _value == other._value;
+        }
+
+        public override string ToString()
+        {
+            return _value.ToString().ToLower();
+        }
+
+        public static bool operator ==(LBoolean left, LBoolean right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(LBoolean left, LBoolean right)
+        {
+            return !left.Equals(right);
+        }
+
+        public static explicit operator bool(LBoolean value)
+        {
+            return value._value;
+        }
+
+        public static explicit operator LBoolean(bool value)
+        {
+            return value ? LBoolean.True : LBoolean.False;
         }
     }
 }

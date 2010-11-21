@@ -28,7 +28,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Immutable) == BFlags.Immutable)
             {
-                CTypeError.Instance.Value.Op_Construct(SList.Empty).Op_Throw();
+                Engine.ThrowTypeError();
             }
             binding.Value = v;
         }
@@ -38,11 +38,8 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Uninitialized) == BFlags.Uninitialized)
             {
-                if (!s)
-                {
-                    return LUndefined.Value;
-                }
-                CReferenceError.Instance.Value.Op_Construct(SList.Empty).Op_Throw();
+                if (!s) return LUndefined.Value;
+                Engine.ThrowReferenceError();
             }
             return binding.Value;
         }

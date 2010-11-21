@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
-    public sealed class PDate : BObject<PDate>
+    public sealed class PDate : LObject
     {
 
     }

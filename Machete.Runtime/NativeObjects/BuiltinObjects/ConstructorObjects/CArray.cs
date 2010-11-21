@@ -6,7 +6,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CArray : BObject<CArray>
+    public sealed class CArray : LObject
     {
 
     }

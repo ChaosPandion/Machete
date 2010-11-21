@@ -8,9 +8,17 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
     public sealed class LNumber : LType
     {
+        public static readonly LNumber NaN = new LNumber(double.NaN);
+        public static readonly LNumber PositiveInfinity = new LNumber(double.PositiveInfinity);
+        public static readonly LNumber NegativeInfinity = new LNumber(double.NegativeInfinity);
         public static readonly LNumber Zero = new LNumber(0.0);
         public static readonly LNumber One = new LNumber(1.0);
 
+
+        public override LTypeCode TypeCode
+        {
+            get { return LTypeCode.LNumber; }
+        }
 
         public double Value { get; private set; }
 
@@ -211,7 +219,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             throw new NotImplementedException();
         }
 
-        public override LType ConvertToPrimitive()
+        public override LType ConvertToPrimitive(string preferredType)
         {
             throw new NotImplementedException();
         }
@@ -234,6 +242,17 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public override LObject ConvertToObject()
         {
             throw new NotImplementedException();
+        }
+
+
+        public static explicit operator double(LNumber value)
+        {
+            return value.Value;
+        }
+
+        public static explicit operator LNumber(double value)
+        {
+            return new LNumber(value);
         }
     }
 }

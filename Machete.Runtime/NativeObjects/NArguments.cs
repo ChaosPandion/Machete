@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
-namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
+namespace Machete.Runtime.NativeObjects
 {
-    public sealed class CUriError : LObject
+    public sealed class NArguments : LObject
     {
+        public LObject ParameterMap { get; set; }
 
     }
 }

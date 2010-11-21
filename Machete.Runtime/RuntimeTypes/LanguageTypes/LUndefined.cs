@@ -9,6 +9,10 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
     {
         public static readonly LUndefined Value = new LUndefined();
 
+        public override LTypeCode TypeCode
+        {
+            get { return LTypeCode.LUndefined; }
+        }
 
         private LUndefined()
         {
@@ -207,7 +211,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             throw new NotImplementedException();
         }
 
-        public override LType ConvertToPrimitive()
+        public override LType ConvertToPrimitive(string preferredType)
         {
             throw new NotImplementedException();
         }

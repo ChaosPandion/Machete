@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
-namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
+namespace Machete.Runtime.RuntimeTypes.Interfaces
 {
-    public sealed class CUriError : LObject
+    public interface IPrimitiveWrapper
     {
-
+        LType PrimitiveValue { get; set; }
     }
 }

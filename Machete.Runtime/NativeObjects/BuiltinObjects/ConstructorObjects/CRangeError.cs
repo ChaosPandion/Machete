@@ -6,7 +6,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CRangeError : BObject<CRangeError>
+    public sealed class CRangeError : LObject
     {
 
     }

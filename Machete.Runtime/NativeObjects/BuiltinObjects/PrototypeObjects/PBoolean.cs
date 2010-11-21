@@ -7,7 +7,7 @@ using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
-    public sealed class PBoolean : BObject<PBoolean>
+    public sealed class PBoolean : LObject
     {
         internal PBoolean()
         {

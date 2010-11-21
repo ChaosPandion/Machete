@@ -6,7 +6,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CBoolean : BObject<CBoolean>
+    public sealed class CBoolean : LObject
     {
     }
 }

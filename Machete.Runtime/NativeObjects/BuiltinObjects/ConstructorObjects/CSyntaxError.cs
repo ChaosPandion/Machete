@@ -6,7 +6,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CSyntaxError : BObject<CSyntaxError>
+    public sealed class CSyntaxError : LObject
     {
     }
 }

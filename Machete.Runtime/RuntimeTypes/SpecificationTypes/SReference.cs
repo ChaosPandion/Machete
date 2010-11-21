@@ -37,7 +37,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 if (IsUnresovableReference)
                 {
-                    CReferenceError.Instance.Value.Construct(SList.Empty).Op_Throw();
+                    Engine.ThrowReferenceError();
                 }
 
                 if (!IsPropertyReference)
@@ -80,9 +80,9 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                 {
                     if (_strictReference)
                     {
-                        CReferenceError.Instance.Value.Construct(SList.Empty).Op_Throw();
+                        Engine.ThrowReferenceError();
                     }
-                    BGlobal.Instance.Value.Put(_referencedName, value, false);
+                    Engine.Instance.Value.GlobalObject.Put(_referencedName, value, false);
                 }
                 else if (!IsPropertyReference)
                 {
@@ -100,13 +100,13 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                 if (!o.CanPut(_referencedName))
                 {
                     if (!_strictReference) return;
-                    CTypeError.Instance.Value.Op_Construct(SList.Empty).Op_Throw();
+                    Engine.ThrowTypeError();
                 }
                 var ownDesc = o.GetOwnProperty(_referencedName);
                 if (ownDesc == null || ownDesc.IsDataDescriptor)
                 {
                     if (!_strictReference) return;
-                    CTypeError.Instance.Value.Op_Construct(SList.Empty).Op_Throw();
+                    Engine.ThrowTypeError();
                 }
                 var desc = o.GetProperty(_referencedName);
                 if (desc.IsAccessorDescriptor)
@@ -116,7 +116,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
                 if (_strictReference)
                 {
-                    CTypeError.Instance.Value.Op_Construct(SList.Empty).Op_Throw();
+                    Engine.ThrowTypeError();
                 }
             }
         }

@@ -25,6 +25,22 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             }
         }
 
+        public int Count
+        {
+            get
+            {
+                return _items.Length;
+            }
+        }
+
+        public bool IsEmpty
+        {
+            get
+            {
+                return _items.Length == 0;
+            }
+        }
+
         public SList(params LType[] items)
         {
             Debug.Assert(items != null);

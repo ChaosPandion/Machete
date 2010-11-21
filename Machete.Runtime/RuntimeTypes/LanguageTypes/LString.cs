@@ -7,6 +7,14 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
     public sealed class LString : LType
     {
+        public static readonly LString Empty = new LString(string.Empty);
+
+
+        public override LTypeCode TypeCode
+        {
+            get { return LTypeCode.LString; }
+        }
+
         public string Value { get; private set; }
 
 
@@ -206,7 +214,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             throw new NotImplementedException();
         }
 
-        public override LType ConvertToPrimitive()
+        public override LType ConvertToPrimitive(string preferredType)
         {
             throw new NotImplementedException();
         }
@@ -229,6 +237,18 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public override LObject ConvertToObject()
         {
             throw new NotImplementedException();
+        }
+
+
+
+        public static explicit operator string(LString value)
+        {
+            return value.Value;
+        }
+
+        public static explicit operator LString(string value)
+        {
+            return new LString(string);
         }
     }
 }
