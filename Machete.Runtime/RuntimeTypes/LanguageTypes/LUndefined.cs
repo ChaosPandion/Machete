@@ -7,17 +7,11 @@ using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LUndefined : IDynamic
+    public struct LUndefined : IDynamic, IReferenceBase
     {
         public static readonly LUndefined Instance = new LUndefined();
         public static readonly LString UndefinedString = new LString("undefined");
         
-
-        public IDynamic Value
-        {
-            get { return this; }
-            set { Engine.ThrowReferenceError(); }
-        }
 
         public LTypeCode TypeCode
         {
@@ -281,6 +275,20 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public LNumber ConvertToUInt16()
         {
             return LType.ConvertToUInt16(this);
+        }
+        
+        public IDynamic GetValue(string name, bool strict)
+        {
+            throw Engine.ThrowReferenceError();
+        }
+
+        public void SetValue(string name, IDynamic value, bool strict)
+        {
+            if (strict)
+            {
+                throw Engine.ThrowReferenceError();
+            }
+            Engine.Instance.Value.GlobalObject.Put(name, value, false);
         }
 
         public override string ToString()

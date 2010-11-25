@@ -8,7 +8,7 @@ using Machete.Runtime.NativeObjects;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LNumber : IDynamic, IEquatable<LNumber>
+    public struct LNumber : IDynamic, IReferenceBase, IEquatable<LNumber>
     {
         private readonly double _value;
         public static readonly LString NumberString = new LString("number");
@@ -27,12 +27,6 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             _value = value;
         }
 
-
-        public IDynamic Value
-        {
-            get { return this; }
-            set { Engine.ThrowReferenceError(); }
-        }
 
         public LTypeCode TypeCode
         {
@@ -373,6 +367,16 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public LNumber ConvertToUInt16()
         {
             return LType.ConvertToUInt16(this);
+        }
+
+        public IDynamic GetValue(string name, bool strict)
+        {
+            return LType.GetValue(this, name, strict);
+        }
+
+        public void SetValue(string name, IDynamic value, bool strict)
+        {
+            LType.SetValue(this, name, value, strict);
         }
 
         public override bool Equals(object obj)

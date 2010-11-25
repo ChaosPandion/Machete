@@ -8,7 +8,7 @@ using Machete.Runtime.NativeObjects;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LBoolean : IDynamic, IEquatable<LBoolean>
+    public struct LBoolean : IDynamic, IReferenceBase, IEquatable<LBoolean>
     {
         private readonly bool _value;
         public static readonly LBoolean True = new LBoolean(true);
@@ -23,13 +23,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             _value = value;
         }
 
-
-        public IDynamic Value
-        {
-            get { return this; }
-            set { Engine.ThrowReferenceError(); }
-        }
-
+        
         public LTypeCode TypeCode
         {
             get { return LTypeCode.LBoolean; }
@@ -293,6 +287,16 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return LType.ConvertToUInt16(this);
         }
 
+        public IDynamic GetValue(string name, bool strict)
+        {
+            return LType.GetValue(this, name, strict);
+        }
+
+        public void SetValue(string name, IDynamic value, bool strict)
+        {
+            LType.SetValue(this, name, value, strict);
+        }
+
         public override bool Equals(object obj)
         {
             return obj is LBoolean && Equals((LBoolean)obj);
@@ -331,6 +335,6 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public static explicit operator LBoolean(bool value)
         {
             return value ? LBoolean.True : LBoolean.False;
-        } 
+        }
     }
 }

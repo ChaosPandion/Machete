@@ -8,7 +8,7 @@ using Machete.Runtime.NativeObjects;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public class LObject : IDynamic
+    public class LObject : IDynamic, IReferenceBase
     {
         private readonly Dictionary<string, SPropertyDescriptor> _map = new Dictionary<string, SPropertyDescriptor>();
 
@@ -20,12 +20,6 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public string Class { get; set; }
 
         public bool Extensible { get; set; }
-
-        public IDynamic Value
-        {
-            get { return this; }
-            set { Engine.ThrowReferenceError(); }
-        }
 
         public LTypeCode TypeCode
         {
@@ -570,6 +564,16 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public LNumber ConvertToUInt16()
         {
             return LType.ConvertToUInt16(this);
+        }
+
+        public IDynamic GetValue(string name, bool strict)
+        {
+            return Get(name);
+        }
+
+        public void SetValue(string name, IDynamic value, bool strict)
+        {
+            Put(name, value, strict);
         }
 
         public override string ToString()

@@ -15,5 +15,15 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         public abstract IDynamic GetBindingValue(string n, bool s);
         public abstract bool DeleteBinding(string n);
         public abstract IDynamic ImplicitThisValue();
+
+        public IDynamic GetValue(string name, bool strict)
+        {
+            return GetBindingValue(name, strict);
+        }
+
+        public void SetValue(string name, IDynamic value, bool strict)
+        {
+            SetMutableBinding(name, value, strict);
+        }
     }
 }

@@ -349,5 +349,81 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 return LBoolean.False;
             }
         }
+
+        public static IDynamic GetValue(LBoolean value, string name, bool strict)
+        {
+            return GetValue((IDynamic)value, name, strict);
+        }
+
+        public static IDynamic GetValue(LString value, string name, bool strict)
+        {
+            return GetValue((IDynamic)value, name, strict);
+        }
+
+        public static IDynamic GetValue(LNumber value, string name, bool strict)
+        {
+            return GetValue((IDynamic)value, name, strict);
+        }
+
+        private static IDynamic GetValue(IDynamic value, string name, bool strict)
+        {
+            var obj = value.ConvertToObject();
+            var desc = obj.GetProperty(name);
+            if (desc == null) return LUndefined.Instance;
+            if (desc.IsDataDescriptor) return desc.Value;
+            if (desc.Get is LUndefined) return LUndefined.Instance;
+            return desc.Get.Op_Call(SList.Empty);
+        }
+
+        public static void SetValue(LBoolean of, string name, IDynamic value, bool strict)
+        {
+            SetValue((IDynamic)of, name, value, strict);
+        }
+
+        public static void SetValue(LString of, string name, IDynamic value, bool strict)
+        {
+            SetValue((IDynamic)of, name, value, strict);
+        }
+
+        public static void SetValue(LNumber of, string name, IDynamic value, bool strict)
+        {
+            SetValue((IDynamic)of, name, value, strict);
+        }
+
+        private static void SetValue(IDynamic of, string name, IDynamic value, bool strict)
+        {
+            var obj = value.ConvertToObject();
+            if (!obj.CanPut(name))
+            {
+                if (strict)
+                {
+                    throw Engine.ThrowTypeError();
+                }
+                return;
+            }
+            var ownDesc = obj.GetOwnProperty(name);
+            if (ownDesc.IsDataDescriptor)
+            {
+                if (strict)
+                {
+                    throw Engine.ThrowTypeError();
+                }
+                return;
+            }
+            var desc = obj.GetProperty(name);
+            if (desc.IsAccessorDescriptor)
+            {
+                desc.Set.Op_Call(new SList(value));
+                return;
+            }
+            else
+            {
+                if (strict)
+                {
+                    throw Engine.ThrowTypeError();
+                }
+                return;
+            }
+        }
     }
 }

@@ -136,11 +136,9 @@
     <Compile Include="RuntimeTypes\SpecificationTypes\SPropertyDescriptor.cs" />
     <Compile Include="RuntimeTypes\SpecificationTypes\SReference.cs" />
     <Compile Include="RuntimeTypes\LanguageTypes\LString.cs" />
-    <Compile Include="RuntimeTypes\RType.cs" />
     <Compile Include="RuntimeTypes\LanguageTypes\LUndefined.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RuntimeTypes\LanguageTypes\LType.cs" />
-    <Compile Include="RuntimeTypes\SpecificationTypes\SType.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">

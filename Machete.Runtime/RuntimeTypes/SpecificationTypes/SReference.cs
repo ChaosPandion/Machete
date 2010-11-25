@@ -17,42 +17,18 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         private readonly bool _strictReference;
 
 
+        public SReference(IReferenceBase @base, string referencedName, bool strictReference)
+        {
+            _base = @base;
+            _referencedName = referencedName;
+            _strictReference = strictReference;
+        }
+
+
         public IDynamic Value
         {
-            get
-            {
-                if (_base is IDynamic)
-                {
-                    return ((IDynamic)_base).Op_GetProperty((LString)_referencedName);
-                }
-                else
-                {
-                    return ((SEnvironmentRecord)_base).GetBindingValue(_referencedName, _strictReference);
-                }
-            }
-            set
-            {
-                if (_base is IDynamic)
-                {
-                    if (_base is LUndefined)
-                    {
-                        if (_strictReference)
-                        {
-                            throw Engine.ThrowReferenceError();
-                        }
-                        Engine.Instance.Value.GlobalObject.Put(_referencedName, value, false);
-                        return;
-                    }
-                    else
-                    {
-                        ((IDynamic)_base).Op_SetProperty((LString)_referencedName, value);
-                    }
-                }
-                else
-                {
-                    ((SEnvironmentRecord)_base).SetMutableBinding(_referencedName, value, _strictReference);
-                }
-            }
+            get { return _base.GetValue(_referencedName, _strictReference); }
+            set { _base.SetValue(_referencedName, value, _strictReference); }
         }
 
         public LTypeCode TypeCode
@@ -64,15 +40,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             get { return Value.IsPrimitive; }
         }
-
-
-        public SReference(IReferenceBase @base, string referencedName, bool strictReference)
-        {
-            _base = @base;
-            _referencedName = referencedName;
-            _strictReference = strictReference;
-        }
-
+        
 
         public IDynamic Op_LogicalNot()
         {

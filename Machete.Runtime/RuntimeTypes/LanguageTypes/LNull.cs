@@ -13,12 +13,6 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public static readonly LString NullString = new LString("null");
         
 
-        public IDynamic Value
-        {
-            get { return this; }
-            set { Engine.ThrowReferenceError(); }
-        }
-
         public LTypeCode TypeCode
         {
             get { return LTypeCode.LNull; }

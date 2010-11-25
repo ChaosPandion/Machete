@@ -7,9 +7,8 @@ using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 
 namespace Machete.Runtime.RuntimeTypes.Interfaces
 {
-    public interface IDynamic : IReferenceBase
+    public interface IDynamic
     {
-        IDynamic Value { get; set; }
         LTypeCode TypeCode { get; }
         bool IsPrimitive { get; }
 
