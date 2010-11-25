@@ -7,7 +7,7 @@ using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 
 namespace Machete.Runtime.RuntimeTypes.Interfaces
 {
-    public interface IDynamic
+    public interface IDynamic : IReferenceBase
     {
         IDynamic Value { get; set; }
         LTypeCode TypeCode { get; }
@@ -53,7 +53,8 @@ namespace Machete.Runtime.RuntimeTypes.Interfaces
         IDynamic Op_PostfixIncrement();
         IDynamic Op_PostfixDecrement();
 
-        IDynamic Op_AccessProperty(IDynamic name);
+        IDynamic Op_GetProperty(IDynamic name);
+        void Op_SetProperty(IDynamic name, IDynamic value);
         IDynamic Op_Call(SList args);
         IDynamic Op_Construct(SList args);
         void Op_Throw();

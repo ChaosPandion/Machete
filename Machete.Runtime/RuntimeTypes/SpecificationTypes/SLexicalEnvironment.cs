@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public class SLexicalEnvironment : SType
+    public class SLexicalEnvironment
     {
         public SEnvironmentRecord Record { get; private set; }
         public SLexicalEnvironment Parent { get; private set; }

@@ -8,7 +8,7 @@ namespace Machete.Runtime.NativeObjects
 {
     public sealed class NRegExp : LObject
     {
-        public virtual bool Match(string input, int index)
+        public bool Match(string input, int index)
         {
             throw new NotImplementedException();
         }

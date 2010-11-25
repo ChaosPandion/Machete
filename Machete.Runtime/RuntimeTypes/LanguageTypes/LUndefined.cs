@@ -11,13 +11,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
     {
         public static readonly LUndefined Instance = new LUndefined();
         public static readonly LString UndefinedString = new LString("undefined");
-
-
-        private LUndefined()
-        {
         
-        }
-
 
         public IDynamic Value
         {
@@ -219,9 +213,14 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             throw Engine.ThrowReferenceError();
         }
 
-        public IDynamic Op_AccessProperty(IDynamic name)
+        public IDynamic Op_GetProperty(IDynamic name)
         {
-            return LType.Op_AccessProperty(this, name);
+            return LType.Op_GetProperty(this, name);
+        }
+
+        public void Op_SetProperty(IDynamic name, IDynamic value)
+        {
+            LType.Op_SetProperty(this, name, value);
         }
 
         public IDynamic Op_Call(SList args)
@@ -261,7 +260,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public LObject ConvertToObject()
         {
-            return null;
+            throw Engine.ThrowTypeError();
         }
 
         public LNumber ConvertToInteger()

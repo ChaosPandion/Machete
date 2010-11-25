@@ -4,15 +4,16 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Diagnostics;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public class SList : SType
+    public class SList
     {
-        private readonly LType[] _items;
+        private readonly IDynamic[] _items;
         public static readonly SList Empty = new SList();
 
-        public LType this[int index]
+        public IDynamic this[int index]
         {
             get
             {
@@ -41,7 +42,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             }
         }
 
-        public SList(params LType[] items)
+        public SList(params IDynamic[] items)
         {
             Debug.Assert(items != null);
             Debug.Assert(!items.Any(o => o == null));

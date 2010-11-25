@@ -6,6 +6,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.NativeObjects.BuiltinObjects;
 using System.Diagnostics.Contracts;
 using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
@@ -39,14 +40,14 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             _bindingObject.DefineOwnProperty(n, desc, false);
         }
 
-        public override void SetMutableBinding(string n, LType v, bool s)
+        public override void SetMutableBinding(string n, IDynamic v, bool s)
         {
             Contract.Assert(n != null);
             Contract.Assert(v != null);
             _bindingObject.Put(n, v, s);
         }
 
-        public override LType GetBindingValue(string n, bool s)
+        public override IDynamic GetBindingValue(string n, bool s)
         {
             Contract.Assert(n != null);
             if (!_bindingObject.HasProperty(n))
@@ -63,9 +64,9 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             return _bindingObject.Delete(n, false);
         }
 
-        public override LType ImplicitThisValue()
+        public override IDynamic ImplicitThisValue()
         {
-            return _provideThis ? (LType)_bindingObject : (LType)LUndefined.Instance;
+            return _provideThis ? (IDynamic)_bindingObject : (IDynamic)LUndefined.Instance;
         }
     }
 }

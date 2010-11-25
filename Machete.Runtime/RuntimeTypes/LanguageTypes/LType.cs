@@ -206,7 +206,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return (LBoolean)(!(bool)value.ConvertToBoolean());
         }
 
-        public static IDynamic Op_AccessProperty(IDynamic value, IDynamic name)
+        public static IDynamic Op_GetProperty(IDynamic value, IDynamic name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static void Op_SetProperty(IDynamic of, IDynamic name, IDynamic value)
         {
             throw new NotImplementedException();
         }

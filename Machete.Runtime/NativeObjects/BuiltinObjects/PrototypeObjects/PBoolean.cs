@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -18,12 +19,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         }
 
 
-        private LType ToString(ExecutionContext context, SList args)
+        private IDynamic ToString(ExecutionContext context, SList args)
         {
             return context.ThisBinding.ConvertToBoolean().ConvertToString();
         }
 
-        private LType ValueOf(ExecutionContext context, SList args)
+        private IDynamic ValueOf(ExecutionContext context, SList args)
         {
             return context.ThisBinding.ConvertToBoolean();
         }

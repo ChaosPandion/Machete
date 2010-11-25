@@ -8,8 +8,8 @@ using Machete.Runtime.RuntimeTypes.Interfaces;
 namespace Machete.Runtime.NativeObjects
 {
     public sealed class NBoolean : LObject, IPrimitiveWrapper
-    {        
-        IDynamic PrimitiveValue { get; set; }
+    {
+        public IDynamic PrimitiveValue { get; set; }
 
         public NBoolean(LBoolean value)
         {

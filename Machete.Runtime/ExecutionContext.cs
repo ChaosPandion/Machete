@@ -5,6 +5,7 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using System.Reflection;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime
 {
@@ -12,10 +13,10 @@ namespace Machete.Runtime
     {
         public SLexicalEnvironment LexicalEnviroment { get; set; }
         public SLexicalEnvironment VariableEnviroment { get; set; }
-        public LType ThisBinding { get; set; }
+        public IDynamic ThisBinding { get; set; }
 
 
-        public ExecutionContext(SLexicalEnvironment enviroment, LType thisBinding)
+        public ExecutionContext(SLexicalEnvironment enviroment, IDynamic thisBinding)
         {
             LexicalEnviroment = enviroment;
             VariableEnviroment = enviroment;

@@ -8,7 +8,7 @@ using Machete.Runtime.NativeObjects;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LString : IDynamic
+    public struct LString : IDynamic, IEquatable<LString>
     {
         private readonly string _value;
         public static readonly LString Empty = new LString(string.Empty);
@@ -224,9 +224,14 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             throw Engine.ThrowReferenceError();
         }
 
-        public IDynamic Op_AccessProperty(IDynamic name)
+        public IDynamic Op_GetProperty(IDynamic name)
         {
-            return LType.Op_AccessProperty(this, name);
+            return LType.Op_GetProperty(this, name);
+        }
+
+        public void Op_SetProperty(IDynamic name, IDynamic value)
+        {
+            LType.Op_SetProperty(this, name, value);
         }
 
         public IDynamic Op_Call(SList args)
@@ -289,19 +294,45 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return LType.ConvertToUInt16(this);
         }
 
+        public override bool Equals(object obj)
+        {
+            return obj is LString && Equals((LString)obj);
+        }
+
+        public bool Equals(LString other)
+        {
+            return this._value == other._value;
+        }
+
+        public override int GetHashCode()
+        {
+            return _value.GetHashCode();
+        }
+
         public override string ToString()
         {
             return _value;
         }
 
+        public static bool operator ==(LString left, LString right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(LString left, LString right)
+        {
+            return !left.Equals(right);
+        }
+
         public static explicit operator string(LString value)
         {
-            return value.Value;
+            return value._value;
         }
 
         public static explicit operator LString(string value)
         {
-            return new LString(string);
-        }        
+            return new LString(value);
+        }
+
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.NativeObjects.BuiltinObjects;
 using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
@@ -23,7 +24,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             _bindings.Add(n, new Binding(d ? BFlags.Deletable : BFlags.None));
         }
 
-        public override void SetMutableBinding(string n, LType v, bool s)
+        public override void SetMutableBinding(string n, IDynamic v, bool s)
         {
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Immutable) == BFlags.Immutable)
@@ -33,7 +34,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             binding.Value = v;
         }
 
-        public override LType GetBindingValue(string n, bool s)
+        public override IDynamic GetBindingValue(string n, bool s)
         {
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Uninitialized) == BFlags.Uninitialized)
@@ -59,7 +60,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             return true;
         }
 
-        public override LType ImplicitThisValue()
+        public override IDynamic ImplicitThisValue()
         {
             return LUndefined.Instance;
         }
@@ -69,7 +70,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             _bindings.Add(n, new Binding(BFlags.Immutable | BFlags.Uninitialized));
         }
 
-        public void InitializeImmutableBinding(string n, LType v)
+        public void InitializeImmutableBinding(string n, IDynamic v)
         {
             _bindings[n].Value = v;
         }
@@ -87,7 +88,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         private sealed class Binding
         {
-            public LType Value;
+            public IDynamic Value;
             public BFlags Flags;
 
             public Binding(BFlags flags)

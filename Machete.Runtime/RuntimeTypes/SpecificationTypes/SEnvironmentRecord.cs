@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public abstract class SEnvironmentRecord : SType
+    public abstract class SEnvironmentRecord : IReferenceBase
     {
         public abstract bool HasBinding(string n);
         public abstract void CreateMutableBinding(string n, bool d);
-        public abstract void SetMutableBinding(string n, LType v, bool s);
-        public abstract LType GetBindingValue(string n, bool s);
+        public abstract void SetMutableBinding(string n, IDynamic v, bool s);
+        public abstract IDynamic GetBindingValue(string n, bool s);
         public abstract bool DeleteBinding(string n);
-        public abstract LType ImplicitThisValue();
+        public abstract IDynamic ImplicitThisValue();
     }
 }

@@ -9,7 +9,7 @@ namespace Machete.Runtime.NativeObjects
 {
     public sealed class NNumber : LObject, IPrimitiveWrapper
     {
-        IDynamic PrimitiveValue { get; set; }
+        public IDynamic PrimitiveValue { get; set; }
 
         public NNumber(LNumber value)
         {

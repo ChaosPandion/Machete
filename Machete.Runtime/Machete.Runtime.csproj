@@ -25,11 +25,11 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeContractsEnableRuntimeChecking>True</CodeContractsEnableRuntimeChecking>
+    <CodeContractsEnableRuntimeChecking>False</CodeContractsEnableRuntimeChecking>
     <CodeContractsRuntimeOnlyPublicSurface>False</CodeContractsRuntimeOnlyPublicSurface>
     <CodeContractsRuntimeThrowOnFailure>False</CodeContractsRuntimeThrowOnFailure>
     <CodeContractsRuntimeCallSiteRequires>False</CodeContractsRuntimeCallSiteRequires>
-    <CodeContractsRunCodeAnalysis>True</CodeContractsRunCodeAnalysis>
+    <CodeContractsRunCodeAnalysis>False</CodeContractsRunCodeAnalysis>
     <CodeContractsNonNullObligations>False</CodeContractsNonNullObligations>
     <CodeContractsBoundsObligations>False</CodeContractsBoundsObligations>
     <CodeContractsArithmeticObligations>False</CodeContractsArithmeticObligations>
@@ -121,6 +121,7 @@
     <Compile Include="RuntimeTypes\Interfaces\IConstructable.cs" />
     <Compile Include="RuntimeTypes\Interfaces\IDynamic.cs" />
     <Compile Include="RuntimeTypes\Interfaces\IPrimitiveWrapper.cs" />
+    <Compile Include="RuntimeTypes\Interfaces\IReferenceBase.cs" />
     <Compile Include="RuntimeTypes\LanguageTypes\LBoolean.cs" />
     <Compile Include="RuntimeTypes\LanguageTypes\LTypeCode.cs" />
     <Compile Include="RuntimeTypes\SpecificationTypes\SCompletion.cs" />

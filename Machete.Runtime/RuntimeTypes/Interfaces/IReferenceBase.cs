@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
+namespace Machete.Runtime.RuntimeTypes.Interfaces
 {
-    public class SCompletion
+    public interface IReferenceBase
     {
 
     }

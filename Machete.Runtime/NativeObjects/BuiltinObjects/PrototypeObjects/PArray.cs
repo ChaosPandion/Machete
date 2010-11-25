@@ -5,6 +5,7 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -40,99 +41,102 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //DefineOwnProperty("valueOf", SPropertyDescriptor.Create(new NFunction(null, () => ValueOf)), false);
         }
 
-        private LType ToString(ExecutionContext context, SList args)
+        private IDynamic ToString(ExecutionContext context, SList args)
         {
             var obj = context.ThisBinding.ConvertToObject();
-            var func = obj.Get("join") as NFunction;
+            var func = obj.Get("join") as ICallable;
             if (func == null) return new LString(string.Format("[object, {0}]", obj.Class));
             return func.Call(obj, SList.Empty);  
         }
 
-        private LType ToLocaleString(ExecutionContext context, SList args)
+        private IDynamic ToLocaleString(ExecutionContext context, SList args)
         {
             var obj = context.ThisBinding.ConvertToObject();
-            var func = obj.Get("toString") as NFunction;
+            var func = obj.Get("toString") as ICallable;
             if (func == null) Engine.ThrowTypeError(); 
             return func.Call(obj, SList.Empty);
         }
 
-        private LType Concat(ExecutionContext context, SList args)
+        private IDynamic Concat(ExecutionContext context, SList args)
         {
-            var obj = context.ThisBinding.ConvertToObject();
-            var array = Engine.ConstructArray();
-            var current = default(LType);
-            var count = 0;
+            throw new NotImplementedException();
+            //var obj = context.ThisBinding.ConvertToObject();
+            //var array = Engine.ConstructArray();
+            //var current = default(LType);
+            //var count = 0;
 
-            for (int i = -1; i < args.Count; i++)
-            {
-                current = i < 0 ? obj : args[i];
-                if (!(current is LObject))
-                {
-                    var desc = new SPropertyDescriptor(current, true, true, true);
-                    array.DefineOwnProperty((count++).ToString(), desc, false);
-                }
-                else
-                {
-                    var inner = current as NArray;
-                    if (inner != null)
-                    {
-                        var length = (uint)inner.Get("length").ConvertToUInt32().Value;
-                        for (int j = 0; j < length; j++)
-                        {
-                            var key = j.ToString();
-                            if (inner.HasProperty(key))
-                            {
-                                var desc = new SPropertyDescriptor(inner.Get(key), true, true, true);
-                                array.DefineOwnProperty((count++).ToString(), desc, false);
-                            }
-                        }
-                    }
-                }
-            }
-            return array;
+            //for (int i = -1; i < args.Count; i++)
+            //{
+            //    current = i < 0 ? obj : args[i];
+            //    if (!(current is LObject))
+            //    {
+            //        var desc = new SPropertyDescriptor(current, true, true, true);
+            //        array.DefineOwnProperty((count++).ToString(), desc, false);
+            //    }
+            //    else
+            //    {
+            //        var inner = current as NArray;
+            //        if (inner != null)
+            //        {
+            //            var length = (uint)inner.Get("length").ConvertToUInt32().Value;
+            //            for (int j = 0; j < length; j++)
+            //            {
+            //                var key = j.ToString();
+            //                if (inner.HasProperty(key))
+            //                {
+            //                    var desc = new SPropertyDescriptor(inner.Get(key), true, true, true);
+            //                    array.DefineOwnProperty((count++).ToString(), desc, false);
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+            //return array;
         }
 
-        private LType Join(ExecutionContext context, SList args)
+        private IDynamic Join(ExecutionContext context, SList args)
         {
-            var obj = context.ThisBinding.ConvertToObject();
-            var length = (uint)obj.Get("length").ConvertToUInt32().Value;
-            var separator = ", ";
+            throw new NotImplementedException();
+            //var obj = context.ThisBinding.ConvertToObject();
+            //var length = (uint)obj.Get("length").ConvertToUInt32().Value;
+            //var separator = ", ";
 
-            if (length == 0)
-            {
-                return LString.Empty;
-            }
+            //if (length == 0)
+            //{
+            //    return LString.Empty;
+            //}
 
-            if (args.Count > 0)
-            {
-                separator = args[0].ConvertToString().Value;
-            }
+            //if (args.Count > 0)
+            //{
+            //    separator = args[0].ConvertToString().Value;
+            //}
 
-            var sb = new StringBuilder();
-            for (int i = 0; i < length; i++)
-            {
-                if (sb.Length > 0)
-                {
-                    sb.Append(separator);
-                }
-                sb.Append(obj.Get(i.ToString()).Value.ConvertToString().Value);
-            }
-            return new LString(sb.ToString());
+            //var sb = new StringBuilder();
+            //for (int i = 0; i < length; i++)
+            //{
+            //    if (sb.Length > 0)
+            //    {
+            //        sb.Append(separator);
+            //    }
+            //    sb.Append(obj.Get(i.ToString()).Value.ConvertToString().Value);
+            //}
+            //return new LString(sb.ToString());
         }
                 
-        private LType Pop(ExecutionContext context, SList args)
+        private IDynamic Pop(ExecutionContext context, SList args)
         {
-            var obj = context.ThisBinding.ConvertToObject();
-            var length = obj.Get("length").ConvertToUInt32();
-            if (length.Value == 0.0) return LUndefined.Instance;
-            var index = (length.Value - 1).ToString();
-            var element = obj.Get(index);
-            obj.Delete(index, true);
-            obj.Put("length", new LNumber(length.Value - 1.0), true);
-            return element;
+            throw new NotImplementedException();
+            //var obj = context.ThisBinding.ConvertToObject();
+            //var length = obj.Get("length").ConvertToUInt32();
+            //if (length.Value == 0.0) return LUndefined.Instance;
+            //var index = (length.Value - 1).ToString();
+            //var element = obj.Get(index);
+            //obj.Delete(index, true);
+            //obj.Put("length", new LNumber(length.Value - 1.0), true);
+            //return element;
         }
 
-        private LType Push(ExecutionContext context, SList args)
+        private IDynamic Push(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -148,7 +152,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return new NumberPrimitive(length);
         }
 
-        private LType Reverse(ExecutionContext context, SList args)
+        private IDynamic Reverse(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -192,7 +196,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return obj;
         }
 
-        private LType Shift(ExecutionContext context, SList args)
+        private IDynamic Shift(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -222,7 +226,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return first;
         }
 
-        private LType Slice(ExecutionContext context, SList args)
+        private IDynamic Slice(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
@@ -245,7 +249,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return result;
         }
 
-        private LType Sort(ExecutionContext context, SList args)
+        private IDynamic Sort(ExecutionContext context, SList args)
         {
 
             throw new NotImplementedException();
@@ -305,17 +309,17 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //defined = (isSparse && (hasNonConfigurable || hasNonWritable || hasAccessor || protoHasProp));
         }
 
-        private LType Splice(ExecutionContext context, SList args)
+        private IDynamic Splice(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
         }
 
-        private LType Unshift(ExecutionContext context, SList args)
+        private IDynamic Unshift(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
         }
 
-        private LType IndexOf(ExecutionContext context, SList args)
+        private IDynamic IndexOf(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -348,7 +352,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return new NumberPrimitive(-1D);
         }
 
-        private LType LastIndexOf(ExecutionContext context, SList args)
+        private IDynamic LastIndexOf(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -389,7 +393,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return new NumberPrimitive(-1D);
         }
 
-        private LType Every(ExecutionContext context, SList args)
+        private IDynamic Every(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -418,7 +422,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return new BooleanPrimitive(true);
         }
 
-        private LType Some(ExecutionContext context, SList args)
+        private IDynamic Some(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -449,7 +453,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return new BooleanPrimitive(false);
         }
 
-        private LType ForEach(ExecutionContext context, SList args)
+        private IDynamic ForEach(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -477,7 +481,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return new UndefinedPrimitive();
         }
 
-        private LType Map(ExecutionContext context, SList args)
+        private IDynamic Map(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
@@ -506,7 +510,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return result;
         }
 
-        private LType Filter(ExecutionContext context, SList args)
+        private IDynamic Filter(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
@@ -540,7 +544,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return result;
         }
 
-        private LType Reduce(ExecutionContext context, SList args)
+        private IDynamic Reduce(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();
@@ -591,7 +595,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return accumulator;
         }
 
-        private LType ReduceRight(ExecutionContext context, SList args)
+        private IDynamic ReduceRight(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var obj = engine.Context.ThisBinding.ToObject();

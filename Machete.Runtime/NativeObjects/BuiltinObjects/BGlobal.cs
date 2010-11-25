@@ -5,6 +5,7 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Threading;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects
 {
@@ -29,12 +30,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             DefineOwnProperty("encodeURIComponent", new SPropertyDescriptor(new NFunction(new[] { "uriComponent" }, () => EncodeUriComponent)), false);
         }
 
-        private LType Eval(ExecutionContext context, SList args)
+        private IDynamic Eval(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
         }
 
-        private LType ParseInt(ExecutionContext context, SList args)
+        private IDynamic ParseInt(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var inputString = (args[0].ConvertToString().Value ?? string.Empty).Trim().ToLowerInvariant();
@@ -116,7 +117,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             //return (LNumber)(sign * result);
         }
 
-        private LType ParseFloat(ExecutionContext context, SList args)
+        private IDynamic ParseFloat(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var inputString = (args[0].ToStringPrimitive().ToString() ?? string.Empty).Trim().ToLowerInvariant();
@@ -167,13 +168,13 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             //return new NumberPrimitive(sign * result);
         }
 
-        private LType IsNan(ExecutionContext context, SList args)
+        private IDynamic IsNan(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //return new BooleanPrimitive(double.IsNaN(args[0].ToNumberPrimitive()));
         }
 
-        private LType IsFinite(ExecutionContext context, SList args)
+        private IDynamic IsFinite(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
             //var num = args[0].ToNumberPrimitive();
@@ -195,22 +196,22 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             //}
         }
 
-        private LType DecodeUri(ExecutionContext context, SList args)
+        private IDynamic DecodeUri(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
         }
 
-        private LType DecodeUriComponent(ExecutionContext context, SList args)
+        private IDynamic DecodeUriComponent(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
         }
 
-        private LType EncodeUri(ExecutionContext context, SList args)
+        private IDynamic EncodeUri(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
         }
 
-        private LType EncodeUriComponent(ExecutionContext context, SList args)
+        private IDynamic EncodeUriComponent(ExecutionContext context, SList args)
         {
             throw new NotImplementedException();
         }

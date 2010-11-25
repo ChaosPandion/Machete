@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public class SPropertyDescriptor : SType
+    public class SPropertyDescriptor
     {
-        public LType Value { get; set; }
+        public IDynamic Value { get; set; }
         public bool? Writable { get; set; }
-        public LType Get { get; set; }
-        public LType Set { get; set; }
+        public IDynamic Get { get; set; }
+        public IDynamic Set { get; set; }
         public bool? Enumerable { get; set; }
         public bool? Configurable { get; set; }
 
@@ -41,25 +42,25 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         }
 
-        public SPropertyDescriptor(LType value)
+        public SPropertyDescriptor(IDynamic value)
             : this(value, false, false, false)
         {
 
         }
 
-        public SPropertyDescriptor(LType value, bool? writable)
+        public SPropertyDescriptor(IDynamic value, bool? writable)
             : this(value, writable, false, false)
         {
 
         }
 
-        public SPropertyDescriptor(LType value, bool? writable, bool? enumerable)
+        public SPropertyDescriptor(IDynamic value, bool? writable, bool? enumerable)
             : this(value, writable, enumerable, false)
         {
 
         }
 
-        public SPropertyDescriptor(LType value, bool? writable, bool? enumerable, bool? configurable)
+        public SPropertyDescriptor(IDynamic value, bool? writable, bool? enumerable, bool? configurable)
         {
             Value = value;
             Writable = writable;
@@ -91,7 +92,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             };
         }
 
-        public static SPropertyDescriptor Create(LType value)
+        public static SPropertyDescriptor Create(IDynamic value)
         {
             return new SPropertyDescriptor()
             {

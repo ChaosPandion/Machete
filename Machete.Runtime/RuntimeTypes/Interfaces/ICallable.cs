@@ -9,6 +9,6 @@ namespace Machete.Runtime.RuntimeTypes.Interfaces
 {
     public interface ICallable
     {
-        LType Call(LType @this, SList args);
+        IDynamic Call(IDynamic @this, SList args);
     }
 }

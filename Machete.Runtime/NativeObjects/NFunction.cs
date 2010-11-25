@@ -17,12 +17,12 @@ namespace Machete.Runtime.NativeObjects
         private readonly SLexicalEnvironment _scope;
 
 
-        public virtual object Scope { get; set; }
-        public virtual string[] FormalParameters { get; set; }
-        public virtual object Code { get; set; }
-        public virtual object TargetFunction { get; set; }
-        public virtual object BoundThis { get; set; }
-        public virtual object BoundArguments { get; set; }
+        public SLexicalEnvironment Scope { get; set; }
+        public string[] FormalParameters { get; set; }
+        internal Code Code { get; set; }
+        public object TargetFunction { get; set; }
+        public object BoundThis { get; set; }
+        public object BoundArguments { get; set; }
 
 
         internal NFunction(string[] formalParameterList, Func<Code> getCode)
@@ -40,13 +40,14 @@ namespace Machete.Runtime.NativeObjects
         }
 
 
-        LType ICallable.Call(LType @this, SList args)
+        IDynamic ICallable.Call(IDynamic @this, SList args)
         {
-            Debug.Assert(@this != null);
-            Debug.Assert(args != null);
-            var enviroment = _scope.NewDeclarativeEnvironment();
-            var context = new ExecutionContext(enviroment, @this);
-            return _code.Value(context, args);
+            throw new NotImplementedException();
+            //Debug.Assert(@this != null);
+            //Debug.Assert(args != null);
+            //var enviroment = _scope.NewDeclarativeEnvironment();
+            //var context = new ExecutionContext(enviroment, @this);
+            //return _code.Value(context, args);
         }
 
         LObject IConstructable.Construct(SList args)
