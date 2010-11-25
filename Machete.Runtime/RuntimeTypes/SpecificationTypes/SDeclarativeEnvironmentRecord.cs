@@ -38,7 +38,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Uninitialized) == BFlags.Uninitialized)
             {
-                if (!s) return LUndefined.Value;
+                if (!s) return LUndefined.Instance;
                 Engine.ThrowReferenceError();
             }
             return binding.Value;
@@ -61,7 +61,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public override LType ImplicitThisValue()
         {
-            return LUndefined.Value;
+            return LUndefined.Instance;
         }
 
         public void CreateImmutableBinding(string n)
@@ -92,7 +92,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
             public Binding(BFlags flags)
             {
-                Value = LUndefined.Value;
+                Value = LUndefined.Instance;
                 Flags = flags;
             }
         }

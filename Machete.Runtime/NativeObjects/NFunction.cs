@@ -54,7 +54,7 @@ namespace Machete.Runtime.NativeObjects
             throw new NotImplementedException();
         }
 
-        public bool HasInstance(LObject obj)
+        public bool HasInstance(IDynamic obj)
         {
             throw new NotImplementedException();
         }

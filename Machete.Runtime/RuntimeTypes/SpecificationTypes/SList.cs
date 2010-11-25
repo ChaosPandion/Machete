@@ -19,7 +19,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                 Debug.Assert(index >= 0);
                 if (index > _items.Length - 1)
                 {
-                    return LUndefined.Value;
+                    return LUndefined.Instance;
                 }
                 return _items[index];
             }

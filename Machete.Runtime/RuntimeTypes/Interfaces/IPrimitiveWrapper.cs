@@ -8,6 +8,6 @@ namespace Machete.Runtime.RuntimeTypes.Interfaces
 {
     public interface IPrimitiveWrapper
     {
-        LType PrimitiveValue { get; set; }
+        IDynamic PrimitiveValue { get; set; }
     }
 }

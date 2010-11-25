@@ -3,251 +3,416 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+using Machete.Runtime.RuntimeTypes.Interfaces;
+using Machete.Runtime.NativeObjects;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public sealed class LNumber : LType
+    public struct LNumber : IDynamic, IEquatable<LNumber>
     {
+        private readonly double _value;
+        public static readonly LString NumberString = new LString("number");
+        public static readonly LString NaNString = new LString("NaN");
+        public static readonly LString InfinityString = new LString("Infinity");
+        public static readonly LString ZeroString = new LString("0");
         public static readonly LNumber NaN = new LNumber(double.NaN);
         public static readonly LNumber PositiveInfinity = new LNumber(double.PositiveInfinity);
         public static readonly LNumber NegativeInfinity = new LNumber(double.NegativeInfinity);
         public static readonly LNumber Zero = new LNumber(0.0);
-        public static readonly LNumber One = new LNumber(1.0);
-
-
-        public override LTypeCode TypeCode
-        {
-            get { return LTypeCode.LNumber; }
-        }
-
-        public double Value { get; private set; }
+        public static readonly LNumber One = new LNumber(1.0);       
 
 
         public LNumber(double value)
         {
-            Value = value;
+            _value = value;
         }
 
-        
-        public override LType Op_LogicalOr(LType other)
+
+        public IDynamic Value
         {
-            throw new NotImplementedException();
+            get { return this; }
+            set { Engine.ThrowReferenceError(); }
         }
 
-        public override LType Op_LogicalAnd(LType other)
+        public LTypeCode TypeCode
         {
-            throw new NotImplementedException();
+            get { return LTypeCode.LNumber; }
         }
 
-        public override LType Op_BitwiseOr(LType other)
+        public bool IsPrimitive
         {
-            throw new NotImplementedException();
+            get { return true; }
         }
 
-        public override LType Op_BitwiseXor(LType other)
+
+        public IDynamic Op_LogicalOr(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_LogicalOr(this, other);
         }
 
-        public override LType Op_BitwiseAnd(LType other)
+        public IDynamic Op_LogicalAnd(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_LogicalAnd(this, other);
         }
 
-        public override LType Op_Equals(LType other)
+        public IDynamic Op_BitwiseOr(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_BitwiseOr(this, other);
         }
 
-        public override LType Op_DoesNotEquals(LType other)
+        public IDynamic Op_BitwiseXor(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_BitwiseXor(this, other);
         }
 
-        public override LType Op_StrictEquals(LType other)
+        public IDynamic Op_BitwiseAnd(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_BitwiseAnd(this, other);
         }
 
-        public override LType Op_StrictDoesNotEquals(LType other)
+        public IDynamic Op_Equals(IDynamic other)
         {
-            throw new NotImplementedException();
+            switch (other.TypeCode)
+            {
+                case LTypeCode.LString:
+                    return this.Op_Equals(other.ConvertToNumber());
+                case LTypeCode.LNumber:
+                    var lnum = (LNumber)other;
+                    return (LBoolean)(!(double.IsNaN(_value) || double.IsNaN(lnum._value)) && this._value == lnum._value);
+                case LTypeCode.LObject:
+                    return this.Op_Equals(other.ConvertToPrimitive());
+                default:
+                    return LBoolean.False;
+            }
         }
 
-        public override LType Op_Lessthan(LType other)
+        public IDynamic Op_DoesNotEquals(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_DoesNotEquals(this, other);
         }
 
-        public override LType Op_Greaterthan(LType other)
+        public IDynamic Op_StrictEquals(IDynamic other)
         {
-            throw new NotImplementedException();
+            switch (other.TypeCode)
+            {
+                case LTypeCode.LNumber:
+                    var lnum = (LNumber)other;
+                    return (LBoolean)(!(double.IsNaN(_value) || double.IsNaN(lnum._value)) && this._value == lnum._value);
+                default:
+                    return LBoolean.False;
+            }
         }
 
-        public override LType Op_LessthanOrEqual(LType other)
+        public IDynamic Op_StrictDoesNotEquals(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_StrictDoesNotEquals(this, other);
         }
 
-        public override LType Op_GreaterthanOrEqual(LType other)
+        public IDynamic Op_Lessthan(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Lessthan(this, other);
         }
 
-        public override LType Op_Instanceof(LType other)
+        public IDynamic Op_Greaterthan(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Greaterthan(this, other);
         }
 
-        public override LType Op_In(LType other)
+        public IDynamic Op_LessthanOrEqual(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_LessthanOrEqual(this, other);
         }
 
-        public override LType Op_LeftShift(LType other)
+        public IDynamic Op_GreaterthanOrEqual(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_GreaterthanOrEqual(this, other);
         }
 
-        public override LType Op_SignedRightShift(LType other)
+        public IDynamic Op_Instanceof(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_GreaterthanOrEqual(this, other);
         }
 
-        public override LType Op_UnsignedRightShift(LType other)
+        public IDynamic Op_In(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_In(this, other);
         }
 
-        public override LType Op_Addition(LType other)
+        public IDynamic Op_LeftShift(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_LeftShift(this, other);
         }
 
-        public override LType Op_Subtraction(LType other)
+        public IDynamic Op_SignedRightShift(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_SignedRightShift(this, other);
         }
 
-        public override LType Op_Multiplication(LType other)
+        public IDynamic Op_UnsignedRightShift(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_UnsignedRightShift(this, other);
         }
 
-        public override LType Op_Division(LType other)
+        public IDynamic Op_Addition(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Addition(this, other);
         }
 
-        public override LType Op_Modulus(LType other)
+        public IDynamic Op_Subtraction(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Subtraction(this, other);
         }
 
-        public override LType Op_Delete()
+        public IDynamic Op_Multiplication(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Multiplication(this, other);
         }
 
-        public override LType Op_Void()
+        public IDynamic Op_Division(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Division(this, other);
         }
 
-        public override LType Op_Typeof()
+        public IDynamic Op_Modulus(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Modulus(this, other);
         }
 
-        public override LType Op_PrefixIncrement()
+        public IDynamic Op_Delete()
         {
-            throw new NotImplementedException();
+            return LBoolean.True;
         }
 
-        public override LType Op_PrefixDecrement()
+        public IDynamic Op_Void()
         {
-            throw new NotImplementedException();
+            return LUndefined.Instance;
         }
 
-        public override LType Op_Plus()
+        public IDynamic Op_Typeof()
         {
-            throw new NotImplementedException();
+            return NumberString;
         }
 
-        public override LType Op_Minus()
+        public IDynamic Op_PrefixIncrement()
         {
-            throw new NotImplementedException();
+            throw Engine.ThrowReferenceError();
         }
 
-        public override LType Op_BitwiseNot()
+        public IDynamic Op_PrefixDecrement()
         {
-            throw new NotImplementedException();
+            throw Engine.ThrowReferenceError();
         }
 
-        public override LType Op_LogicalNot()
+        public IDynamic Op_Plus()
         {
-            throw new NotImplementedException();
+            return this;
         }
 
-        public override LType Op_PostfixIncrement()
+        public IDynamic Op_Minus()
         {
-            throw new NotImplementedException();
+            if (!double.IsNaN(_value))
+            {
+                return (LNumber)(-_value);
+            }
+            return this;
         }
 
-        public override LType Op_PostfixDecrement()
+        public IDynamic Op_BitwiseNot()
         {
-            throw new NotImplementedException();
+            return LType.Op_BitwiseNot(this);
         }
 
-        public override LType Op_AccessProperty(LType name)
+        public IDynamic Op_LogicalNot()
         {
-            throw new NotImplementedException();
+            return LType.Op_LogicalNot(this);
         }
 
-        public override LType Op_Call(SList args)
+        public IDynamic Op_PostfixIncrement()
         {
-            throw new NotImplementedException();
+            throw Engine.ThrowReferenceError();
         }
 
-        public override LType Op_Construct(SList args)
+        public IDynamic Op_PostfixDecrement()
         {
-            throw new NotImplementedException();
+            throw Engine.ThrowReferenceError();
         }
 
-        public override void Op_Throw()
+        public IDynamic Op_AccessProperty(IDynamic name)
         {
-            throw new NotImplementedException();
+            return LType.Op_AccessProperty(this, name);
         }
 
-        public override LType ConvertToPrimitive(string preferredType)
+        public IDynamic Op_Call(SList args)
         {
-            throw new NotImplementedException();
+            return LType.Op_Call(this, args);
         }
 
-        public override LBoolean ConvertToBoolean()
+        public IDynamic Op_Construct(SList args)
         {
-            throw new NotImplementedException();
+            return LType.Op_Construct(this, args);
         }
 
-        public override LNumber ConvertToNumber()
+        public void Op_Throw()
         {
-            throw new NotImplementedException();
+            LType.Op_Throw(this);
         }
 
-        public override LString ConvertToString()
+        public IDynamic ConvertToPrimitive(string preferredType = null)
         {
-            throw new NotImplementedException();
+            return this;
         }
 
-        public override LObject ConvertToObject()
+        public LBoolean ConvertToBoolean()
         {
-            throw new NotImplementedException();
+            return (LBoolean)(!double.IsNaN(_value) && _value != 0.0);
         }
 
+        public LNumber ConvertToNumber()
+        {
+            return this;
+        }
+
+        public LString ConvertToString()
+        {
+            if (double.IsNaN(_value))
+            {
+                return NaNString;
+            }
+            else if (_value == 0.0)
+            {
+                return ZeroString;
+            }
+            else if (_value < 0.0)
+            {
+                return (LString)("-" + (string)((LNumber)(-_value)).ConvertToString());
+            }
+            else if (double.IsInfinity(_value))
+            {
+                return InfinityString;
+            }
+
+            const double epsilon = 0.0000001;
+
+            int n = 0, k = 0, s = 0;
+            int min = 0, max = 0;
+            double r = 0.0, rv = 0.0, rmin = _value - epsilon, rmax = _value + epsilon;
+            bool complete = false;
+
+            for (int ki = 1; !complete && ki < int.MaxValue; k = ki, ki++)
+            {
+                min = (int)Math.Pow(10, ki - 1);
+                max = (int)Math.Pow(10, ki);
+                for (int si = min; !complete && si < max; s = si, si++)
+                {
+                    if (si % 10 == 0) continue;
+                    r = Math.Log10(_value / si) + ki;
+                    rv = si * Math.Pow(10, (int)r - ki);
+                    complete = rv > rmin && rv < rmax;
+                    n = (int)r;
+                }
+            }
+
+            if (k <= n && n <= 21)
+            {
+                return (LString)(s.ToString().Substring(0, k).PadRight((2 * k) - n, '0'));
+            }
+            else if (n > 0 && n <= 21)
+            {
+                var sv = s.ToString();
+                var left = sv.Substring(0, n);
+                var right = sv.Substring(n, k - n);
+                return (LString)(left + "." + right);
+            }
+            else if (n > -6 && n <= 0)
+            {
+                return (LString)("0.".PadRight(2 + -n, '0') + s.ToString().Substring(0, k));
+            }
+            else if (k == 1)
+            {
+                var v = n - 1;
+                var sign = v < 0 ? "-" : "+";
+                var sv = s.ToString();
+                var nv = Math.Abs(v).ToString();
+                return (LString)(sv + "e" + sign + nv);
+            }
+            else
+            {
+                var v = n - 1;
+                var sign = v < 0 ? "-" : "+";
+                var sv = s.ToString();
+                var nv = Math.Abs(v).ToString();
+                return (LString)(sv[0] + "." + sv.Substring(1) + "e" + sign + nv);
+            }
+        }
+
+        public LObject ConvertToObject()
+        {
+            return new NNumber(this);
+        }
+
+        public LNumber ConvertToInteger()
+        {
+            return LType.ConvertToInteger(this);
+        }
+
+        public LNumber ConvertToInt32()
+        {
+            return LType.ConvertToInt32(this);
+        }
+
+        public LNumber ConvertToUInt32()
+        {
+            return LType.ConvertToUInt32(this);
+        }
+
+        public LNumber ConvertToUInt16()
+        {
+            return LType.ConvertToUInt16(this);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is LNumber && Equals((LNumber)obj);
+        }
+
+        public bool Equals(LNumber other)
+        {
+            return this._value == other._value;
+        }
+
+        public override int GetHashCode()
+        {
+            return _value.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return _value.ToString();
+        }
+
+        public static bool operator ==(LNumber left, LNumber right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(LNumber left, LNumber right)
+        {
+            return !left.Equals(right);
+        }
+
+        public static bool operator ==(LNumber left, double right)
+        {
+            return left._value == right;
+        }
+
+        public static bool operator !=(LNumber left, double right)
+        {
+            return left._value != right;
+        }
 
         public static explicit operator double(LNumber value)
         {
-            return value.Value;
+            return value._value;
         }
 
         public static explicit operator LNumber(double value)

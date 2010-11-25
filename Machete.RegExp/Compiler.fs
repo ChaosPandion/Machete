@@ -2,6 +2,7 @@
 
 module internal Compiler =
 
+    open System
     open Machete.Compiler
     open Machete.Compiler.Parsers
     open Machete.Compiler.NumericLiteral
@@ -35,14 +36,18 @@ module internal Compiler =
     | Integer of int
     
     let canonicalize c s =
-        if s.ignoreCase then c else System.Char.ToUpper c
+        if s.ignoreCase then 
+            c 
+        else 
+            System.Char.ToUpper c
 
-    let characterSetMatcher (a:char Set) (invert:bool) (s:State) (c:Continuation) =
+    let characterSetMatcher (a:string) (invert:bool) (s:State) (c:Continuation) =
         if s.endIndex = s.input.Length then 
             Failure
         else
-            let cc = canonicalize (s.input.[s.endIndex]) s
-            let found = a.Contains cc
+            let cc = s.input.[s.endIndex] |> string
+            let comp = if s.ignoreCase then System.StringComparison.InvariantCultureIgnoreCase else System.StringComparison.InvariantCulture
+            let found = a.IndexOf (cc, comp) > 0            
             let success = invert || (found && not (invert && found))
             if success then 
                 c { s with endIndex = s.endIndex + 1; captures = Array.copy s.captures } 
@@ -62,35 +67,6 @@ module internal Compiler =
                 failwith ""
             else
                 set [a..b]
-
-//    let rec evalDecimalDigits d =
-//        match d with
-//        | DecimalDigits (l, r) ->
-//            match l, r with
-//            | Nil, DecimalDigit c ->
-//                assert(c >= '0' && c <= '9')
-//                int c - int '0'
-//            | DecimalDigits (_, _), DecimalDigit c ->
-//                assert(c >= '0' && c <= '9')
-//                (evalDecimalDigits l * 10) + int c - int '0'
-//            | _ -> invalidOp "Invalid DecimalDigits pattern found."                   
-//        | _ -> invalidArg "d" "Expected DecimalDigits."
-//
-//    let evalDecimalIntegerLiteral d =
-//        match d with
-//        | DecimalIntegerLiteral (l, r) ->
-//            match l, r with
-//            | Char c, Nil ->
-//                assert(c = '0')
-//                0
-//            | NonZeroDigit c, Nil ->
-//                assert(c >= '1' && c <= '9')
-//                int c - int '0'
-//            | NonZeroDigit c, DecimalDigits (_, _) ->
-//                assert(c >= '1' && c <= '9')
-//                int c - int '0' + evalDecimalDigits d                     
-//            | _ -> invalidOp "Invalid DecimalIntegerLiteral pattern found."                    
-//        | _ -> invalidArg "d" "Expected DecimalIntegerLiteral."
 
     let evalDecimalEscape d =
         match d with
@@ -174,40 +150,18 @@ module internal Compiler =
                         | _ -> failwith ""
                     min, max
             | _ -> failwith ""
-        | _ -> failwith "" 
-
-//    let evalHexDigit v =
-//        match v with
-//        | HexDigit c ->  
-//            match c with
-//            | c when c >= '0' && c <= '9' -> int c - 48   
-//            | c when c >= 'a' && c <= 'f' -> int c - 87  
-//            | c when c >= 'A' && c <= 'F' -> int c - 55    
-//            | _ ->  invalidOp ("Unexpected value '" + c.ToString() + "' found while evaluating HexDigit.")       
-//        | _ -> invalidArg "v" "Expected HexDigit." 
-//        
-//    let evalHexEscapeSequence v =
-//        match v with
-//        | HexEscapeSequence (h, l) -> 
-//            char (16 * evalHexDigit h + evalHexDigit l)                  
-//        | _ -> invalidArg "v" "Expected HexEscapeSequence." 
-//
-//    let evalUnicodeEscapeSequence v =
-//        match v with
-//        | UnicodeEscapeSequence (a, b, c, d) -> 
-//            char (4096 * evalHexDigit a + 256 * evalHexDigit b + 16 * evalHexDigit c + evalHexDigit d)                  
-//        | _ -> invalidArg "v" "Expected UnicodeEscapeSequence."   
+        | _ -> failwith ""   
         
     let evalCharacterClassEscape v =
         match v with
         | CharacterClassEscape cce ->
             match cce with
-            | Digit -> CharSets.decimalDigitCharSet
-            | NonDigit -> CharSets.nonDecimalDigitCharSet
-            | CharacterClassEscape.WhiteSpace -> CharSets.whiteSpaceLineTerminatorCharSet
-            | NonWhiteSpace -> CharSets.nonWhiteSpaceLineTerminatorCharSet
-            | Word -> CharSets.wordCharSet
-            | NonWord -> CharSets.nonWordCharSet
+            | 'd' -> CharSets.decimalDigitCharSet
+            | 'D' -> CharSets.nonDecimalDigitCharSet
+            | 's' -> CharSets.whiteSpaceLineTerminatorCharSet
+            | 'S' -> CharSets.nonWhiteSpaceLineTerminatorCharSet
+            | 'w' -> CharSets.wordCharSet
+            | 'W' -> CharSets.nonWordCharSet
         | _ -> invalidArg "v" "Expected CharacterClassEscape."   
         
     let evalCharacterEscape v =
@@ -288,16 +242,16 @@ module internal Compiler =
                 | Atom a ->
                     match a with
                     | PatternCharacter c -> 
-                        characterSetMatcher (set [c]) false
+                        characterSetMatcher (c.ToString()) false
                     | Dot ->
-                        characterSetMatcher CharSets.nonLineTerminatorCharSet false
+                        characterSetMatcher (CharSets.nonLineTerminatorCharSet |> Set.toArray |> fun cs -> new String(cs)) false
                     | AtomEscape a ->
                         match a with
                         | DecimalEscape _ ->
                             let e = evalDecimalEscape a
                             match e with
                             | Character c ->
-                                characterSetMatcher (set [c]) false
+                                characterSetMatcher (c.ToString()) false
                             | Integer n when n > 0 && n <= capturingGroupCount ->
                                 fun x c ->
                                     let cap = x.captures
@@ -320,11 +274,10 @@ module internal Compiler =
                             | _ -> failwith ""
                         | CharacterEscape ce ->
                             let c = evalCharacterEscape a
-                            let a = set [c]
-                            characterSetMatcher a false                           
+                            characterSetMatcher (c.ToString()) false                           
                         | CharacterClassEscape cce ->
                             let a = evalCharacterClassEscape a
-                            characterSetMatcher a false
+                            characterSetMatcher (a |> Set.toArray |> fun cs -> new String(cs)) false
                         | _ -> failwith ""
                     | CharacterClass (invert, classRanges) -> 
                         let rec build node = 
@@ -375,7 +328,7 @@ module internal Compiler =
                             | Element.Nil -> set []
                             | _ ->  failwith ""
                         let a = build classRanges
-                        characterSetMatcher a invert                            
+                        characterSetMatcher (a |> Set.toArray |> fun cs -> new String(cs)) invert.IsSome                            
                     | CapturingGroup (i, d) ->
                         let m = build d 
                         fun x c -> 

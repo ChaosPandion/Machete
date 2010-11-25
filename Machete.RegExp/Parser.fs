@@ -32,35 +32,45 @@ module internal Parser =
     and classAtom () = 
         ((pchar '-' |>> Char) <|> classAtomNoDash()) |>> ClassAtom
 
-    and nonemptyClassRangesNoDash () = 
+    and classRange() =
+        parse {
+            let! a = classAtom()
+            do! skipChar '-'
+            let! b = classAtom()
+            return a, b
+        }
+
+    and nonemptyClassRangesNoDash () =
         attempt (parse {
+            let! a, b = parse {
+                let! a = classAtomNoDash()
+                do! skipChar '-'
+                let! b = classAtom()
+                return a, b
+            }
+            let! c = classRanges()
+            return NonemptyClassRanges (a, b, c)        
+        }) <|> attempt (parse {
             let! a = classAtomNoDash()
             let! b = nonemptyClassRangesNoDash()
-            return NonemptyClassRangesNoDash (a, b, Nil)        
-        }) <|> attempt (parse {
-            let! a = classAtomNoDash()
-            let! _ = pchar '-'
-            let! b = classAtom()
-            let! c = classRanges()
-            return NonemptyClassRangesNoDash (a, b, c)          
+            return NonemptyClassRanges (a, b, Nil)  
         }) <|> attempt (parse {
             let! a = classAtom()
-            return NonemptyClassRangesNoDash (a, Nil, Nil)            
+            return NonemptyClassRanges (a, Nil, Nil)  
         })
 
-    and nonemptyClassRanges () = 
+    and nonemptyClassRanges () =
         attempt (parse {
-            let! a = classAtom()
-            let! b = opt (nonemptyClassRangesNoDash())
-            match b with 
-            | Some b -> return NonemptyClassRanges (a, b, Nil) 
-            | None -> return NonemptyClassRanges (a, Nil, Nil)                         
+            let! a, b = classRange()
+            let! c = classRanges()
+            return NonemptyClassRanges (a, b, c)        
         }) <|> attempt (parse {
             let! a = classAtom()
-            let! _ = pchar '-'
-            let! b = classAtom()
-            let! c = classRanges()
-            return NonemptyClassRanges (a, b, c)          
+            let! b = nonemptyClassRangesNoDash()
+            return NonemptyClassRanges (a, b, Nil)  
+        }) <|> attempt (parse {
+            let! a = classAtom()
+            return NonemptyClassRanges (a, Nil, Nil)  
         })
 
     and classRanges () = 
@@ -71,27 +81,15 @@ module internal Parser =
 
     and characterClass () = 
         parse {
-            let! a = between (pstring "[^") (pchar ']') (classRanges())
-            return CharacterClass(true, a)            
-        } <|> parse {
-            let! a = between (pstring "[") (pchar ']') (classRanges())
-            return CharacterClass(false, a)            
+            do! skipChar '['
+            let! invert = opt (pchar '^')
+            let! ranges = classRanges() 
+            do! skipChar ']'
+            return CharacterClass (invert, ranges)
         }
 
     and characterClassEscape () = 
-        parse {
-            let! a = anyOf "dDsSwW"
-            let r =
-                match a with
-                | 'd' -> Digit 
-                | 'D' -> NonDigit  
-                | 's' -> WhiteSpace 
-                | 'S' -> NonWhiteSpace 
-                | 'w' -> Word 
-                | 'W' -> NonWord
-                | c -> invalidOp ("The value " + c.ToString() + " was not expected.")                         
-            return CharacterClassEscape r
-        }
+        anyOf "dDsSwW" |>> CharacterClassEscape
 
     and decimalEscape () = 
         parse {
@@ -124,7 +122,6 @@ module internal Parser =
             let! a = controlEscape() <|> characterEscape2() <|> (hexEscapeSequence |>> InputElement) <|> (unicodeEscapeSequence |>> InputElement) <|> identityEscape()
             return CharacterEscape a
         }
-        
 
     and characterEscape2 () = 
         parse {

@@ -119,7 +119,7 @@
     <Compile Include="NativeObjects\NUriError.cs" />
     <Compile Include="RuntimeTypes\Interfaces\ICallable.cs" />
     <Compile Include="RuntimeTypes\Interfaces\IConstructable.cs" />
-    <Compile Include="RuntimeTypes\Interfaces\IPrimitive.cs" />
+    <Compile Include="RuntimeTypes\Interfaces\IDynamic.cs" />
     <Compile Include="RuntimeTypes\Interfaces\IPrimitiveWrapper.cs" />
     <Compile Include="RuntimeTypes\LanguageTypes\LBoolean.cs" />
     <Compile Include="RuntimeTypes\LanguageTypes\LTypeCode.cs" />

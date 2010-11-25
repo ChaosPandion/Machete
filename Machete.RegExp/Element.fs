@@ -39,8 +39,8 @@ type internal Element =
 | ControlLetter of char
 | IdentityEscape of char
 | DecimalEscape of Element
-| CharacterClassEscape of CharacterClassEscape
-| CharacterClass of bool * Element
+| CharacterClassEscape of char
+| CharacterClass of option<char> * Element
 | ClassRanges of Element
 | NonemptyClassRanges of Element * Element * Element
 | NonemptyClassRangesNoDash of Element * Element * Element

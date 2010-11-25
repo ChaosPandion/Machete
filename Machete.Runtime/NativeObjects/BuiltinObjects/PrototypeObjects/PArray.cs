@@ -124,7 +124,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         {
             var obj = context.ThisBinding.ConvertToObject();
             var length = obj.Get("length").ConvertToUInt32();
-            if (length.Value == 0.0) return LUndefined.Value;
+            if (length.Value == 0.0) return LUndefined.Instance;
             var index = (length.Value - 1).ToString();
             var element = obj.Get(index);
             obj.Delete(index, true);

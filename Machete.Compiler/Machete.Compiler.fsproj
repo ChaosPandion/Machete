@@ -49,6 +49,7 @@
     <Compile Include="NumericLiteral.fs" />
     <Compile Include="StringLiteral.fs" />
     <Compile Include="IdentifierName.fs" />
+    <Compile Include="StringNumericLiteral.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FParsecCS\FParsecCS.csproj">
@@ -59,11 +60,6 @@
     <ProjectReference Include="..\FParsec\FParsec.fsproj">
       <Name>FParsec</Name>
       <Project>{cbf9a79a-0316-4aad-ad31-c7947402ebe7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Machete.Runtime\Machete.Runtime.csproj">
-      <Name>Machete.Runtime</Name>
-      <Project>{c0b1eec3-dd81-4ed6-8896-03b615bb5f90}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

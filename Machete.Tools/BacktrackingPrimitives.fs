@@ -170,18 +170,7 @@ module BacktrackingPrimitives =
                 return (v::acc) |> List.rev |> List.fold f start
             }
         go []
-//        let complete result state = Success (List.rev result |> List.fold f start, state) 
-//        let rec manySeparated state result =
-//            match parser state with
-//            | Success (value, leftState) ->
-//                match separator leftState with
-//                | Success (_, middleState) ->
-//                    manySeparated middleState (value::result)
-//                | _ -> 
-//                    complete (value::result) leftState
-//            | _ -> 
-//                complete result state
-//        manySeparated state []
+
 
     let run p i d =
         p (State(i, d))  
@@ -202,6 +191,12 @@ module BacktrackingPrimitives =
                     return! str (sv.Substring(1))
             }
         str s
+
+    let g x = 3
+
+    let f x =
+        let g x = 2
+        g x
         
 //    let main1 () =
 //        let p1 = 

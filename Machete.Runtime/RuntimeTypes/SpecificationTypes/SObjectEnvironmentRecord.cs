@@ -31,7 +31,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             Contract.Assert(n != null);
             var desc = new SPropertyDescriptor() { 
-                Value = LUndefined.Value, 
+                Value = LUndefined.Instance, 
                 Writable = true, 
                 Enumerable = true, 
                 Configurable = d 
@@ -51,7 +51,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             Contract.Assert(n != null);
             if (!_bindingObject.HasProperty(n))
             {
-                if (!s) return LUndefined.Value;
+                if (!s) return LUndefined.Instance;
                 Engine.ThrowReferenceError();
             }
             return _bindingObject.Get(n);
@@ -65,7 +65,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public override LType ImplicitThisValue()
         {
-            return _provideThis ? (LType)_bindingObject : (LType)LUndefined.Value;
+            return _provideThis ? (LType)_bindingObject : (LType)LUndefined.Instance;
         }
     }
 }

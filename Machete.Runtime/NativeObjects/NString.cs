@@ -9,6 +9,11 @@ namespace Machete.Runtime.NativeObjects
 {
     public sealed class NString : LObject, IPrimitiveWrapper
     {
-        LType IPrimitiveWrapper.PrimitiveValue { get; set; }
+        IDynamic PrimitiveValue { get; set; }
+
+        public NString(LString value)
+        {
+            PrimitiveValue = value;
+        }
     }
 }

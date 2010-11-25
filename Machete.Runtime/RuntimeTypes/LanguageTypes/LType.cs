@@ -3,36 +3,57 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+using Machete.Runtime.NativeObjects;
+using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public abstract class LType : RType
+    internal static class LType
     {
-        public abstract LTypeCode TypeCode { get; }
-
-        public abstract LType Op_LogicalOr(LType other);
-        public abstract LType Op_LogicalAnd(LType other);
-        public abstract LType Op_BitwiseOr(LType other);
-        public abstract LType Op_BitwiseXor(LType other);
-        public abstract LType Op_BitwiseAnd(LType other);
-
-        public abstract LType Op_Equals(LType other);
-
-        public LType Op_DoesNotEquals(LType other)
+        public static IDynamic Op_LogicalOr(IDynamic left, IDynamic right)
         {
-            return Op_Equals(other).Op_LogicalNot();
+            return (bool)left.ConvertToBoolean() ? left : right;
         }
 
-        public abstract LType Op_StrictEquals(LType other);
-
-        public LType Op_StrictDoesNotEquals(LType other)
+        public static IDynamic Op_LogicalAnd(IDynamic left, IDynamic right)
         {
-            return Op_StrictEquals(other).Op_LogicalNot();
+            return !(bool)left.ConvertToBoolean() ? left : right;
         }
 
-        public LType Op_Lessthan(LType other)
+        public static IDynamic Op_BitwiseOr(IDynamic left, IDynamic right)
         {
-            var r = this.RelationalComparison(true, other);
+            var lnum = (int)(double)left.ConvertToInt32();
+            var rnum = (int)(double)right.ConvertToInt32();
+            return (LNumber)(double)(lnum | rnum);
+        }
+
+        public static IDynamic Op_BitwiseXor(IDynamic left, IDynamic right)
+        {
+            var lnum = (int)(double)left.ConvertToInt32();
+            var rnum = (int)(double)right.ConvertToInt32();
+            return (LNumber)(double)(lnum ^ rnum);
+        }
+
+        public static IDynamic Op_BitwiseAnd(IDynamic left, IDynamic right)
+        {
+            var lnum = (int)(double)left.ConvertToInt32();
+            var rnum = (int)(double)right.ConvertToInt32();
+            return (LNumber)(double)(lnum & rnum);
+        }
+
+        public static IDynamic Op_DoesNotEquals(IDynamic left, IDynamic right)
+        {
+            return left.Op_Equals(right).Op_LogicalNot();
+        }
+
+        public static IDynamic Op_StrictDoesNotEquals(IDynamic left, IDynamic right)
+        {
+            return left.Op_StrictEquals(right).Op_LogicalNot();
+        }
+
+        public static IDynamic Op_Lessthan(IDynamic left, IDynamic right)
+        {
+            var r = RelationalComparison(true, left, right);
             if (r.TypeCode == LTypeCode.LUndefined)
             {
                 return LBoolean.False;
@@ -40,9 +61,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return r;
         }
 
-        public LType Op_Greaterthan(LType other)
+        public static IDynamic Op_Greaterthan(IDynamic left, IDynamic right)
         {
-            var r = other.RelationalComparison(false, this);
+            var r = RelationalComparison(false, left, right);
             if (r.TypeCode == LTypeCode.LUndefined)
             {
                 return LBoolean.False;
@@ -50,9 +71,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return r;
         }
 
-        public LType Op_LessthanOrEqual(LType other)
+        public static IDynamic Op_LessthanOrEqual(IDynamic left, IDynamic right)
         {
-            var r = other.RelationalComparison(false, this);
+            var r = RelationalComparison(false, left, right);
             if (r.TypeCode == LTypeCode.LUndefined || (bool)(LBoolean)r)
             {
                 return LBoolean.True;
@@ -60,9 +81,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return LBoolean.False;
         }
 
-        public LType Op_GreaterthanOrEqual(LType other)
+        public static IDynamic Op_GreaterthanOrEqual(IDynamic left, IDynamic right)
         {
-            var r = this.RelationalComparison(true, other);
+            var r = RelationalComparison(true, left, right);
             if (r.TypeCode == LTypeCode.LUndefined || (bool)(LBoolean)r)
             {
                 return LBoolean.False;
@@ -70,95 +91,217 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return LBoolean.True;
         }
 
-        public abstract LType Op_Instanceof(LType other);
-        public abstract LType Op_In(LType other);
-        public abstract LType Op_LeftShift(LType other);
-        public abstract LType Op_SignedRightShift(LType other);
-        public abstract LType Op_UnsignedRightShift(LType other);
-        public abstract LType Op_Addition(LType other);
-        public abstract LType Op_Subtraction(LType other);
-        public abstract LType Op_Multiplication(LType other);
-        public abstract LType Op_Division(LType other);
-        public abstract LType Op_Modulus(LType other);
-        public abstract LType Op_Delete();
-        public abstract LType Op_Void();
-        public abstract LType Op_Typeof();
-        public abstract LType Op_PrefixIncrement();
-        public abstract LType Op_PrefixDecrement();
-        public abstract LType Op_Plus();
-        public abstract LType Op_Minus();
-        public abstract LType Op_BitwiseNot();
-        public abstract LType Op_LogicalNot();
-        public abstract LType Op_PostfixIncrement();
-        public abstract LType Op_PostfixDecrement();
-        public abstract LType Op_AccessProperty(LType name);
-        public abstract LType Op_Call(SList args);
-        public abstract LType Op_Construct(SList args);
-        public abstract void Op_Throw();
-
-        public abstract LType ConvertToPrimitive(string preferredType);
-        public abstract LBoolean ConvertToBoolean();
-        public abstract LNumber ConvertToNumber();
-        public abstract LString ConvertToString();
-        public abstract LObject ConvertToObject();
-
-        public LNumber ConvertToInteger()
+        public static IDynamic Op_Instanceof(IDynamic left, IDynamic right)
         {
-            var number = this.ConvertToNumber();
-            if (double.IsNaN(number.Value))
+            var func = right as NFunction;
+            if (func == null)
+            {
+                throw Engine.ThrowTypeError();
+            }
+            return (LBoolean)func.HasInstance(left);
+        }
+
+        public static IDynamic Op_In(IDynamic left, IDynamic right)
+        {
+            var obj = right as LObject;
+            if (obj == null)
+            {
+                throw Engine.ThrowTypeError();
+            }
+            return (LBoolean)obj.HasProperty((string)left.ConvertToString());
+        }
+
+        public static IDynamic Op_LeftShift(IDynamic left, IDynamic right)
+        {
+            var lnum = (int)(double)left.ConvertToInt32();
+            var rnum = (uint)(double)right.ConvertToUInt32();
+            var shiftCount = (int)(rnum & (uint)0x1F);
+            return (LNumber)(double)(lnum << shiftCount);
+        }
+
+        public static IDynamic Op_SignedRightShift(IDynamic left, IDynamic right)
+        {
+            var lnum = (int)(double)left.ConvertToInt32();
+            var rnum = (uint)(double)right.ConvertToUInt32();
+            var shiftCount = (int)(rnum & (uint)0x1F);
+            return (LNumber)(double)(lnum >> shiftCount);
+        }
+
+        public static IDynamic Op_UnsignedRightShift(IDynamic left, IDynamic right)
+        {
+            var lnum = (uint)(double)left.ConvertToUInt32();
+            var rnum = (uint)(double)right.ConvertToUInt32();
+            var shiftCount = (int)(rnum & (uint)0x1F);
+            return (LNumber)(double)unchecked(lnum >> shiftCount);
+        }
+
+        public static IDynamic Op_Addition(IDynamic left, IDynamic right)
+        {
+            var lprim = left.ConvertToPrimitive();
+            var rprim = right.ConvertToPrimitive();
+            if (lprim.TypeCode == LTypeCode.LString || rprim.TypeCode == LTypeCode.LString)
+            {
+                var lstr = (string)lprim.ConvertToString();
+                var rstr = (string)rprim.ConvertToString();
+                return (LString)(lstr + rstr);
+            }
+            else
+            {
+                var lnum = (double)lprim.ConvertToNumber();
+                var rnum = (double)rprim.ConvertToNumber();
+                return (LNumber)(lnum + rnum);
+            }
+        }
+
+        public static IDynamic Op_Subtraction(IDynamic left, IDynamic right)
+        {
+            var lnum = (double)left.ConvertToNumber();
+            var rnum = (double)right.ConvertToNumber();
+            return (LNumber)(lnum - rnum);
+        }
+
+        public static IDynamic Op_Multiplication(IDynamic left, IDynamic right)
+        {
+            var lnum = (double)left.ConvertToNumber();
+            var rnum = (double)right.ConvertToNumber();
+            return (LNumber)(lnum * rnum);
+        }
+
+        public static IDynamic Op_Division(IDynamic left, IDynamic right)
+        {
+            var lnum = (double)left.ConvertToNumber();
+            var rnum = (double)right.ConvertToNumber();
+            return (LNumber)(lnum / rnum);
+        }
+
+        public static IDynamic Op_Modulus(IDynamic left, IDynamic right)
+        {
+            var lnum = (double)left.ConvertToNumber();
+            var rnum = (double)right.ConvertToNumber();
+            return (LNumber)(lnum % rnum);
+        }
+
+        public static IDynamic Op_Plus(IDynamic value)
+        {
+            return value.ConvertToNumber();
+        }
+
+        public static IDynamic Op_Minus(IDynamic value)
+        {
+            var r = (double)value.ConvertToNumber();
+            if (double.IsNaN(r))
+            {
+                return LNumber.NaN;
+            }
+            return (LNumber)(-r);
+        }
+
+        public static IDynamic Op_BitwiseNot(IDynamic value)
+        {
+            return (LNumber)(double)(~(int)(double)value.ConvertToInt32());
+        }
+
+        public static IDynamic Op_LogicalNot(IDynamic value)
+        {
+            return (LBoolean)(!(bool)value.ConvertToBoolean());
+        }
+
+        public static IDynamic Op_AccessProperty(IDynamic value, IDynamic name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static IDynamic Op_Call(IDynamic value, SList args)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static IDynamic Op_Construct(IDynamic value, SList args)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static void Op_Throw(IDynamic value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static LNumber ConvertToInteger(IDynamic value)
+        {
+            var number = value.ConvertToNumber();
+            if (double.IsNaN((double)number))
             {
                 return LNumber.Zero;
             }
-            else if (number.Value == 0.0 || double.IsInfinity(number.Value))
+            else if (number == 0.0 || double.IsInfinity((double)number))
             {
                 return number;
             }
             else
             {
-                var sign = Math.Sign(number.Value);
-                var abs = Math.Abs(number.Value);
+                var sign = Math.Sign((double)number);
+                var abs = Math.Abs((double)number);
                 var floor = Math.Floor(abs);
-                return new LNumber(sign * floor);
+                return (LNumber)(sign * floor);
             }
         }
 
-        public LNumber ConvertToInt32()
+        public static LNumber ConvertToInt32(IDynamic value)
         {
-            var number = this.ConvertToNumber();
-            if (number.Value == 0.0 || double.IsNaN(number.Value) || double.IsInfinity(number.Value))
+            var number = (double)value.ConvertToNumber();
+            if (number == 0.0 || double.IsNaN(number) || double.IsInfinity(number))
             {
                 return LNumber.Zero;
             }
-            return LNumber.Zero;
+            var posInt = Math.Sign(number) * Math.Floor(Math.Abs(number));
+            var int32Bit = posInt % uint.MaxValue;
+            if (int32Bit > int.MaxValue)
+            {
+                return (LNumber)(int32Bit - uint.MaxValue);
+            }
+            return (LNumber)int32Bit;
         }
 
-        public LNumber ConvertToUInt32()
+        public static LNumber ConvertToUInt32(IDynamic value)
         {
-            return LNumber.Zero;
+            var number = (double)value.ConvertToNumber();
+            if (number == 0.0 || double.IsNaN(number) || double.IsInfinity(number))
+            {
+                return LNumber.Zero;
+            }
+            var posInt = Math.Sign(number) * Math.Floor(Math.Abs(number));
+            var int32Bit = posInt % uint.MaxValue;
+            return (LNumber)int32Bit;
         }
 
-        public LNumber ConvertToUInt16()
+        public static LNumber ConvertToUInt16(IDynamic value)
         {
-            return LNumber.Zero;
+            var number = (double)value.ConvertToNumber();
+            if (number == 0.0 || double.IsNaN(number) || double.IsInfinity(number))
+            {
+                return LNumber.Zero;
+            }
+            var posInt = Math.Sign(number) * Math.Floor(Math.Abs(number));
+            var int16Bit = posInt % ushort.MaxValue;
+            return (LNumber)int16Bit;
         }
 
-
-        protected LType RelationalComparison(bool leftFirst, LType other)
+        private static IDynamic RelationalComparison(bool leftFirst, IDynamic left, IDynamic right)
         {
-            LType px, py;
+            IDynamic px, py;
             if (leftFirst)
             {
-                px = this.ConvertToPrimitive("Number");
-                py = other.ConvertToPrimitive("Number");
+                px = left.ConvertToPrimitive("Number");
+                py = right.ConvertToPrimitive("Number");
             }
             else
             {
-                py = other.ConvertToPrimitive("Number");
-                px = this.ConvertToPrimitive("Number");
+                py = right.ConvertToPrimitive("Number");
+                px = left.ConvertToPrimitive("Number");
             }
             if (px.TypeCode == LTypeCode.LString && py.TypeCode == LTypeCode.LString)
             {
-                string sx = (string)(LString)px, sy = (string)(LString)py;
+                string sx = (string)px.ConvertToString(), sy = (string)py.ConvertToString();
                 if (sx.StartsWith(sy))
                 {
                     return LBoolean.False;
@@ -177,7 +320,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 double nx = (double)px.ConvertToNumber(), ny = (double)py.ConvertToNumber();
                 if (double.IsNaN(nx) || double.IsNaN(ny))
                 {
-                    return LUndefined.Value;
+                    return LUndefined.Instance;
                 }
                 else if (nx != ny)
                 {

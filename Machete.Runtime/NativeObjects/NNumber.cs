@@ -9,6 +9,11 @@ namespace Machete.Runtime.NativeObjects
 {
     public sealed class NNumber : LObject, IPrimitiveWrapper
     {
-        LType IPrimitiveWrapper.PrimitiveValue { get; set; }
+        IDynamic PrimitiveValue { get; set; }
+
+        public NNumber(LNumber value)
+        {
+            PrimitiveValue = value;
+        }
     }
 }

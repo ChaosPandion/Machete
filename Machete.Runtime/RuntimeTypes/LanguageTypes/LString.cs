@@ -2,244 +2,297 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Machete.Runtime.RuntimeTypes.Interfaces;
+using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+using Machete.Runtime.NativeObjects;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public sealed class LString : LType
+    public struct LString : IDynamic
     {
+        private readonly string _value;
         public static readonly LString Empty = new LString(string.Empty);
-
-
-        public override LTypeCode TypeCode
-        {
-            get { return LTypeCode.LString; }
-        }
-
-        public string Value { get; private set; }
+        public static readonly LString StringString = new LString("string");
 
 
         public LString(string value)
         {
-            Value = value;
+            _value = value;
         }
 
 
-        public override LType Op_LogicalOr(LType other)
+        public IDynamic Value
         {
-            throw new NotImplementedException();
+            get { return this; }
+            set { Engine.ThrowReferenceError(); }
         }
 
-        public override LType Op_LogicalAnd(LType other)
+        public LTypeCode TypeCode
         {
-            throw new NotImplementedException();
+            get { return LTypeCode.LString; }
         }
 
-        public override LType Op_BitwiseOr(LType other)
+        public bool IsPrimitive
         {
-            throw new NotImplementedException();
+            get { return true; }
         }
 
-        public override LType Op_BitwiseXor(LType other)
+
+        public IDynamic Op_LogicalNot()
         {
-            throw new NotImplementedException();
+            return LType.Op_LogicalNot(this);
         }
 
-        public override LType Op_BitwiseAnd(LType other)
+        public IDynamic Op_LogicalOr(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_LogicalOr(this, other);
         }
 
-        public override LType Op_Equals(LType other)
+        public IDynamic Op_LogicalAnd(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_LogicalAnd(this, other);
         }
 
-        public override LType Op_DoesNotEquals(LType other)
+        public IDynamic Op_BitwiseNot()
         {
-            throw new NotImplementedException();
+            return LType.Op_BitwiseNot(this);
         }
 
-        public override LType Op_StrictEquals(LType other)
+        public IDynamic Op_BitwiseOr(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_BitwiseOr(this, other);
         }
 
-        public override LType Op_StrictDoesNotEquals(LType other)
+        public IDynamic Op_BitwiseXor(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_BitwiseXor(this, other);
         }
 
-        public override LType Op_Lessthan(LType other)
+        public IDynamic Op_BitwiseAnd(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_BitwiseAnd(this, other);
         }
 
-        public override LType Op_Greaterthan(LType other)
+        public IDynamic Op_Equals(IDynamic other)
         {
-            throw new NotImplementedException();
+            switch (other.TypeCode)
+            {
+                case LTypeCode.LString:
+                    return (LBoolean)(this._value == ((LString)other)._value);
+                case LTypeCode.LNumber:
+                    return this.ConvertToNumber().Op_Equals(other);
+                case LTypeCode.LObject:
+                    return this.ConvertToPrimitive().Op_Equals(other);
+                default:
+                    return LBoolean.False;
+            }
         }
 
-        public override LType Op_LessthanOrEqual(LType other)
+        public IDynamic Op_DoesNotEquals(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_DoesNotEquals(this, other);
         }
 
-        public override LType Op_GreaterthanOrEqual(LType other)
+        public IDynamic Op_StrictEquals(IDynamic other)
         {
-            throw new NotImplementedException();
+            switch (other.TypeCode)
+            {
+                case LTypeCode.LString:
+                    return (LBoolean)(this._value == ((LString)other)._value);
+                default:
+                    return LBoolean.False;
+            }
         }
 
-        public override LType Op_Instanceof(LType other)
+        public IDynamic Op_StrictDoesNotEquals(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_StrictDoesNotEquals(this, other);
         }
 
-        public override LType Op_In(LType other)
+        public IDynamic Op_Lessthan(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Lessthan(this, other);
         }
 
-        public override LType Op_LeftShift(LType other)
+        public IDynamic Op_Greaterthan(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Greaterthan(this, other);
         }
 
-        public override LType Op_SignedRightShift(LType other)
+        public IDynamic Op_LessthanOrEqual(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_LessthanOrEqual(this, other);
         }
 
-        public override LType Op_UnsignedRightShift(LType other)
+        public IDynamic Op_GreaterthanOrEqual(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_GreaterthanOrEqual(this, other);
         }
 
-        public override LType Op_Addition(LType other)
+        public IDynamic Op_Instanceof(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_GreaterthanOrEqual(this, other);
         }
 
-        public override LType Op_Subtraction(LType other)
+        public IDynamic Op_In(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_In(this, other);
         }
 
-        public override LType Op_Multiplication(LType other)
+        public IDynamic Op_LeftShift(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_LeftShift(this, other);
         }
 
-        public override LType Op_Division(LType other)
+        public IDynamic Op_SignedRightShift(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_SignedRightShift(this, other);
         }
 
-        public override LType Op_Modulus(LType other)
+        public IDynamic Op_UnsignedRightShift(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_UnsignedRightShift(this, other);
         }
 
-        public override LType Op_Delete()
+        public IDynamic Op_Addition(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Addition(this, other);
         }
 
-        public override LType Op_Void()
+        public IDynamic Op_Subtraction(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Subtraction(this, other);
         }
 
-        public override LType Op_Typeof()
+        public IDynamic Op_Multiplication(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Multiplication(this, other);
         }
 
-        public override LType Op_PrefixIncrement()
+        public IDynamic Op_Division(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Division(this, other);
         }
 
-        public override LType Op_PrefixDecrement()
+        public IDynamic Op_Modulus(IDynamic other)
         {
-            throw new NotImplementedException();
+            return LType.Op_Modulus(this, other);
         }
 
-        public override LType Op_Plus()
+        public IDynamic Op_Delete()
         {
-            throw new NotImplementedException();
+            return LBoolean.True;
         }
 
-        public override LType Op_Minus()
+        public IDynamic Op_Void()
         {
-            throw new NotImplementedException();
+            return LUndefined.Instance;
         }
 
-        public override LType Op_BitwiseNot()
+        public IDynamic Op_Typeof()
         {
-            throw new NotImplementedException();
+            return StringString;
         }
 
-        public override LType Op_LogicalNot()
+        public IDynamic Op_PrefixIncrement()
         {
-            throw new NotImplementedException();
+            throw Engine.ThrowReferenceError();
         }
 
-        public override LType Op_PostfixIncrement()
+        public IDynamic Op_PrefixDecrement()
         {
-            throw new NotImplementedException();
+            throw Engine.ThrowReferenceError();
         }
 
-        public override LType Op_PostfixDecrement()
+        public IDynamic Op_Plus()
         {
-            throw new NotImplementedException();
+            return ConvertToNumber();
         }
 
-        public override LType Op_AccessProperty(LType name)
+        public IDynamic Op_Minus()
         {
-            throw new NotImplementedException();
+            return LType.Op_Minus(this);
         }
 
-        public override LType Op_Call(SpecificationTypes.SList args)
+        public IDynamic Op_PostfixIncrement()
         {
-            throw new NotImplementedException();
+            throw Engine.ThrowReferenceError();
         }
 
-        public override LType Op_Construct(SpecificationTypes.SList args)
+        public IDynamic Op_PostfixDecrement()
         {
-            throw new NotImplementedException();
+            throw Engine.ThrowReferenceError();
         }
 
-        public override void Op_Throw()
+        public IDynamic Op_AccessProperty(IDynamic name)
         {
-            throw new NotImplementedException();
+            return LType.Op_AccessProperty(this, name);
         }
 
-        public override LType ConvertToPrimitive(string preferredType)
+        public IDynamic Op_Call(SList args)
         {
-            throw new NotImplementedException();
+            return LType.Op_Call(this, args);
         }
 
-        public override LBoolean ConvertToBoolean()
+        public IDynamic Op_Construct(SList args)
         {
-            throw new NotImplementedException();
+            return LType.Op_Construct(this, args);
         }
 
-        public override LNumber ConvertToNumber()
+        public void Op_Throw()
         {
-            throw new NotImplementedException();
+            LType.Op_Throw(this);
         }
 
-        public override LString ConvertToString()
+        public IDynamic ConvertToPrimitive(string preferredType = null)
         {
-            throw new NotImplementedException();
+            return this;
         }
 
-        public override LObject ConvertToObject()
+        public LBoolean ConvertToBoolean()
         {
-            throw new NotImplementedException();
+            return (LBoolean)(_value.Length > 0);
         }
 
+        public LNumber ConvertToNumber()
+        {
+            return (LNumber)Machete.Compiler.StringNumericLiteral.eval(_value);
+        }
 
+        public LString ConvertToString()
+        {
+            return StringString;
+        }
+
+        public LObject ConvertToObject()
+        {
+            return new NString(this);
+        }
+
+        public LNumber ConvertToInteger()
+        {
+            return LType.ConvertToInteger(this);
+        }
+
+        public LNumber ConvertToInt32()
+        {
+            return LType.ConvertToInt32(this);
+        }
+
+        public LNumber ConvertToUInt32()
+        {
+            return LType.ConvertToUInt32(this);
+        }
+
+        public LNumber ConvertToUInt16()
+        {
+            return LType.ConvertToUInt16(this);
+        }
+
+        public override string ToString()
+        {
+            return _value;
+        }
 
         public static explicit operator string(LString value)
         {
@@ -249,6 +302,6 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public static explicit operator LString(string value)
         {
             return new LString(string);
-        }
+        }        
     }
 }

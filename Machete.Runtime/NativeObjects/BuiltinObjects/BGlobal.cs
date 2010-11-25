@@ -17,7 +17,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             Extensible = true;
             DefineOwnProperty("NaN", new SPropertyDescriptor(LNumber.NaN), false);
             DefineOwnProperty("Infinity", new SPropertyDescriptor(LNumber.PositiveInfinity), false);
-            DefineOwnProperty("undefined", new SPropertyDescriptor(LUndefined.Value), false);
+            DefineOwnProperty("undefined", new SPropertyDescriptor(LUndefined.Instance), false);
             DefineOwnProperty("eval", new SPropertyDescriptor(new NFunction(new[] { "x" }, () => Eval)), false);
             DefineOwnProperty("parseInt", new SPropertyDescriptor(new NFunction(new[] { "string", "radix" }, () => ParseInt)), false);
             DefineOwnProperty("parseFloat", new SPropertyDescriptor(new NFunction(new[] { "string" }, () => ParseFloat)), false);
