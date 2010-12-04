@@ -10,7 +10,7 @@ type internal Element =
 //| DecimalIntegerLiteral of Element * Element 
 //| UnicodeEscapeSequence of Element * Element * Element * Element
 //| HexEscapeSequence of Element * Element
-| InputElement of Machete.Compiler.InputElement
+| InputElement of Machete.Compiler.Lexer.InputElement
 | Pattern of int * Element
 | Disjunction of Element * Element
 | Alternative of Element * Element

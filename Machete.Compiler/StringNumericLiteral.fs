@@ -2,6 +2,7 @@
 
 module StringNumericLiteral =
 
+    open Lexer
     open FParsec.CharParsers
     open FParsec.Primitives
 

@@ -4,10 +4,11 @@ module internal Compiler =
 
     open System
     open Machete.Compiler
+    open Machete.Compiler.Lexer
     open Machete.Compiler.Parsers
-    open Machete.Compiler.NumericLiteral
-    open Machete.Compiler.StringLiteral
-    open Machete.Compiler.IdentifierName
+    open Machete.Compiler.Lexer.NumericLiteral
+    open Machete.Compiler.Lexer.StringLiteral
+    open Machete.Compiler.Lexer.IdentifierName
 
     type Max =
     | Bounded of int
@@ -72,7 +73,7 @@ module internal Compiler =
         match d with
         | DecimalEscape d ->
             match d with
-            | InputElement ie ->
+            | Element.InputElement ie ->
                 let i = evalDecimalIntegerLiteral ie
                 match i with
                 | 0 -> Character '\u0000'
@@ -138,7 +139,7 @@ module internal Compiler =
             | ZeroOrOne -> 0, Bounded 1
             | Range (min, max) ->
                 match min, max with
-                | InputElement a, InputElement b ->
+                | Element.InputElement a, Element.InputElement b ->
                     let min = evalDecimalDigits a
                     let max = 
                         match b with
@@ -180,7 +181,7 @@ module internal Compiler =
                 let i = int e
                 let j = i % 32
                 char j
-            | InputElement ie ->
+            | Element.InputElement ie ->
                 match ie with
                 | HexEscapeSequence (_, _) ->
                     evalHexEscapeSequence ie

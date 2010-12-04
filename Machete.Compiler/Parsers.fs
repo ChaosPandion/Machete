@@ -2,12 +2,11 @@
 
 module Parsers =
 
+    open Lexer
     open FParsec.CharParsers
     open FParsec.Primitives
 
         
-    let nil<'a> : Parser<InputElement, 'a> =
-        preturn Nil
     
     let whiteSpace<'a> : Parser<InputElement, 'a> =
         satisfy CharSets.lineTerminatorCharSet.Contains |>> (fun c -> WhiteSpace)
@@ -33,3 +32,4 @@ module Parsers =
         match v with
         | NullLiteral "null" -> null
 
+    

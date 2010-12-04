@@ -6,7 +6,7 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{f4056a29-8845-4dfa-b551-35d7b27d5954}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>Machete.Compilers</RootNamespace>
     <AssemblyName>Machete.Compiler</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -36,6 +36,7 @@
     <DocumentationFile>bin\Release\Machete.Compilers.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FSharp.PowerPack, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
@@ -44,12 +45,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CharSets.fs" />
-    <Compile Include="InputElement.fs" />
+    <Compile Include="Lexer.fs" />
     <Compile Include="Parsers.fs" />
-    <Compile Include="NumericLiteral.fs" />
-    <Compile Include="StringLiteral.fs" />
-    <Compile Include="IdentifierName.fs" />
     <Compile Include="StringNumericLiteral.fs" />
+    <Compile Include="SourceElement.fs" />
+    <Compile Include="SourceElementParser.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FParsecCS\FParsecCS.csproj">
@@ -60,6 +60,11 @@
     <ProjectReference Include="..\FParsec\FParsec.fsproj">
       <Name>FParsec</Name>
       <Project>{cbf9a79a-0316-4aad-ad31-c7947402ebe7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Machete.Tools\Machete.Tools.fsproj">
+      <Name>Machete.Tools</Name>
+      <Project>{3f156978-5687-47a0-93bd-e52840aa7840}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

@@ -25,7 +25,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         }
 
 
-        public IDynamic Value
+        private IDynamic Value
         {
             get { return _base.GetValue(_referencedName, _strictReference); }
             set { _base.SetValue(_referencedName, value, _strictReference); }

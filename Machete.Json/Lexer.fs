@@ -6,9 +6,10 @@ module Lexer =
     open FParsec.CharParsers
     open FParsec.Primitives
     open Machete.Compiler
+    open Machete.Compiler.Lexer
+    open Machete.Compiler.Lexer.StringLiteral
+    open Machete.Compiler.Lexer.NumericLiteral
     open Machete.Compiler.Parsers
-    open Machete.Compiler.NumericLiteral
-    open Machete.Compiler.StringLiteral
     
 
 //    let complete value (state:State<unit>) =

@@ -1,6 +1,6 @@
 ﻿namespace Machete.Json
 
-open Machete.Compiler
+open Machete.Compiler.Lexer
 
 type Position = {
     line : int64
