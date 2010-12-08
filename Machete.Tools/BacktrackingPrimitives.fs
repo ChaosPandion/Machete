@@ -146,6 +146,11 @@ module BacktrackingPrimitives =
             return v
         }
 
+    let skip p = parse {
+        let! v = p
+        return ()
+    }
+
     let like value =
         satisfy (fun v -> v = value)
 
@@ -171,12 +176,98 @@ module BacktrackingPrimitives =
             }
         go []
 
+    let manyFold parser start (f:_ -> _ -> _) =
+        let rec go acc = 
+            parse {
+                let! v = parser
+                return! parse {
+                    return! go (v::acc)
+                }
+                return (v::acc) |> List.rev |> List.fold f start
+            }
+        go []
+
+    let isNotFollowedBy p =
+        parse {
+            let! v = maybe p
+            match v with
+            | Some _ -> ()
+            | None -> return ()
+        }
+
+    let pipe2 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (f:'c -> 'd -> 'e) = 
+        parse {
+            let! v1 = p1
+            let! v2 = p2
+            return f v1 v2
+        }
+
+    let pipe3 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (f:'c -> 'd -> 'e -> 'f) = 
+        parse {
+            let! v1 = p1
+            let! v2 = p2
+            let! v3 = p3
+            return f v1 v2 v3
+        }
+
+    let pipe4 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (f:'c -> 'd -> 'e -> 'f -> 'g) = 
+        parse {
+            let! v1 = p1
+            let! v2 = p2
+            let! v3 = p3
+            let! v4 = p4
+            return f v1 v2 v3 v4
+        }
+
+    let pipe5 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (p5:Parser<'a, 'b, 'g>) (f:'c -> 'd -> 'e -> 'f -> 'g -> 'h) = 
+        parse {
+            let! v1 = p1
+            let! v2 = p2
+            let! v3 = p3
+            let! v4 = p4
+            let! v5 = p5
+            return f v1 v2 v3 v4 v5
+        }
+
+    let tuple2<'a, 'b, 'c, 'd, 'e> (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (f:'c * 'd -> 'e) = 
+        parse {
+            let! v1 = p1
+            let! v2 = p2
+            return f (v1, v2)
+        }
+
+    let tuple3 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (f:'c * 'd * 'e -> 'f) = 
+        parse {
+            let! v1 = p1
+            let! v2 = p2
+            let! v3 = p3
+            return f (v1, v2, v3)
+        }
+
+    let tuple4 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (f:'c * 'd * 'e * 'f -> 'g) = 
+        parse {
+            let! v1 = p1
+            let! v2 = p2
+            let! v3 = p3
+            let! v4 = p4
+            return f (v1, v2, v3, v4)
+        }
+
+    let tuple5 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (p5:Parser<'a, 'b, 'g>) (f:'c * 'd * 'e * 'f * 'g -> 'h) = 
+        parse {
+            let! v1 = p1
+            let! v2 = p2
+            let! v3 = p3
+            let! v4 = p4
+            let! v5 = p5
+            return f (v1, v2, v3, v4, v5)
+        }
 
     let run p i d =
         p (State(i, d))  
 
     
-    let createParserRef() =
+    let createParserRef<'a, 'b, 'c> () =
         let dummyParser = fun state -> failwith "a parser was not initialized"
         let r = ref dummyParser
-        (fun state -> !r state), r : Parser<_, _, 'u> * Parser<_, _, 'u> ref
+        (fun state -> !r state), r : Parser<'a, 'b, 'c> * Parser<'a, 'b, 'c> ref

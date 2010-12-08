@@ -49,6 +49,7 @@
     <Compile Include="Parsers.fs" />
     <Compile Include="StringNumericLiteral.fs" />
     <Compile Include="SourceElement.fs" />
+    <Compile Include="Parser.fs" />
     <Compile Include="SourceElementParser.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -54,7 +54,7 @@ namespace Machete.Runtime
         internal PUriError UriErrorPrototype { get; private set; }
         internal BJson JsonObject { get; private set; }
         internal SLexicalEnvironment GlobalEnvironment { get; private set; }
-
+        
 
         private Engine()
         {

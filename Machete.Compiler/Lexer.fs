@@ -68,6 +68,99 @@ module Lexer =
     | RegularExpressionClassChars of InputElement * InputElement
     | RegularExpressionClassChar of InputElement
     | RegularExpressionFlags of InputElement * InputElement
+//    | Null
+//    | True
+//    | False
+//    | Break 
+//    | Case 
+//    | Catch 
+//    | Continue 
+//    | Debugger 
+//    | Default 
+//    | Delete 
+//    | Do
+//    | Else 
+//    | Finally 
+//    | For 
+//    | Function
+//    | If 
+//    | In 
+//    | Instanceof 
+//    | New
+//    | Return
+//    | Switch
+//    | This 
+//    | Throw 
+//    | Try 
+//    | Typeof
+//    | Var 
+//    | Void
+//    | While 
+//    | With
+//    | Class
+//    | Const
+//    | Enum
+//    | Export
+//    | Extends
+//    | Implements
+//    | Import
+//    | Interface
+//    | Let
+//    | Package
+//    | Private
+//    | Protected
+//    | Public
+//    | Static
+//    | Super
+//    | Yield
+//    | LeftCurlyBracket
+//    | RightCurlyBracket
+//    | LeftParenthesis
+//    | RightParenthesis
+//    | LeftSquareBracket
+//    | RightSquareBracket
+//    | FullStop
+//    | Comma
+//    | LessThan
+//    | GreaterThan
+//    | LessThanOrEqual
+//    | GreaterThanOrEqual
+//    | Equal
+//    | DoesNotEqual
+//    | StrictEqual
+//    | StrictDoesNotEqual
+//    | Plus
+//    | Minus
+//    | Multiply
+//    | Divide
+//    | Modulus
+//    | Increment
+//    | Decrement
+//    | LeftShift
+//    | SignedRightShift
+//    | UnsignedRightShift
+//    | BitwiseAnd
+//    | BitwiseOr
+//    | BitwiseXor
+//    | LogicalNot
+//    | BitwiseNot
+//    | LogicalAnd
+//    | LogicalOr
+//    | QuestionMark
+//    | Colon
+//    | Assign
+//    | PlusAssign
+//    | MinusAssign
+//    | MultiplyAssign
+//    | DivideAssign
+//    | ModulusAssign
+//    | LeftShiftAssign
+//    | SignedRightShiftAssign
+//    | UnsignedRightShiftAssign
+//    | BitwiseAndAssign
+//    | BitwiseOrAssign
+//    | BitwiseXorAssign
+
 
     type LexerState = {
         previousElement : option<InputElement>
@@ -495,7 +588,7 @@ module Lexer =
             a <|> b <|> c <|> d <|> e <|> f
 
         let identifierName<'a> : Parser<InputElement, 'a> =
-            pipe2 identifierStart (many identifierPart) (fun a b -> b |> List.fold (fun a b -> IdentifierName(a, b)) a)
+            pipe2 (identifierStart |>> fun a -> IdentifierName (a, Nil)) (many identifierPart) (fun a b -> b |> List.fold (fun a b -> IdentifierName(a, b)) a)
 
         let evalIdentifierStart v =
             match v with
@@ -647,6 +740,59 @@ module Lexer =
             divChoice  
         ]
 
+    let reservedWordMap =
+        Map.ofList [
+            // Keyword
+            ("break", Break)
+            ("case", Case)
+            ("catch", Catch)
+            ("continue", Continue)
+            ("debugger", Debugger)
+            ("default", Default)
+            ("delete", Delete)
+            ("do", Do)
+            ("else", Else)
+            ("finally", Finally); 
+            ("for", For)
+            ("function", Function)
+            ("if", If)
+            ("in", In)
+            ("instanceof", Instanceof)
+            ("new", New)
+            ("return", Return)
+            ("switch", Switch)
+            ("this", This)
+            ("throw", Throw)
+            ("try", Try)
+            ("typeof", Typeof)
+            ("var", Var)
+            ("void", Void)
+            ("while", While)
+            ("with", With)
+            // FutureReservedWord
+            ("class", Class); 
+            ("const", Const)
+            ("enum", Enum); 
+            ("export", Export)
+            ("extends", Extends)
+            ("implements", Implements)
+            ("import", Import)
+            ("interface", Interface)
+            ("let", Let)
+            ("package", Package)
+            ("private", Private)
+            ("protected", Protected)
+            ("public", Public)
+            ("static", Static)
+            ("super", Super)
+            ("yield", Yield)
+            // NullLiteral
+            ("null", Null)
+            // BooleanLiteral
+            ("true", True)
+            ("false", False)
+        ]
+
     let tokenize (input:string) =        
         let rec tokenize i r =
             seq {
@@ -658,6 +804,10 @@ module Lexer =
                     | Comment (MultiLineComment ct) ->
                         if ct |> Seq.exists CharSets.lineTerminatorCharSet.Contains then
                             yield LineTerminator
+//                    | IdentifierName (_, _) ->
+//                        match reservedWordMap.TryFind (IdentifierName.evalIdentifierName v) with
+//                        | Some r -> yield r
+//                        | None -> yield v
                     | _ -> 
                         yield v
                     let index = int p.Index + i

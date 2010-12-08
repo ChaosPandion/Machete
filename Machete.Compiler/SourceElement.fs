@@ -120,16 +120,16 @@
     | VariableStatement of SourceElement
     | VariableDeclarationList of SourceElement * SourceElement
     | VariableDeclarationListNoIn of SourceElement * SourceElement
-    | VariableDeclaration of SourceElement * SourceElement
-    | VariableDeclarationNoIn of SourceElement * SourceElement
+    | VariableDeclaration of InputElement * SourceElement
+    | VariableDeclarationNoIn of InputElement * SourceElement
     | Initialiser of SourceElement
     | InitialiserNoIn of SourceElement
     | EmptyStatement
     | ExpressionStatement of SourceElement
     | IfStatement of SourceElement * SourceElement * SourceElement 
     | IterationStatement of SourceElement * SourceElement * SourceElement * SourceElement
-    | ContinueStatement of SourceElement
-    | BreakStatement of SourceElement
+    | ContinueStatement of InputElement
+    | BreakStatement of InputElement
     | ReturnStatement of SourceElement
     | WithStatement of SourceElement * SourceElement
     | SwitchStatement of SourceElement * SourceElement
@@ -137,15 +137,15 @@
     | CaseClauses of SourceElement * SourceElement
     | CaseClause of SourceElement * SourceElement
     | DefaultClause of SourceElement
-    | LabelledStatement of SourceElement * SourceElement
+    | LabelledStatement of InputElement * SourceElement
     | ThrowStatement of SourceElement
     | TryStatement of SourceElement * SourceElement * SourceElement
-    | Catch of SourceElement * SourceElement
+    | Catch of InputElement * SourceElement
     | Finally of SourceElement
     | DebuggerStatement    
-    | FunctionDeclaration of SourceElement * SourceElement * SourceElement
-    | FunctionExpression of SourceElement * SourceElement * SourceElement
-    | FormalParameterList of SourceElement * SourceElement
+    | FunctionDeclaration of InputElement * SourceElement * SourceElement
+    | FunctionExpression of InputElement * SourceElement * SourceElement
+    | FormalParameterList of SourceElement * InputElement
     | FunctionBody of SourceElement    
     | SourceElement of SourceElement
     | SourceElements of SourceElement * SourceElement
