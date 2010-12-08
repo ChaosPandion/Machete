@@ -159,15 +159,6 @@ module Parser =
             (objectLiteral)
             (arrayLiteral)
         ] |>> PrimaryExpression
-//        (
-//            (expectLiteral |>> InputElement) <|>
-//            (expectSpecificIdentifierName "this" |>> InputElement) <|>
-//            (between expectOpenParenthesis expectCloseParenthesis expression) <|>
-//            (expectIdentifier |>> InputElement) <|>
-//            objectLiteral <|>
-//            arrayLiteral
-//        )          
-//        |>> PrimaryExpression
 
     and arrayLiteral =
         parse {
@@ -468,30 +459,8 @@ module Parser =
             return ConditionalExpressionNoIn (e1, SourceElement.Nil, SourceElement.Nil)
         }
 
-//    and assignmentExpression =
-//        (conditionalExpression |>> fun e -> AssignmentExpression (e, SourceElement.Nil, SourceElement.Nil)) <|> parse {
-//            let! a = leftHandSideExpression
-//            let! b = assignmentOperator
-//            let! c = assignmentExpression
-//            return AssignmentExpression (a, b, c)                
-//        } 
-//
-//    and assignmentExpressionNoIn =
-//        (conditionalExpressionNoIn |>> fun e -> AssignmentExpressionNoIn (e, SourceElement.Nil, SourceElement.Nil)) <|> parse {
-//            let! a = leftHandSideExpression
-//            let! b = assignmentOperator
-//            let! c = assignmentExpressionNoIn
-//            return AssignmentExpressionNoIn (a, b, c)  
-//        }
-
     and assignmentOperator = 
         expectAssignmentOperator |>> AssignmentOperator
-
-//    and expression : ComplexParser =
-//        manySeparatedFold assignmentExpression expectComma SourceElement.Nil (fun x y -> Expression (x, y))
-//
-//    and expressionNoIn : ComplexParser =
-//        manySeparatedFold assignmentExpressionNoIn expectComma SourceElement.Nil (fun x y -> ExpressionNoIn (x, y)) 
 
     and functionExpression = 
         parse {
@@ -522,22 +491,22 @@ module Parser =
 
     and statement =
         parse {
-            let! v = expressionStatement
-//                blockParser <|> 
-//                variableStatement <|> 
-//                emptyStatement <|> 
-//                expressionStatement <|> 
-//                ifStatement <|> 
-//                iterationStatement <|>
-//                continueStatement <|>
-//                breakStatement <|>
-//                returnStatement <|>
-//                withStatement <|>
-//                switchStatement <|>
-//                labelledStatement <|>
-//                throwStatement <|>
-//                tryStatement <|>
-//                debuggerStatement
+            let! v = 
+                blockParser <|> 
+                variableStatement <|> 
+                emptyStatement <|> 
+                expressionStatement <|> 
+                ifStatement <|> 
+                iterationStatement <|>
+                continueStatement <|>
+                breakStatement <|>
+                returnStatement <|>
+                withStatement <|>
+                switchStatement <|>
+                labelledStatement <|>
+                throwStatement <|>
+                tryStatement <|>
+                debuggerStatement
             return Statement v 
         }
 
