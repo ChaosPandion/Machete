@@ -3,10 +3,38 @@
 module Program =
     open FParsec.CharParsers
     open FParsec.Primitives
+    open Tools1
     let main () =
-        let r = Lexer.tokenize "function do while { }"
-        for n in r do
-            printfn "%s" (n.ToString())
+        let r = Parser.parse "2 + 2;3+3;"
+        printfn "%s" (r.ToString())
+//        let cat = parse {
+//            let! a = satisfy (fun c -> c = 'c')
+//            let! b = satisfy (fun c -> c = 'a')
+//            let! c = satisfy (fun c -> c = 't')
+//            return a.ToString() + b.ToString() + c.ToString()
+//        }
+//        let catty = parse {
+//            let! a = satisfy (fun c -> c = 'c')
+//            let! b = satisfy (fun c -> c = 'a')
+//            let! c = satisfy (fun c -> c = 't')
+//            let! d = satisfy (fun c -> c = 't')
+//            let! e = satisfy (fun c -> c = 'y')
+//            return a.ToString() + b.ToString() + c.ToString() + d.ToString() + e.ToString()
+//        }
+//        let parser = parse {
+//            let! a = catty <|> cat
+//            let! b = satisfy (fun c -> c = 't')
+//            let! c = satisfy (fun c -> c = 'y')
+//            return a + b.ToString() + c.ToString()
+//        }
+//        let r = run (many parser) (LazyList.ofSeq "catty") () 
+//        
+//        for x in r do
+//            match x with
+//            | Success (v, s) ->
+//                printfn "%s" (v.ToString())
+//            | Failure (ms, s) ->
+//                failwith (System.String.Join ("\r\n", ms))
         ()
     main()
 //

@@ -29,7 +29,7 @@ module Lexer =
     | FutureReservedWord
     | Punctuator of InputElement
     | DivPunctuator of InputElement
-    | Literal
+    | Literal of InputElement
     | NullLiteral of string
     | BooleanLiteral of string
     | NumericLiteral of InputElement
@@ -740,58 +740,58 @@ module Lexer =
             divChoice  
         ]
 
-    let reservedWordMap =
-        Map.ofList [
-            // Keyword
-            ("break", Break)
-            ("case", Case)
-            ("catch", Catch)
-            ("continue", Continue)
-            ("debugger", Debugger)
-            ("default", Default)
-            ("delete", Delete)
-            ("do", Do)
-            ("else", Else)
-            ("finally", Finally); 
-            ("for", For)
-            ("function", Function)
-            ("if", If)
-            ("in", In)
-            ("instanceof", Instanceof)
-            ("new", New)
-            ("return", Return)
-            ("switch", Switch)
-            ("this", This)
-            ("throw", Throw)
-            ("try", Try)
-            ("typeof", Typeof)
-            ("var", Var)
-            ("void", Void)
-            ("while", While)
-            ("with", With)
-            // FutureReservedWord
-            ("class", Class); 
-            ("const", Const)
-            ("enum", Enum); 
-            ("export", Export)
-            ("extends", Extends)
-            ("implements", Implements)
-            ("import", Import)
-            ("interface", Interface)
-            ("let", Let)
-            ("package", Package)
-            ("private", Private)
-            ("protected", Protected)
-            ("public", Public)
-            ("static", Static)
-            ("super", Super)
-            ("yield", Yield)
-            // NullLiteral
-            ("null", Null)
-            // BooleanLiteral
-            ("true", True)
-            ("false", False)
-        ]
+//    let reservedWordMap =
+//        Map.ofList [
+//            // Keyword
+//            ("break", Break)
+//            ("case", Case)
+//            ("catch", Catch)
+//            ("continue", Continue)
+//            ("debugger", Debugger)
+//            ("default", Default)
+//            ("delete", Delete)
+//            ("do", Do)
+//            ("else", Else)
+//            ("finally", Finally); 
+//            ("for", For)
+//            ("function", Function)
+//            ("if", If)
+//            ("in", In)
+//            ("instanceof", Instanceof)
+//            ("new", New)
+//            ("return", Return)
+//            ("switch", Switch)
+//            ("this", This)
+//            ("throw", Throw)
+//            ("try", Try)
+//            ("typeof", Typeof)
+//            ("var", Var)
+//            ("void", Void)
+//            ("while", While)
+//            ("with", With)
+//            // FutureReservedWord
+//            ("class", Class); 
+//            ("const", Const)
+//            ("enum", Enum); 
+//            ("export", Export)
+//            ("extends", Extends)
+//            ("implements", Implements)
+//            ("import", Import)
+//            ("interface", Interface)
+//            ("let", Let)
+//            ("package", Package)
+//            ("private", Private)
+//            ("protected", Protected)
+//            ("public", Public)
+//            ("static", Static)
+//            ("super", Super)
+//            ("yield", Yield)
+//            // NullLiteral
+//            ("null", Null)
+//            // BooleanLiteral
+//            ("true", True)
+//            ("false", False)
+//        ]
 
     let tokenize (input:string) =        
         let rec tokenize i r =

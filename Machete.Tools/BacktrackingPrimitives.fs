@@ -105,7 +105,7 @@ module BacktrackingPrimitives =
         read (parser state)                
 
     type ParseMonad() =        
-        member this.Bind (f, g) = f >>= g      
+        member this.Bind (f:Parser<'a, 'b, 'c>, g:'c -> Parser<'a, 'b, 'd>) = f >>= g      
         member this.Combine (f, g) = f <|> g                
         member this.Delay (f:unit -> Parser<_,_,_>) = f()
         member this.Return x = result x

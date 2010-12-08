@@ -3,7 +3,7 @@
 module Parser =
     open System
     open Machete.Compiler.Lexer
-    open Machete.Tools.BacktrackingPrimitives
+    open Machete.Compiler.Tools
 
     type State = {
         dummy:int
@@ -40,6 +40,16 @@ module Parser =
                 when IdentifierName.evalIdentifierName v = value ->
                         return v
             | _ -> ()
+        }
+
+    let expectSpecificIdentifierNames (value:Set<string>) : SimpleParser =
+        parse {
+            let! v = passLineTerminator ()
+            match v with
+            | IdentifierName (_, _) 
+                when value.Contains (IdentifierName.evalIdentifierName v) -> 
+                    return v
+            | _ -> ()
         } 
 
     let expectIdentifier : SimpleParser =
@@ -56,26 +66,46 @@ module Parser =
         parse {
             let! v = passLineTerminator ()
             match v with
-            | Punctuator (Str str) 
+            | Punctuator (Str str)  
+            | DivPunctuator (Str str)
                 when str = value -> 
                     return v
             | _ -> ()
-        }
+        } 
+         
+    let expectPunctuators (value:Set<string>) : SimpleParser =
+        parse {
+            let! v = passLineTerminator ()
+            match v with
+            | Punctuator (Str str) 
+            | DivPunctuator (Str str)
+                when value.Contains str -> 
+                    return v
+            | _ -> ()
+        }  
         
     let expectComma : SimpleParser = expectPunctuator ","  
 
     let nil : ComplexParser = result SourceElement.Nil
     
     let statementTerminator =
-        expectPunctuator ";" |>> fun a -> ()
+        parse {
+            let! v = expectPunctuator ";"
+            return ()
+        }
 
 
     let expectOpenParenthesis = expectPunctuator "("
     let expectCloseParenthesis = expectPunctuator ")"        
     let expectOpenBrace = expectPunctuator "{"
-    let expectCloseBrace = expectPunctuator "}"
+    let expectCloseBrace = expectPunctuator "}"        
+    let expectOpenBracket = expectPunctuator "["
+    let expectCloseBracket = expectPunctuator "]"
     let expectSemiColon = expectPunctuator ";"
     let expectEqualsSign = expectPunctuator "="
+    let expectQuestionMark = expectPunctuator "?"
+    let expectColon = expectPunctuator ":"
+    let expectFullStop = expectPunctuator "."
 
     let expectDo = expectSpecificIdentifierName "do"
     let expectFor = expectSpecificIdentifierName "for"
@@ -85,441 +115,431 @@ module Parser =
     let expectIf = expectSpecificIdentifierName "if"
     let expectElse = expectSpecificIdentifierName "else"
     let expectFunction = expectSpecificIdentifierName "function"
+    let expectNew = expectSpecificIdentifierName "new"
 
+    let expectAssignmentOperator = expectPunctuators (set ["=";"*=";"/=";"%=";"+=";"-=";"<<=";">>=";">>>=";"&=";"^=";"|="])
+    let expectEqualityOperator = expectPunctuators (set ["=="; "!="; "==="; "!=="]) |>> InputElement
+    let expectRelationalOperator = expectPunctuators (set ["<"; ">"; "<="; ">="; "instanceof"; "in"]) |>> InputElement
+    let expectRelationalOperatorNoIn = expectPunctuators (set ["<"; ">"; "<="; ">="; "instanceof"]) |>> InputElement
+    let expectShiftOperator = expectPunctuators (set ["<<"; ">>"; ">>>"]) |>> InputElement
+    let expectAdditiveOperator = expectPunctuators (set ["+"; "-"]) |>> InputElement
+    let expectMultiplicativeOperator = expectPunctuators (set ["*"; "%"; "/"]) |>> InputElement
+    let expectPostfixOperator = expectPunctuators (set ["++"; "--"]) |>> InputElement
+    let expectUnaryOperator = expectPunctuators (set ["++"; "--"; "+"; "-"; "~"; "!"; "delete"; "void"; "typeof"])
 
-
-    let binaryExpressionTail punctuators other = 
-        parser {
-            let! a = (matchPunctuator punctuators) +++ (matchKeyWord punctuators)
-            let! b = other
-            return [a; b]
+    let expression, expressionRef = createParserRef<InputElement, State, SourceElement>()
+    let expressionNoIn, expressionNoInRef = createParserRef<InputElement, State, SourceElement>()
+    let memberExpression, memberExpressionRef = createParserRef<InputElement, State, SourceElement>()
+    let callExpression, callExpressionRef = createParserRef<InputElement, State, SourceElement>()
+    let newExpression, newExpressionRef = createParserRef<InputElement, State, SourceElement>()
+    let assignmentExpression, assignmentExpressionRef = createParserRef<InputElement, State, SourceElement>()
+    let assignmentExpressionNoIn, assignmentExpressionNoInRef = createParserRef<InputElement, State, SourceElement>()
+    
+    let expectLiteral = 
+        parse {
+            let! v = passLineTerminator ()
+            match v with
+            | IdentifierName (_, _) ->
+                match IdentifierName.evalIdentifierName v with
+                | "true" | "false" as s -> return Literal (BooleanLiteral s)
+                | "null" as s -> return Literal (NullLiteral s)
+                | _ -> ()
+            | StringLiteral _
+            | NumericLiteral _ -> return Literal v
+            | _ -> ()
         }
+    
 
-    let binaryExpression goalSymbol other tail = parser {
-            let! a =  other
-            let! b = many tail                
-            let symbols = [a]
-            let root = Node(goalSymbol, symbols)
-            return fold goalSymbol root b
-        }
+    let rec primaryExpression : ComplexParser =
+        choice [
+            (expectLiteral |>> InputElement)
+            (expectSpecificIdentifierName "this" |>> InputElement)
+            (between expectOpenParenthesis expectCloseParenthesis expression)
+            (expectIdentifier |>> InputElement)
+            (objectLiteral)
+            (arrayLiteral)
+        ] |>> PrimaryExpression
+//        (
+//            (expectLiteral |>> InputElement) <|>
+//            (expectSpecificIdentifierName "this" |>> InputElement) <|>
+//            (between expectOpenParenthesis expectCloseParenthesis expression) <|>
+//            (expectIdentifier |>> InputElement) <|>
+//            objectLiteral <|>
+//            arrayLiteral
+//        )          
+//        |>> PrimaryExpression
 
-
-
-    let rec primaryExpression = 
-        parser {
-            let! a = simplePrimaryExpression              
-            return Node(NodeType.PrimaryExpression, [a])
-        } +++ objectLiteral +++ arrayLiteral +++ parser {
-            let! a = openParenthesis
-            let! b = expression
-            let! c = closeParenthesis
-            return Node(NodeType.PrimaryExpression, [a;b;c] )
+    and arrayLiteral =
+        parse {
+            do! skip expectOpenBracket
+            let! e1 = elementList <|> nil
+            do! skip (maybe expectComma)
+            let! e2 = elision <|> nil
+            do! skip expectCloseBracket
+            return ArrayLiteral (e1, e2)
         } 
-    and simplePrimaryExpression = 
-        passLineTerminator (
-            fun x ->
-                match x with
-                | Identifier token
-                | Literal token -> true                        
-                | KeyWord token when token.Value = "this"-> true
-                | _ -> false
-        ) 
-    and arrayLiteral = 
-        parser {
-            let! a = openSquareBracket
-            let! b = maybeOne elision 
-            let! c = maybeOne elementList 
-            let! d = maybeOne comma
-            let! e = maybeOne elision 
-            let! f = closeSquareBracket
-            let symbols = [a] @ b @ c @ d @ e @ [f] 
-            return Node(NodeType.ArrayLiteral, symbols)
-        }
-    and elementListTail = 
-        parser {
-            let! a = comma
-            let! b = maybeOne elision 
-            let! c = assignmentExpression
-            return [a] @ b @ [c]
-        }
-    and elementList = 
-        parser {
-            let! a = maybeOne elision 
-            let! b = assignmentExpression 
-            let! c = many elementListTail
-            let symbols = a @ [b]
-            let nodeType = NodeType.ElementList
-            let root = Node(nodeType, symbols)
-            return fold nodeType root c 
-        }
+
+    and elementList =
+        manySepFold (tuple2 (elision <|> nil) assignmentExpression (fun t -> t)) expectComma SourceElement.Nil (fun x (y, z) -> ElementList (x, y, z))
+
     and elision = 
-        parser {
-            let! a = comma
-            let! b = many comma
-            let root = Node(NodeType.Elision, [a])
-            return singleFold NodeType.Elision root b 
-        }
+        many1Fold expectComma SourceElement.Nil (fun x y -> Elision (x, y))
+
     and objectLiteral =
-        parser {
-            let! a = openCurlyBracket
-            let! b = maybeOne propertyNameAndValueList 
-            let! c = maybeOne comma 
-            let! d = closeCurlyBracket
-            let symbols = [a] @ b @ c @ [d]
-            return Node(NodeType.ObjectLiteral, symbols)
-        }
-    and propertyNameAndValueList = 
-        parser {
-            let! a = propertyAssignment 
-            let! b = many propertyNameAndValueListTail
-            let symbols = [a] 
-            let nodeType = NodeType.PropertyNameAndValueList
-            let root = Node(nodeType, symbols)
-            return fold nodeType root b
-        }
-    and propertyNameAndValueListTail = 
-        parser {
-            let! a = comma
-            let! b = propertyAssignment
-            return [a;b]
-        }
-    and propertyAssignment =
-         standardPropertyAssignment +++ getPropertyAssignment +++ setPropertyAssignment
-    and standardPropertyAssignment = 
-        parser {
-            let! a = propertyName
-            let! b = colon 
-            let! c = assignmentExpression
-            return Node(NodeType.PropertyAssignment, [a;b;c])
-        }
-    and getPropertyAssignment =
-        parser {
-            let! a = getIdentifierName
-            let! b = propertyName
-            let! c = openParenthesis 
-            let! d = closeParenthesis 
-            let! e = openCurlyBracket 
-            let! f = functionBody
-            let! g = closeCurlyBracket 
-            return Node(NodeType.PropertyAssignment, [a;b;c;d;e;f;g])
-        }
-    and setPropertyAssignment = 
-        parser {
-            let! a = setIdentifierName
-            return! parser {
-                let! b = propertyName
-                let! c = openParenthesis 
-                let! d = propertySetParameterList
-                let! e = closeParenthesis 
-                let! f = openCurlyBracket 
-                let! g = functionBody
-                let! h = closeCurlyBracket
-                return Node(NodeType.PropertyAssignment, [a;b;c;d;e;f;g;h])
-            } +++ parser {
-                failwith "SHIT!"
-            }
-        }
-    and propertyName =
-        parser {
-            let! a = propertyNameChild        
-            return Node(NodeType.PropertyName, [a])   
-        }
-    and propertyNameChild = 
-        passLineTerminator (
-                fun x ->
-                    match x.TokenType with
-                    | TokenType.IdentifierName
-                    | TokenType.StringLiteral
-                    | TokenType.NumericLiteral -> true
-                    | _ -> false
-            )  
-    and propertySetParameterList =
-        parser {
-            let! a = identifier         
-            return Node(NodeType.PropertySetParameterList, [a])    
-        }
-    and memberExpressionTail =
-        parser {
-            let! a = openSquareBracket
-            let! b = expression
-            let! c = closeSquareBracket
-            return [a; b; c]
-        } +++ parser {
-            let! a = fullStop
-            let! b = identifierName
-            return [a; b]
-        }
-    and memberExpression =
-        parser {
-            let! a = primaryExpression +++ functionExpression
-            let! b = many memberExpressionTail
-            let symbols = [a]  
-            let root = Node(NodeType.MemberExpression, symbols)
-            return fold NodeType.MemberExpression root b
-        } +++ parser {
-            let! a = newKeyWord
-            let! b = memberExpression
-            let! c = arguments
-            let symbols = [a; b; c]
-            return Node(NodeType.MemberExpression, symbols)
-        }
-    and newExpression = 
-        parser {
-            let! a = memberExpression
-            let symbols = [a]
-            return Node(NodeType.NewExpression, symbols)
-        } +++ parser {
-            let! a = newKeyWord
-            let! b = newExpression
-            let symbols = [a; b]
-            return Node(NodeType.NewExpression, symbols)
-        }
-    and callExpressionTail =
-        parser {
-            let! a = arguments
-            return [a]
-        } +++ parser {
-            let! a = openSquareBracket
-            let! b = expression
-            let! c = closeSquareBracket
-            return [a; b; c]
-        } +++ parser {
-            let! a = fullStop
-            let! b = identifierName
-            return [a; b]
-        }            
-    and callExpression = 
-        parser {
-            let! a = memberExpression
-            let! b = arguments
-            let symbols = [a; b]
-            let! r = many callExpressionTail
-            let root = Node(NodeType.CallExpression, symbols)
-            return fold NodeType.CallExpression root r
-        }
-    and arguments = parser {
-            let! a = openParenthesis
-            let! b = maybeOne argumentList
-            let! c = maybeOne closeParenthesis
-            if c.IsEmpty then
-                return! fun input state ->
-                    let baseMsg = "Missing closing parenthesis for Arguments."
-                    match input with
-                    | LazyList.Cons(x, xs) -> 
-                        let msg = sprintf "%s\nValue:%s\nLine:%i\nColumn:%i" baseMsg x.Value x.Line x.Column
-                        let token = Token(TokenType.TokenError, msg, x.Line, x.Column)
-                        let child = Node(NodeType.NodeError, [a] @ b @ [Node(NodeType.TokenNode, [], token)])
-                        [Result(Node(NodeType.Arguments, [child]), msg::state, xs)] 
-                    | _ -> 
-                        let t = a.Token.Value
-                        let msg = sprintf "%s\nLine:%i\nColumn:%i" baseMsg t.Line t.Column
-                        let token = Token(TokenType.TokenError, msg, t.Line, t.Column)
-                        let child = Node(NodeType.NodeError, [a] @ b, token)
-                        [Result(Node(NodeType.Arguments, [child]), msg::state, input)]
-            else
-                let symbols = [a] @ b @ c
-                return Node(NodeType.Arguments, symbols)
-        }
-    and argumentListTail = parser {
-            let! a = comma
-            let! b = maybeOne assignmentExpression
-            if b.IsEmpty then
-                return! fun input state ->
-                    let baseMsg = "Missing AssignmentExpression in ArgumentList."
-                    match input with
-                    | LazyList.Cons(x, xs) when x.Value <> ")" && x.Value <> "," -> 
-                        let msg = sprintf "%s\nValue:%s\nLine:%i\nColumn:%i" baseMsg x.Value x.Line x.Column
-                        [Result([Node(NodeType.NodeError, [a; Node(NodeType.TokenNode, [], x)])], msg::state, xs)] 
-                    | _ -> 
-                        let t = a.Token.Value
-                        let msg = sprintf "%s\nLine:%i\nColumn:%i" baseMsg t.Line t.Column
-                        [Result([Node(NodeType.NodeError, [a])], msg::state, input)]
-            else
-                return a::b
-        }
-    and argumentList = parser {
-            let! head = assignmentExpression
-            let! tail = many argumentListTail
-            let symbols = [head]
-            let root = Node(NodeType.ArgumentList, symbols)
-            return fold NodeType.ArgumentList root tail
-        }
-    and leftHandSideExpression = parser { 
-            let! r = callExpression +++ newExpression
-            let symbols = [r]
-            return Node(NodeType.LeftHandSideExpression, symbols)
-        }
-    and postfixExpression = 
-        parser {
-            let! r = leftHandSideExpression
-            let! b = maybeOne postFixOperatorPunctuator             
-            let symbols = [r] @ b
-            return Node(NodeType.PostfixExpression, symbols)
-        }    
-    and unaryExpression = 
-        parser {
-            let! a = postfixExpression
-            let symbols = [a]
-            return Node(NodeType.UnaryExpression, symbols)
-        } +++ parser {
-            let! a = unaryOperatorPunctuators +++ unaryOperatorKeyWords
-            let! b = unaryExpression               
-            let symbols = [a;b]
-            return Node(NodeType.UnaryExpression, symbols)
+        parse {
+            do! skip expectOpenBrace
+            let! e = propertyNameAndValueList
+            do! skip (maybe expectComma)
+            do! skip expectCloseBrace
+            return ObjectLiteral e
         }
 
-    and multiplicativeExpression =   
-        binaryExpression NodeType.MultiplicativeExpression unaryExpression (binaryExpressionTail ["*"; "/"; "%"] unaryExpression)
+    and propertyNameAndValueList =
+        manySepFold propertyAssignment expectComma SourceElement.Nil (fun x y -> PropertyNameAndValueList (x, y))
+
+    and propertyAssignment =
+        parse {
+            let! e1 = propertyName
+            do! skip expectColon
+            let! e2 = assignmentExpression
+            return PropertyAssignment (e1, e2, SourceElement.Nil)
+        } <|> parse {
+            do! skip (expectSpecificIdentifierNames (set ["get"; "set"]))
+            let! e1 = propertyName
+            let! e2 = between expectOpenParenthesis expectCloseParenthesis propertySetParameterList
+            let! e3 = between expectOpenBrace expectCloseBrace functionBody
+            return PropertyAssignment (e1, e2, e3)
+        }
+
+    and propertyName =
+        parse {
+            let! v = passLineTerminator ()
+            match v with
+            | IdentifierName (_, _)
+            | StringLiteral _
+            | NumericLiteral _ -> return PropertyName v
+            | _ -> ()
+        } 
+
+    and propertySetParameterList =
+        expectIdentifier |>> PropertySetParameterList
+
+    and arguments = 
+        between expectOpenParenthesis expectCloseParenthesis argumentList |>> Arguments
+
+    and argumentList : ComplexParser =
+        manySepFold assignmentExpression expectComma SourceElement.Nil (fun x y -> ArgumentList (x, y))     
+
+    and leftHandSideExpression =
+        choice [
+            newExpression
+            callExpression
+        ] |>> LeftHandSideExpression
+
+    and postfixExpression =
+        parse {
+            let! e1 = leftHandSideExpression
+            let! e2 = choice [expectPostfixOperator; nil]
+            return PostfixExpression (e1, e2)
+        } 
+           
+    and unaryExpression = 
+        parse {
+            let! e1 = choice [expectUnaryOperator |>> InputElement; nil]
+            let! e2 = postfixExpression
+            return UnaryExpression (e1, e2)
+        }
+
+    and multiplicativeExpression =
+        parse {
+            let! e1 = unaryExpression
+            return! parse {
+                let! e2 = expectMultiplicativeOperator
+                let! e3 = multiplicativeExpression
+                return MultiplicativeExpression (e1, e2, e3)
+            } 
+            return MultiplicativeExpression (SourceElement.Nil, SourceElement.Nil, e1)
+        } 
     
-    and additiveExpression =   
-        binaryExpression NodeType.AdditiveExpression multiplicativeExpression (binaryExpressionTail ["+"; "-"] multiplicativeExpression)
+    and additiveExpression =
+        parse {
+            let! e1 = multiplicativeExpression
+            return! parse {
+                let! e2 = expectAdditiveOperator
+                let! e3 = additiveExpression
+                return AdditiveExpression (e1, e2, e3)
+            } 
+            return AdditiveExpression (SourceElement.Nil, SourceElement.Nil, e1)
+        } 
     
-    and shiftExpression =   
-        binaryExpression NodeType.ShiftExpression additiveExpression (binaryExpressionTail ["<<"; ">>"; ">>>"] additiveExpression)
+    and shiftExpression =
+        parse {
+            let! e1 = additiveExpression
+            return! parse {
+                let! e2 = expectShiftOperator
+                let! e3 = shiftExpression
+                return ShiftExpression (e1, e2, e3)
+            } 
+            return ShiftExpression (SourceElement.Nil, SourceElement.Nil, e1)
+        }
     
-    and relationalExpression = 
-        binaryExpression NodeType.RelationalExpression shiftExpression (binaryExpressionTail ["<"; ">"; "<="; ">="; "instanceof"; "in"] shiftExpression)
+    and relationalExpression =
+        parse {
+            let! e1 = shiftExpression
+            return! parse {
+                let! e2 = expectRelationalOperator
+                let! e3 = relationalExpression
+                return RelationalExpression (e1, e2, e3)
+            } 
+            return RelationalExpression (SourceElement.Nil, SourceElement.Nil, e1)
+        }
     
-    and relationalExpressionNoIn =  
-        binaryExpression NodeType.RelationalExpressionNoIn shiftExpression (binaryExpressionTail ["<"; ">"; "<="; ">="; "instanceof"] shiftExpression)
+    and relationalExpressionNoIn =
+        parse {
+            let! e1 = shiftExpression
+            return! parse {
+                let! e2 = expectRelationalOperatorNoIn
+                let! e3 = relationalExpressionNoIn
+                return RelationalExpressionNoIn (e1, e2, e3)
+            } 
+            return RelationalExpressionNoIn (SourceElement.Nil, SourceElement.Nil, e1)
+        } 
     
     and equalityExpression = 
-        binaryExpression NodeType.EqualityExpression relationalExpression (binaryExpressionTail ["=="; "!="; "==="; "!=="] relationalExpression)
-    and equalityExpressionNoIn = 
-        binaryExpression NodeType.EqualityExpressionNoIn relationalExpressionNoIn (binaryExpressionTail ["=="; "!="; "==="; "!=="] relationalExpressionNoIn)
-    
-    and bitwiseANDExpression = 
-        manySeparatedFold equalityExpression (expectPunctuator "&") SourceElement.Nil (fun x y -> BitwiseANDExpression (x, y))
-    and bitwiseANDExpressionNoIn = 
-        manySeparatedFold equalityExpressionNoIn (expectPunctuator "&") SourceElement.Nil (fun x y -> BitwiseANDExpressionNoIn (x, y))
-    and bitwiseXORExpression = 
-        manySeparatedFold bitwiseANDExpression (expectPunctuator "^") SourceElement.Nil (fun x y -> BitwiseXORExpression (x, y))
-    and bitwiseXORExpressionNoIn = 
-        manySeparatedFold bitwiseANDExpressionNoIn (expectPunctuator "^") SourceElement.Nil (fun x y -> BitwiseXORExpressionNoIn (x, y))
-    and bitwiseORExpression = 
-        manySeparatedFold bitwiseXORExpression (expectPunctuator "|") SourceElement.Nil (fun x y -> BitwiseORExpression (x, y))
-    and bitwiseORExpressionNoIn = 
-        manySeparatedFold bitwiseXORExpressionNoIn (expectPunctuator "|") SourceElement.Nil (fun x y -> BitwiseORExpressionNoIn (x, y))
-
-    and logicalANDExpression = 
-        manySeparatedFold bitwiseORExpression (expectPunctuator "&&") SourceElement.Nil (fun x y -> LogicalANDExpression (x, y))
-    and logicalANDExpressionNoIn = 
-        manySeparatedFold bitwiseORExpressionNoIn (expectPunctuator "&&") SourceElement.Nil (fun x y -> LogicalANDExpressionNoIn (x, y)) 
-    and logicalORExpression =
-        manySeparatedFold logicalANDExpression (expectPunctuator "||") SourceElement.Nil (fun x y -> LogicalORExpression (x, y)) 
-    and logicalORExpressionNoIn =
-        manySeparatedFold logicalANDExpressionNoIn (expectPunctuator "||") SourceElement.Nil (fun x y -> LogicalORExpressionNoIn (x, y))
-
-    and conditionalExpressionTail = 
-        parser {
-            let! a = questionMark
-            let! b = assignmentExpression
-            let! c = colon
-            let! d = assignmentExpression
-            return [a; b; c; d]
-        }
-    and conditionalExpression = 
-        parser {
-            let! a = logicalORExpression
-            let! b = many conditionalExpressionTail
-            return if b.IsEmpty then Node(NodeType.ConditionalExpression, [a]) else fold NodeType.ConditionalExpression a b              
-        }
-    and conditionalExpressionNoInTail = 
-        parser {
-            let! a = questionMark
-            let! b = assignmentExpression
-            let! c = colon
-            let! d = assignmentExpressionNoIn
-            return [a; b; c; d]
-        }
-    and conditionalExpressionNoIn = 
-        parser {
-            let! a = logicalORExpressionNoIn
-            let! b = many conditionalExpressionNoInTail
-            return if b.IsEmpty then Node(NodeType.ConditionalExpressionNoIn, [a]) else fold NodeType.ConditionalExpressionNoIn a b                 
-        } 
-    and assignmentExpression =
-        parser {
-            let! a = leftHandSideExpression
-            let! z = maybeOne questionMark
-            if z.IsEmpty then
-                let! b = assignmentOperator
-                let! c = assignmentExpression
-                let symbols = [a; b; c]
-                return Node(NodeType.AssignmentExpression, symbols)
-        } +++ parser {
-            let! a = conditionalExpression
-            let symbols = [a]
-            return Node(NodeType.AssignmentExpression, symbols)
-        }
-    and assignmentExpressionNoIn =
         parse {
-            let! a = leftHandSideExpression
-            let! b = assignmentOperator
-            let! c = assignmentExpressionNoIn
-            return AssignmentExpressionNoIn(a, b, c)
-        } <|> parse {
-            let! a = conditionalExpressionNoIn
-            return AssignmentExpressionNoIn a
+            let! e1 = relationalExpression
+            return! parse {
+                let! e2 = expectEqualityOperator
+                let! e3 = equalityExpression
+                return EqualityExpression (e1, e2, e3)
+            } 
+            return EqualityExpression (SourceElement.Nil, SourceElement.Nil, e1)
         }
-    and assignmentOperator = parse {
-            let! a = assignmentOperatorPunctuator
-            let symbols = [a]
-            return Node(NodeType.AssignmentOperator, symbols)
+
+    and equalityExpressionNoIn =
+        parse {
+            let! e1 = relationalExpressionNoIn
+            return! parse {
+                let! e2 = expectEqualityOperator
+                let! e3 = equalityExpressionNoIn
+                return EqualityExpressionNoIn (e1, e2, e3)
+            } 
+            return EqualityExpressionNoIn (SourceElement.Nil, SourceElement.Nil, e1)
+        } 
+    
+    and bitwiseANDExpression =
+        parse {
+            let! e1 = equalityExpression
+            return! parse {
+                let! _ = expectPunctuator "&"
+                let! e2 = bitwiseANDExpression
+                return BitwiseANDExpression (e2, e1)
+            } 
+            return BitwiseANDExpression (SourceElement.Nil, e1)
         }
-    and expression =
-        binaryExpression Expression assignmentExpression (binaryExpressionTail [","] assignmentExpression)
-    and expressionNoIn = 
-        binaryExpression ExpressionNoIn assignmentExpressionNoIn (binaryExpressionTail [","] assignmentExpressionNoIn)
+
+    and bitwiseANDExpressionNoIn =
+        parse {
+            let! e1 = equalityExpressionNoIn
+            return! parse {
+                let! _ = expectPunctuator "&"
+                let! e2 = bitwiseANDExpressionNoIn
+                return BitwiseANDExpression (e2, e1)
+            } 
+            return BitwiseANDExpression (SourceElement.Nil, e1)
+        }
+
+    and bitwiseXORExpression =
+        parse {
+            let! e1 = bitwiseANDExpression
+            return! parse {
+                let! _ = expectPunctuator "^"
+                let! e2 = bitwiseXORExpression
+                return BitwiseXORExpression (e2, e1)
+            } 
+            return BitwiseXORExpression (SourceElement.Nil, e1)
+        }
+
+    and bitwiseXORExpressionNoIn =
+        parse {
+            let! e1 = bitwiseANDExpressionNoIn
+            return! parse {
+                let! _ = expectPunctuator "^"
+                let! e2 = bitwiseXORExpressionNoIn
+                return BitwiseXORExpressionNoIn (e2, e1)
+            } 
+            return BitwiseXORExpressionNoIn (SourceElement.Nil, e1)
+        }
+
+    and bitwiseORExpression =
+        parse {
+            let! e1 = bitwiseXORExpression
+            return! parse {
+                let! _ = expectPunctuator "|"
+                let! e2 = bitwiseORExpression
+                return BitwiseORExpression (e2, e1)
+            } 
+            return BitwiseORExpression (SourceElement.Nil, e1)
+        }
+
+    and bitwiseORExpressionNoIn =
+        parse {
+            let! e1 = bitwiseXORExpressionNoIn
+            return! parse {
+                let! _ = expectPunctuator "|"
+                let! e2 = bitwiseORExpressionNoIn
+                return BitwiseORExpressionNoIn (e2, e1)
+            } 
+            return BitwiseORExpressionNoIn (SourceElement.Nil, e1)
+        }
+
+    and logicalANDExpression =
+        parse {
+            let! e1 = bitwiseORExpression
+            return! parse {
+                let! _ = expectPunctuator "&&"
+                let! e2 = logicalANDExpression
+                return LogicalANDExpression (e2, e1)
+            } 
+            return LogicalANDExpression (SourceElement.Nil, e1)
+        }
+
+    and logicalANDExpressionNoIn =
+        parse {
+            let! e1 = bitwiseORExpressionNoIn
+            return! parse {
+                let! _ = expectPunctuator "&&"
+                let! e2 = logicalANDExpressionNoIn
+                return LogicalANDExpressionNoIn (e2, e1)
+            } 
+            return LogicalANDExpressionNoIn (SourceElement.Nil, e1)
+        }
+
+    and logicalORExpression =
+        parse {
+            let! e1 = logicalANDExpression
+            return! parse {
+                let! _ = expectPunctuator "||"
+                let! e2 = logicalORExpression
+                return LogicalORExpression (e2, e1)
+            } 
+            return LogicalORExpression (SourceElement.Nil, e1)
+        }
+         
+    and logicalORExpressionNoIn =
+        parse {
+            let! e1 = logicalANDExpressionNoIn
+            return! parse {
+                let! _ = expectPunctuator "||"
+                let! e2 = logicalORExpressionNoIn
+                return LogicalORExpressionNoIn (e2, e1)
+            } 
+            return LogicalORExpressionNoIn (SourceElement.Nil, e1)
+        }
+
+    and conditionalExpression =
+        parse {
+            let! e1 = logicalORExpression
+            return! choice [ 
+                parse {
+                    do! skip expectQuestionMark
+                    let! e2 = assignmentExpression
+                    do! skip expectColon
+                    let! e3 = assignmentExpression
+                    return ConditionalExpression (e1, e2, e3)
+                }
+                parse {
+                    
+                    return ConditionalExpression (e1, SourceElement.Nil, SourceElement.Nil)
+                }
+            ]
+        }
+
+    and conditionalExpressionNoIn = 
+        parse {
+            let! e1 = logicalORExpressionNoIn
+            return! parse {
+                do! skip expectQuestionMark
+                let! e2 = assignmentExpression
+                do! skip expectColon
+                let! e3 = assignmentExpressionNoIn
+                return ConditionalExpressionNoIn (e1, e2, e3)
+            }
+            return ConditionalExpressionNoIn (e1, SourceElement.Nil, SourceElement.Nil)
+        }
+
+//    and assignmentExpression =
+//        (conditionalExpression |>> fun e -> AssignmentExpression (e, SourceElement.Nil, SourceElement.Nil)) <|> parse {
+//            let! a = leftHandSideExpression
+//            let! b = assignmentOperator
+//            let! c = assignmentExpression
+//            return AssignmentExpression (a, b, c)                
+//        } 
+//
+//    and assignmentExpressionNoIn =
+//        (conditionalExpressionNoIn |>> fun e -> AssignmentExpressionNoIn (e, SourceElement.Nil, SourceElement.Nil)) <|> parse {
+//            let! a = leftHandSideExpression
+//            let! b = assignmentOperator
+//            let! c = assignmentExpressionNoIn
+//            return AssignmentExpressionNoIn (a, b, c)  
+//        }
+
+    and assignmentOperator = 
+        expectAssignmentOperator |>> AssignmentOperator
+
+//    and expression : ComplexParser =
+//        manySeparatedFold assignmentExpression expectComma SourceElement.Nil (fun x y -> Expression (x, y))
+//
+//    and expressionNoIn : ComplexParser =
+//        manySeparatedFold assignmentExpressionNoIn expectComma SourceElement.Nil (fun x y -> ExpressionNoIn (x, y)) 
 
     and functionExpression = 
         parse {
             do! skip expectFunction
             let! i = expectIdentifier <|> result Nil
-            do! skip expectOpenParenthesis
-            let! l = formalParameterList <|> nil
-            do! skip expectCloseParenthesis
-            do! skip expectOpenBrace
-            let! b = functionBody
-            do! skip expectCloseBrace             
+            let! l = between expectOpenParenthesis expectCloseParenthesis (formalParameterList <|> nil)
+            let! b = between expectOpenBrace expectCloseBrace functionBody             
             return FunctionExpression (i, l, b)
         }  
               
     and functionBody = 
-        (statementList <|> nil) |>> FunctionBody
+        parse {
+            let! x = statementList <|> nil
+            return FunctionBody x
+        }
         
     and formalParameterList = 
-        manySeparatedFold expectIdentifier expectComma SourceElement.Nil (fun x y -> FormalParameterList (x, y))
+        manySepFold expectIdentifier expectComma SourceElement.Nil (fun x y -> FormalParameterList (x, y))
 
     and functionDeclaration = 
         parse {
             do! skip expectFunction
             let! i = expectIdentifier
-            do! skip expectOpenParenthesis
-            let! l = formalParameterList <|> nil
-            do! skip expectCloseParenthesis
-            do! skip expectOpenBrace
-            let! b = functionBody
-            do! skip expectCloseBrace             
+            let! l = between expectOpenParenthesis expectCloseParenthesis (formalParameterList <|> nil)
+            let! b = between expectOpenBrace expectCloseBrace functionBody
             return FunctionDeclaration (i, l, b)
         }  
 
     and statement =
-        blockParser <|> 
-        variableStatement <|> 
-        emptyStatement <|> 
-        expressionStatement <|> 
-        ifStatement <|> 
-        iterationStatement <|>
-        continueStatement <|>
-        breakStatement <|>
-        returnStatement <|>
-        withStatement <|>
-        switchStatement <|>
-        labelledStatement <|>
-        throwStatement <|>
-        tryStatement <|>
-        debuggerStatement 
+        parse {
+            let! v = expressionStatement
+//                blockParser <|> 
+//                variableStatement <|> 
+//                emptyStatement <|> 
+//                expressionStatement <|> 
+//                ifStatement <|> 
+//                iterationStatement <|>
+//                continueStatement <|>
+//                breakStatement <|>
+//                returnStatement <|>
+//                withStatement <|>
+//                switchStatement <|>
+//                labelledStatement <|>
+//                throwStatement <|>
+//                tryStatement <|>
+//                debuggerStatement
+            return Statement v 
+        }
 
     and statementList =  
         manyFold statement SourceElement.Nil (fun x y -> StatementList (x, y))
@@ -531,10 +551,10 @@ module Parser =
         pipe3 expectVar variableDeclarationList statementTerminator (fun _ v _ -> VariableStatement v)
 
     and variableDeclarationList =
-        manySeparatedFold variableDeclaration expectComma SourceElement.Nil (fun x y -> VariableDeclarationList (x, y))
+        manySepFold variableDeclaration expectComma SourceElement.Nil (fun x y -> VariableDeclarationList (x, y))
 
     and variableDeclarationListNoIn =
-        manySeparatedFold variableDeclarationNoIn expectComma SourceElement.Nil (fun x y -> VariableDeclarationListNoIn (x, y))
+        manySepFold variableDeclarationNoIn expectComma SourceElement.Nil (fun x y -> VariableDeclarationListNoIn (x, y))
 
     and variableDeclaration =
         tuple2 expectIdentifier (initializer <|> nil) VariableDeclaration
@@ -574,9 +594,7 @@ module Parser =
     and ifStatement =
         parse {
             do! skip expectIf
-            do! skip expectOpenParenthesis
-            let! e = expression 
-            do! skip expectCloseParenthesis
+            let! e = between expectOpenParenthesis expectCloseParenthesis expression
             let! s1 = statement 
             let! x = maybe expectElse
             match x with
@@ -589,19 +607,13 @@ module Parser =
 
     and iterationStatement =
         parse {
-            do! skip expectDo
-            let! s = statement 
-            do! skip expectWhile
-            do! skip expectOpenParenthesis
-            let! e = expression 
-            do! skip expectCloseParenthesis
+            let! s = between expectDo expectWhile statement 
+            let! e = between expectOpenParenthesis expectCloseParenthesis expression
             do! skip statementTerminator
             return IterationStatement (s, e, SourceElement.Nil, SourceElement.Nil)
         } <|> parse {
             do! skip expectWhile
-            do! skip expectOpenParenthesis
-            let! e = expression
-            do! skip expectCloseParenthesis 
+            let! e = between expectOpenParenthesis expectCloseParenthesis expression 
             let! s = statement 
             do! skip expectCloseParenthesis
             return IterationStatement (s, e, SourceElement.Nil, SourceElement.Nil)
@@ -689,10 +701,127 @@ module Parser =
         pipe2 (expectSpecificIdentifierName "debugger") statementTerminator (fun x y -> DebuggerStatement)
 
     let sourceElement = 
-        (statement <|> functionDeclaration) |>> SourceElement 
+        parse {
+            let! v = choice [statement; functionDeclaration] |>> SourceElement
+            return v
+        }
 
-    let sourceElements = 
-        manyFold sourceElement SourceElement.Nil (fun x y -> SourceElements(x, y))
+    let sourceElements =  
+        manyFold sourceElement SourceElement.Nil (fun x y -> SourceElements (x, y))
 
     let program = 
-        (sourceElements <|> nil) |>> Program
+        choice [sourceElements; nil] |>> Program
+
+    do 
+        expressionRef :=
+            parse {
+                let! e1 = assignmentExpression
+                return! parse {
+                    let! _ = expectPunctuator ","
+                    let! e2 = assignmentExpression
+                    return Expression (e2, e1)
+                } 
+                return Expression (SourceElement.Nil, e1)
+            } 
+
+        expressionNoInRef := 
+            parse {
+                let! e1 = assignmentExpressionNoIn
+                return! parse {
+                    let! _ = expectPunctuator ","
+                    let! e2 = assignmentExpressionNoIn
+                    return ExpressionNoIn (e2, e1)
+                } 
+                return ExpressionNoIn (SourceElement.Nil, e1)
+            } 
+
+        memberExpressionRef :=
+            choice [       
+                parse {
+                    let! e = choice [primaryExpression; functionExpression]
+                    return MemberExpression (SourceElement.Nil, e)
+                }
+                parse {
+                    let! e1 = memberExpression
+                    do! skip expectFullStop
+                    let! e2 = between expectOpenBracket expectCloseBracket expression
+                    return MemberExpression (e1, e2)
+                }
+                parse {
+                    let! e1 = memberExpression
+                    do! skip expectFullStop
+                    let! e2 = expression
+                    return MemberExpression (e1, e2)
+                }
+                parse {
+                    do! skip expectNew
+                    let! e1 = memberExpression
+                    let! e2 = arguments
+                    return MemberExpression (e1, e2)
+                }
+            ]
+
+        callExpressionRef :=
+            choice [  
+                parse {
+                    let! e1 = callExpression
+                    let! e2 = 
+                        choice [
+                            arguments;
+                            (between expectOpenBracket expectCloseBracket expression);
+                            parse {
+                                do! skip expectFullStop
+                                let! e3 = expression
+                                return e3
+                            }
+                        ]
+                    return CallExpression (e1, e2)
+                }; parse {
+                    let! e1 = memberExpression
+                    let! e2 = arguments
+                    return CallExpression (e1, e2)
+                } 
+            ]
+
+        newExpressionRef :=
+            choice [
+                parse {
+                    let! e = memberExpression
+                    return NewExpression e
+                }; parse {
+                    do! skip expectNew
+                    let! e = newExpression
+                    return NewExpression e
+                }
+            ]
+
+        assignmentExpressionRef :=
+            choice [
+                parse {
+                    let! e = conditionalExpression
+                    return AssignmentExpression (e, SourceElement.Nil, SourceElement.Nil)
+                }
+                parse {
+                    let! a = leftHandSideExpression
+                    let! b = assignmentOperator
+                    let! c = assignmentExpression
+                    return AssignmentExpression (a, b, c)                
+                }
+            ]
+
+        assignmentExpressionNoInRef :=
+            (conditionalExpressionNoIn |>> fun e -> AssignmentExpressionNoIn (e, SourceElement.Nil, SourceElement.Nil)) <|> parse {
+                let! a = leftHandSideExpression
+                let! b = assignmentOperator
+                let! c = assignmentExpressionNoIn
+                return AssignmentExpressionNoIn (a, b, c)  
+            }
+
+    let parse input =
+        let rs = run program (Lexer.tokenize input) ({ dummy = 3 })
+        seq {
+            for r in rs do
+                match r with
+                | Success (v, s) -> yield v
+                | Failure (ms, s) -> failwith (System.String.Join ("\r\n", ms))
+        } |> Seq.head

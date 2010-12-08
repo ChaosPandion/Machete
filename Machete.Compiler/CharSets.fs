@@ -88,51 +88,79 @@ module CharSets =
     let hexDigitCharSet = 
         set (['0'..'9'] @ ['a'..'f'] @ ['A'..'F'])
 
-    let reservedWordSet =
-        Set.ofList [
-            "break"
-            "case"
-            "catch"
-            "continue"
-            "debugger"
-            "default"
-            "delete"
-            "do"
-            "else"
-            "finally"
-            "for"
-            "function"
-            "if"
-            "in"
-            "instanceof"
-            "new"
-            "return"
-            "switch"
-            "this"
-            "throw"
-            "try"
-            "typeof"
-            "var"
-            "void"
-            "while"
-            "with"
-            "class"
-            "const"
-            "enum"
-            "export"
-            "extends"
-            "implements"
-            "import"
-            "interface"
-            "let"
-            "package"
-            "private"
-            "protected"
-            "public"
-            "static"
-            "super"
-            "yield"
-            "null"
-            "true"
-            "false"
+    let keyWordSet =
+        set [
+            "break"; 
+            "case"; "catch"; "continue";
+            "debugger"; "default"; "delete"; "do";  
+            "else"; 
+            "finally"; "for"; "function"; 
+            "if"; "in"; "instanceof";
+            "new";
+            "return";
+            "switch";
+            "this"; "throw"; "try"; "typeof";
+            "var"; "void";
+            "while"; "with";
         ]
+
+    let futureReservedWordSet = 
+        set [
+            "class"; "const"; 
+            "enum"; "export"; "extends";
+            "implements"; "import"; "interface";
+            "let";
+            "package"; "private"; "protected"; "public";
+            "static"; "super";
+            "yield";
+        ]
+
+    let reservedWordSet =
+        Set.union keyWordSet futureReservedWordSet 
+//        Set.ofList [
+//            "break"
+//            "case"
+//            "catch"
+//            "continue"
+//            "debugger"
+//            "default"
+//            "delete"
+//            "do"
+//            "else"
+//            "finally"
+//            "for"
+//            "function"
+//            "if"
+//            "in"
+//            "instanceof"
+//            "new"
+//            "return"
+//            "switch"
+//            "this"
+//            "throw"
+//            "try"
+//            "typeof"
+//            "var"
+//            "void"
+//            "while"
+//            "with"
+//            "class"
+//            "const"
+//            "enum"
+//            "export"
+//            "extends"
+//            "implements"
+//            "import"
+//            "interface"
+//            "let"
+//            "package"
+//            "private"
+//            "protected"
+//            "public"
+//            "static"
+//            "super"
+//            "yield"
+//            "null"
+//            "true"
+//            "false"
+//        ]

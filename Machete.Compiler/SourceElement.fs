@@ -76,8 +76,9 @@
     | InputElement of InputElement
     | Expression of SourceElement * SourceElement
     | ExpressionNoIn of SourceElement * SourceElement
-    | AssignmentExpression of SourceElement * AssignmentOperator * SourceElement
-    | AssignmentExpressionNoIn of SourceElement * AssignmentOperator * SourceElement
+    | AssignmentOperator of InputElement
+    | AssignmentExpression of SourceElement * SourceElement * SourceElement
+    | AssignmentExpressionNoIn of SourceElement * SourceElement * SourceElement
     | ConditionalExpression of SourceElement * SourceElement * SourceElement
     | ConditionalExpressionNoIn of SourceElement * SourceElement * SourceElement
     | LogicalORExpression of SourceElement * SourceElement
@@ -90,29 +91,29 @@
     | BitwiseXORExpressionNoIn of SourceElement * SourceElement
     | BitwiseANDExpression of SourceElement * SourceElement
     | BitwiseANDExpressionNoIn of SourceElement * SourceElement
-    | EqualityExpression of SourceElement * EqualityOperator * SourceElement
-    | EqualityExpressionNoIn of SourceElement * EqualityOperator * SourceElement
-    | RelationalExpression of SourceElement * RelationalOperator * SourceElement
-    | RelationalExpressionNoIn of SourceElement * RelationalOperator * SourceElement
-    | ShiftExpression of SourceElement * BitwiseShiftOperator * SourceElement
-    | AdditiveExpression of SourceElement * AdditiveOperator * SourceElement
-    | MultiplicativeExpression of SourceElement * MultiplicativeOperator * SourceElement
-    | UnaryExpression of UnaryOperator * SourceElement
-    | PostfixExpression of SourceElement * PostfixOperator
+    | EqualityExpression of SourceElement * SourceElement * SourceElement
+    | EqualityExpressionNoIn of SourceElement * SourceElement * SourceElement
+    | RelationalExpression of SourceElement * SourceElement * SourceElement
+    | RelationalExpressionNoIn of SourceElement * SourceElement * SourceElement
+    | ShiftExpression of SourceElement * SourceElement * SourceElement
+    | AdditiveExpression of SourceElement * SourceElement * SourceElement
+    | MultiplicativeExpression of SourceElement * SourceElement * SourceElement
+    | UnaryExpression of SourceElement * SourceElement
+    | PostfixExpression of SourceElement * SourceElement
     | MemberExpression of SourceElement * SourceElement
-    | Arguments of SourceElement * SourceElement
-    | ArgumentList of SourceElement
+    | Arguments of SourceElement
+    | ArgumentList of SourceElement * SourceElement
     | CallExpression of SourceElement * SourceElement
-    | NewExpression of NewOperator * SourceElement
+    | NewExpression of SourceElement
     | LeftHandSideExpression of SourceElement
     | PrimaryExpression of SourceElement
     | ObjectLiteral of SourceElement
     | PropertyNameAndValueList of SourceElement * SourceElement
     | PropertyAssignment of SourceElement * SourceElement * SourceElement 
-    | PropertyName of SourceElement
-    | PropertySetParameterList of SourceElement
+    | PropertyName of InputElement
+    | PropertySetParameterList of InputElement
     | ArrayLiteral of SourceElement * SourceElement
-    | Elision of SourceElement * SourceElement
+    | Elision of SourceElement * InputElement
     | ElementList of SourceElement * SourceElement * SourceElement     
     | Statement of SourceElement
     | Block of SourceElement

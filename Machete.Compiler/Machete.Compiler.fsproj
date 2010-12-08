@@ -44,6 +44,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Tools.fs" />
     <Compile Include="CharSets.fs" />
     <Compile Include="Lexer.fs" />
     <Compile Include="Parsers.fs" />
@@ -61,11 +62,6 @@
     <ProjectReference Include="..\FParsec\FParsec.fsproj">
       <Name>FParsec</Name>
       <Project>{cbf9a79a-0316-4aad-ad31-c7947402ebe7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Machete.Tools\Machete.Tools.fsproj">
-      <Name>Machete.Tools</Name>
-      <Project>{3f156978-5687-47a0-93bd-e52840aa7840}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
