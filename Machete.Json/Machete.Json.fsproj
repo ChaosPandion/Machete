@@ -65,11 +65,6 @@
       <Project>{f4056a29-8845-4dfa-b551-35d7b27d5954}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Machete.Tools\Machete.Tools.fsproj">
-      <Name>Machete.Tools</Name>
-      <Project>{3f156978-5687-47a0-93bd-e52840aa7840}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
