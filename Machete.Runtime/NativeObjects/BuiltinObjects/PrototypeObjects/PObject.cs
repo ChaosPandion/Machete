@@ -19,7 +19,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         {
             var obj = context.ThisBinding.ConvertToObject();
             var func = obj.Get("toString") as ICallable;
-            if (func == null) Engine.ThrowTypeError();
+            if (func == null) Environment.ThrowTypeError();
             return func.Call(obj, SList.Empty);
         }
 

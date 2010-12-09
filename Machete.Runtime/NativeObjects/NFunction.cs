@@ -29,7 +29,7 @@ namespace Machete.Runtime.NativeObjects
         {
             _formalParameterList = formalParameterList ?? new string[0];
             _code = new Lazy<Code>(getCode);
-            _scope = Engine.Instance.Value.GlobalEnvironment;
+            _scope = Environment.Instance.Value.GlobalEnvironment;
         }
 
         internal NFunction(string[] formalParameterList, Func<Code> getCode, SLexicalEnvironment scope)

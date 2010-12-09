@@ -96,7 +96,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var func = right as NFunction;
             if (func == null)
             {
-                throw Engine.ThrowTypeError();
+                throw Environment.ThrowTypeError();
             }
             return (LBoolean)func.HasInstance(left);
         }
@@ -106,7 +106,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var obj = right as LObject;
             if (obj == null)
             {
-                throw Engine.ThrowTypeError();
+                throw Environment.ThrowTypeError();
             }
             return (LBoolean)obj.HasProperty((string)left.ConvertToString());
         }
@@ -397,7 +397,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (strict)
                 {
-                    throw Engine.ThrowTypeError();
+                    throw Environment.ThrowTypeError();
                 }
                 return;
             }
@@ -406,7 +406,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (strict)
                 {
-                    throw Engine.ThrowTypeError();
+                    throw Environment.ThrowTypeError();
                 }
                 return;
             }
@@ -420,7 +420,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (strict)
                 {
-                    throw Engine.ThrowTypeError();
+                    throw Environment.ThrowTypeError();
                 }
                 return;
             }

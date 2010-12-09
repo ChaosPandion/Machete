@@ -173,7 +173,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 if (_strictReference)
                 {
-                    throw Engine.ThrowSyntaxError();
+                    throw Environment.ThrowSyntaxError();
                 }
                 return LBoolean.True;
             }
@@ -181,7 +181,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 if (_strictReference)
                 {
-                    throw Engine.ThrowSyntaxError();
+                    throw Environment.ThrowSyntaxError();
                 }
                 return (LBoolean)((SEnvironmentRecord)_base).DeleteBinding(_referencedName);
             }
@@ -314,7 +314,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             if (_strictReference && _base is SEnvironmentRecord && (_referencedName == "eval" || _referencedName == "arguments"))
             {
-                throw Engine.ThrowSyntaxError();
+                throw Environment.ThrowSyntaxError();
             }
         }
     }

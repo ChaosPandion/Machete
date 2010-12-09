@@ -190,12 +190,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PrefixIncrement()
         {
-            throw Engine.ThrowReferenceError();
+            throw Environment.ThrowReferenceError();
         }
 
         public IDynamic Op_PrefixDecrement()
         {
-            throw Engine.ThrowReferenceError();
+            throw Environment.ThrowReferenceError();
         }
 
         public IDynamic Op_Plus()
@@ -210,12 +210,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PostfixIncrement()
         {
-            throw Engine.ThrowReferenceError();
+            throw Environment.ThrowReferenceError();
         }
 
         public IDynamic Op_PostfixDecrement()
         {
-            throw Engine.ThrowReferenceError();
+            throw Environment.ThrowReferenceError();
         }
 
         public IDynamic Op_GetProperty(IDynamic name)

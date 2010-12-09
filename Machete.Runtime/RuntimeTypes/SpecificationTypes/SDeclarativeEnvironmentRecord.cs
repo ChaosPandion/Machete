@@ -29,7 +29,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Immutable) == BFlags.Immutable)
             {
-                Engine.ThrowTypeError();
+                Environment.ThrowTypeError();
             }
             binding.Value = v;
         }
@@ -40,7 +40,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             if ((binding.Flags & BFlags.Uninitialized) == BFlags.Uninitialized)
             {
                 if (!s) return LUndefined.Instance;
-                Engine.ThrowReferenceError();
+                Environment.ThrowReferenceError();
             }
             return binding.Value;
         }

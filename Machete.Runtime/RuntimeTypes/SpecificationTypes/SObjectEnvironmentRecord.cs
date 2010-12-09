@@ -53,7 +53,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             if (!_bindingObject.HasProperty(n))
             {
                 if (!s) return LUndefined.Instance;
-                Engine.ThrowReferenceError();
+                Environment.ThrowReferenceError();
             }
             return _bindingObject.Get(n);
         }

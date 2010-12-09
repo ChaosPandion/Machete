@@ -13,9 +13,9 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime
 {
-    public sealed class Engine
+    public sealed class Environment
     {
-        internal static readonly ThreadLocal<Engine> Instance = new ThreadLocal<Engine>();
+        internal static readonly ThreadLocal<Environment> Instance = new ThreadLocal<Environment>();
         private readonly ConcurrentQueue<Tuple<string, BlockingCollection<object>>> _messageQueue;
         private readonly Thread _backingThread;
 
@@ -56,7 +56,7 @@ namespace Machete.Runtime
         internal SLexicalEnvironment GlobalEnvironment { get; private set; }
         
 
-        private Engine()
+        private Environment()
         {
             _messageQueue = new ConcurrentQueue<Tuple<string, BlockingCollection<object>>>();
             _backingThread = new Thread(ProcessScripts);

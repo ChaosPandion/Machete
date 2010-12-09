@@ -127,7 +127,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (@throw)
                 {
-                    throw Engine.ThrowTypeError();
+                    throw Environment.ThrowTypeError();
                 }
                 return;
             }
@@ -165,7 +165,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
             else if (@throw)
             {
-                throw Engine.ThrowTypeError();
+                throw Environment.ThrowTypeError();
             }
             else
             {
@@ -186,7 +186,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                         return result;
                     }
                 }
-                throw Engine.ThrowTypeError();
+                throw Environment.ThrowTypeError();
             }
             else
             {
@@ -199,7 +199,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                         return result;
                     }
                 }
-                throw Engine.ThrowTypeError();  
+                throw Environment.ThrowTypeError();  
             }
         }
 
@@ -207,7 +207,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             var reject = new Func<bool>(() => {
                 if (!@throw) return false;
-                throw Engine.ThrowTypeError();
+                throw Environment.ThrowTypeError();
             });
             var current = GetOwnProperty(p);
             if (current == null)
@@ -468,12 +468,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PrefixIncrement()
         {
-            throw Engine.ThrowReferenceError();
+            throw Environment.ThrowReferenceError();
         }
 
         public IDynamic Op_PrefixDecrement()
         {
-            throw Engine.ThrowReferenceError();
+            throw Environment.ThrowReferenceError();
         }
 
         public IDynamic Op_Plus()
@@ -488,12 +488,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PostfixIncrement()
         {
-            throw Engine.ThrowReferenceError();
+            throw Environment.ThrowReferenceError();
         }
 
         public IDynamic Op_PostfixDecrement()
         {
-            throw Engine.ThrowReferenceError();
+            throw Environment.ThrowReferenceError();
         }
 
         public IDynamic Op_GetProperty(IDynamic name)
