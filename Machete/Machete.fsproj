@@ -39,6 +39,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RuntimeInterfaces.fs" />
     <Compile Include="Engine.fs" />
   </ItemGroup>
   <ItemGroup>

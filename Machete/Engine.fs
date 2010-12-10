@@ -27,12 +27,16 @@ type Engine () =
         agent.Value.PostAndReply (buildExecuteScriptMessage script)
 
     member this.ExecuteScript (script:string, timeout:int) =
-        agent.Value.PostAndReply (buildExecuteScriptMessage script, timeout) 
+        agent.Value.PostAndReply (buildExecuteScriptMessage script, timeout)
+        
+    member this.ExecuteScriptAsync (script:string) =
+        agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script)
+
+    member this.ExecuteScriptAsync (script:string, timeout:int) =
+        agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script, timeout)
             
     member this.ExecuteScriptAsTask (script:string) =
-        agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script)
-        |> Async.StartAsTask 
+        agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script) |> Async.StartAsTask 
 
     member this.ExecuteScriptAsTask (script:string, timeout:int) =
-        agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script, timeout)
-        |> Async.StartAsTask   
+        agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script, timeout) |> Async.StartAsTask   

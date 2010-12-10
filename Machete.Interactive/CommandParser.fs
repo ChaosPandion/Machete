@@ -6,12 +6,22 @@ module CommandParser =
     open FParsec.CharParsers
     open FParsec.Primitives
 
-    let parseSetTimeout : Parser<Command, unit> =
-        spaces 
-        .>> skipChar '#' 
-        .>> spaces
-        .>> skipString "set-timeout" 
-        .>> spaces
-        >>. numberLiteral NumberLiteralOptions.DefaultInteger "The 'setTimeout' command requires one integer argument."
-        |>> fun n -> SetTimeout (int n.String)
+
+    let private parseInt message =
+        numberLiteral NumberLiteralOptions.DefaultInteger message 
+        |>> fun n -> int n.String
+
+    let private parseGetTimeout : Parser<Command, unit> =
+        skipString "get-timeout" .>> spaces 
+        |>> fun () -> GetTimeout
+
+    let private parseSetTimeout : Parser<Command, unit> =
+        skipString "set-timeout" .>> spaces
+        >>. parseInt "The 'set-timeout' command requires one integer argument."
+        |>> SetTimeout
+
+    let parse : Parser<Command, unit> =
+        spaces .>> skipChar '#' .>> spaces >>. (
+            parseGetTimeout <|> parseSetTimeout
+        )     
 

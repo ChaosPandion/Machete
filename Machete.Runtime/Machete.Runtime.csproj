@@ -140,12 +140,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RuntimeTypes\LanguageTypes\LType.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">
-      <Project>{F4056A29-8845-4DFA-B551-35D7B27D5954}</Project>
-      <Name>Machete.Compiler</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

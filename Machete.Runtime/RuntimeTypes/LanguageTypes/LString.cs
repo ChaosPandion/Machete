@@ -255,7 +255,8 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public LNumber ConvertToNumber()
         {
-            return (LNumber)Machete.Compiler.StringNumericLiteral.eval(_value);
+            return LNumber.Zero;
+            //return (LNumber)Machete.Compiler.StringNumericLiteral.eval(_value);
         }
 
         public LString ConvertToString()

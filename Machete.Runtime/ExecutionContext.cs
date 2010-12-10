@@ -9,7 +9,7 @@ using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime
 {
-    class ExecutionContext
+    public class ExecutionContext
     {
         public SLexicalEnvironment LexicalEnviroment { get; set; }
         public SLexicalEnvironment VariableEnviroment { get; set; }

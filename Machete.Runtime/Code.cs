@@ -8,5 +8,5 @@ using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime
 {
-    delegate IDynamic Code(ExecutionContext context, SList args);
+    public delegate IDynamic Code(ExecutionContext context, SList args);
 }

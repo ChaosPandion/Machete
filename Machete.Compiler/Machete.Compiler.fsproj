@@ -51,6 +51,8 @@
     <Compile Include="StringNumericLiteral.fs" />
     <Compile Include="SourceElement.fs" />
     <Compile Include="Parser.fs" />
+    <Compile Include="Reflection.fs" />
+    <Compile Include="Compiler.fs" />
     <Compile Include="SourceElementParser.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -62,6 +64,11 @@
     <ProjectReference Include="..\FParsec\FParsec.fsproj">
       <Name>FParsec</Name>
       <Project>{cbf9a79a-0316-4aad-ad31-c7947402ebe7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Machete\Machete.fsproj">
+      <Name>Machete</Name>
+      <Project>{882914a4-65af-444b-9c79-362361998e70}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

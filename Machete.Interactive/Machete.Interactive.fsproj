@@ -31,7 +31,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Release\Machete.Interactive.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
@@ -55,6 +55,16 @@
     <ProjectReference Include="..\FParsec\FParsec.fsproj">
       <Name>FParsec</Name>
       <Project>{cbf9a79a-0316-4aad-ad31-c7947402ebe7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">
+      <Name>Machete.Compiler</Name>
+      <Project>{f4056a29-8845-4dfa-b551-35d7b27d5954}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Machete.Runtime\Machete.Runtime.csproj">
+      <Name>Machete.Runtime</Name>
+      <Project>{c0b1eec3-dd81-4ed6-8896-03b615bb5f90}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Machete\Machete.fsproj">
