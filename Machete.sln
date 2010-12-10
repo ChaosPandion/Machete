@@ -13,46 +13,11 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.Json", "Machete.Jso
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Runtime", "Machete.Runtime\Machete.Runtime.csproj", "{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete", "Machete\Machete.fsproj", "{882914A4-65AF-444B-9C79-362361998E70}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.Interactive", "Machete.Interactive\Machete.Interactive.fsproj", "{5C16B94B-C4CD-49E8-A153-856A4DB43993}"
+EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 12
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://team.magicsynthesis.com:8080/tfs/defaultcollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = Machete\\Machete.fsproj
-		SccProjectName1 = Machete
-		SccLocalPath1 = Machete
-		SccProjectUniqueName2 = FParsec\\FParsec.fsproj
-		SccProjectName2 = FParsec
-		SccLocalPath2 = FParsec
-		SccProjectUniqueName3 = FParsecCS\\FParsecCS.csproj
-		SccProjectName3 = FParsecCS
-		SccLocalPath3 = FParsecCS
-		SccProjectUniqueName4 = Machete.RegExp\\Machete.RegExp.fsproj
-		SccProjectName4 = Machete.RegExp
-		SccLocalPath4 = Machete.RegExp
-		SccProjectUniqueName5 = ..\\ChaosPandion\\ChaosPandion.Prototyping\\ChaosPandion.Prototyping.csproj
-		SccProjectName5 = ../ChaosPandion/ChaosPandion.Prototyping
-		SccLocalPath5 = ..\\ChaosPandion\\ChaosPandion.Prototyping
-		SccProjectUniqueName6 = Machete.Compiler\\Machete.Compiler.fsproj
-		SccProjectName6 = Machete.Compiler
-		SccLocalPath6 = Machete.Compiler
-		SccProjectUniqueName7 = Machete.Json\\Machete.Json.fsproj
-		SccProjectName7 = Machete.Json
-		SccLocalPath7 = Machete.Json
-		SccProjectUniqueName8 = Lucene\\Lucene.fsproj
-		SccProjectName8 = Lucene
-		SccLocalPath8 = Lucene
-		SccProjectUniqueName9 = Machete.Tools\\Machete.Tools.fsproj
-		SccProjectName9 = Machete.Tools
-		SccLocalPath9 = Machete.Tools
-		SccProjectUniqueName10 = Machete.Types\\Machete.Types.fsproj
-		SccProjectName10 = Machete.Types
-		SccLocalPath10 = Machete.Types
-		SccProjectUniqueName11 = Machete.Runtime\\Machete.Runtime.csproj
-		SccProjectName11 = Machete.Runtime
-		SccLocalPath11 = Machete.Runtime
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -118,6 +83,26 @@ Global
 		{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}.Release|x86.ActiveCfg = Release|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{882914A4-65AF-444B-9C79-362361998E70}.Release|x86.ActiveCfg = Release|Any CPU
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Debug|x86.ActiveCfg = Debug|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Debug|x86.Build.0 = Debug|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Release|Any CPU.ActiveCfg = Release|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Release|Mixed Platforms.Build.0 = Release|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Release|x86.ActiveCfg = Release|x86
+		{5C16B94B-C4CD-49E8-A153-856A4DB43993}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

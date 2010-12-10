@@ -15,9 +15,7 @@ namespace Machete.Runtime
 {
     public sealed class Environment
     {
-        internal static readonly ThreadLocal<Environment> Instance = new ThreadLocal<Environment>();
-        private readonly ConcurrentQueue<Tuple<string, BlockingCollection<object>>> _messageQueue;
-        private readonly Thread _backingThread;
+        public static readonly ThreadLocal<Environment> Instance = new ThreadLocal<Environment>();
 
 
         internal BGlobal GlobalObject { get; private set; }
@@ -58,41 +56,6 @@ namespace Machete.Runtime
 
         private Environment()
         {
-            _messageQueue = new ConcurrentQueue<Tuple<string, BlockingCollection<object>>>();
-            _backingThread = new Thread(ProcessScripts);
-            _backingThread.IsBackground = true;
-            _backingThread.Start();
-        }
-
-
-        public object ExecuteScript(string script)
-        {
-            using (var channel = new BlockingCollection<object>())
-            {
-                var message = Tuple.Create(script, channel);
-                _messageQueue.Enqueue(message);
-                return channel.Take();
-            }
-        }
-        
-        private void ProcessScripts()
-        {
-            Tuple<string, BlockingCollection<object>> message;
-            while (_messageQueue.TryDequeue(out message))
-            {
-                ProcessScript(message);
-            }
-        }
-
-        private void ProcessScript(Tuple<string, BlockingCollection<object>> message)
-        {
-
-        }
-
-        private void Initalize()
-        {
-            Instance.Value = this;
-
             GlobalObject = new BGlobal();
             MathObject = new BMath();
             JsonObject = new BJson();
@@ -161,7 +124,7 @@ namespace Machete.Runtime
             SyntaxErrorPrototype.Prototype = ErrorPrototype;
             TypeErrorPrototype.Prototype = ErrorPrototype;
             UriErrorPrototype.Prototype = ErrorPrototype;
-            
+
             ObjectConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(ObjectPrototype), false);
             FunctionConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(FunctionPrototype), false);
             ArrayConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(ArrayPrototype), false);
@@ -212,12 +175,18 @@ namespace Machete.Runtime
             GlobalObject.DefineOwnProperty("Math", new SPropertyDescriptor(MathObject), false);
             GlobalObject.DefineOwnProperty("JSON", new SPropertyDescriptor(JsonObject), false);
         }
-        
+
+
+        public object ExecuteScript(string script)
+        {
+            return null;
+        }
+                
+
         internal static NArray ConstructArray()
         {
             return (NArray)Instance.Value.ArrayConstructor.Op_Construct(SList.Empty);
         }
-
 
         internal static Exception ThrowEvalError()
         {

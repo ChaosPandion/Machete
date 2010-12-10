@@ -66,7 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code.cs" />
-    <Compile Include="Engine.cs" />
+    <Compile Include="Environment.cs" />
     <Compile Include="ExecutionContext.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\BObject.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
