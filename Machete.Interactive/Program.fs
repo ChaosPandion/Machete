@@ -125,7 +125,11 @@ module Program =
                             | SetTimeout timeout ->
                                 writeNewLineStart ()
                                 writeColored ("The timeout value has been changed to " + timeout.ToString() + ".") ConsoleColor.DarkCyan 
-                                writeNewLineStart ()                        
+                                writeNewLineStart ()  
+                            | Echo message ->
+                                writeNewLineStart ()    
+                                writeColored message ConsoleColor.Green 
+                                writeNewLineStart () 
                         | Failure (m, e, s) ->
                             writeNewLineStart ()
                             writeColored ("Error:") ConsoleColor.Red 
