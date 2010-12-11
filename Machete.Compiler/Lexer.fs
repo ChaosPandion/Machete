@@ -804,10 +804,6 @@ module Lexer =
                     | Comment (MultiLineComment ct) ->
                         if ct |> Seq.exists CharSets.lineTerminatorCharSet.Contains then
                             yield LineTerminator
-//                    | IdentifierName (_, _) ->
-//                        match reservedWordMap.TryFind (IdentifierName.evalIdentifierName v) with
-//                        | Some r -> yield r
-//                        | None -> yield v
                     | _ -> 
                         yield v
                     let index = int p.Index + i

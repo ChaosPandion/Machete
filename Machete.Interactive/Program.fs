@@ -113,68 +113,34 @@ module Program =
                 if not (commandStart.IsMatch text) then
                     Console.WriteLine (engine.Value.ExecuteScript text)
                 else
-                    let r = run CommandParser.parse text
-                    match r with
-                    | Success (v, s, p) ->
-                        match v with
-                        | GetTimeout ->
+                    try
+                        let r = run CommandParser.parse text
+                        match r with
+                        | Success (v, s, p) ->
+                            match v with
+                            | GetTimeout ->
+                                writeNewLineStart ()
+                                writeColored ("The current timeout is " + (2000).ToString() + ".") ConsoleColor.DarkCyan
+                                writeNewLineStart ()  
+                            | SetTimeout timeout ->
+                                writeNewLineStart ()
+                                writeColored ("The timeout value has been changed to " + timeout.ToString() + ".") ConsoleColor.DarkCyan 
+                                writeNewLineStart ()                        
+                        | Failure (m, e, s) ->
                             writeNewLineStart ()
-                            writeColored ("The current timeout is " + (2000).ToString() + ".") ConsoleColor.DarkCyan
-                            writeNewLineStart ()  
-                        | SetTimeout timeout ->
-                            writeNewLineStart ()
-                            writeColored ("The timeout value has been changed to " + timeout.ToString() + ".") ConsoleColor.DarkCyan 
-                            writeNewLineStart ()                        
-                    | Failure (m, e, s) ->
+                            writeColored ("Error:") ConsoleColor.Red 
+                            writeStrings m 
+                    with | e ->
                         writeNewLineStart ()
-                        writeColored ("Error:") ConsoleColor.Red 
-                        writeStrings m    
+                        writeColored ("Error:") ConsoleColor.Red  
+                        writeStrings (e.Message + "\n" + e.StackTrace)
+                        writeNewLineStart () 
                     ()
             ()
     
     open System.Reflection
 
     let main () =
-
-        let f = "and eval{0} (state:State) =
-match state.Element with
-| Bitwise{0} (Nil, right) ->
-    eval{0} (state.WithElement right)
-| Bitwise{0} (left, right) ->
-    let inst = eval{0} (state.WithElement left)
-    let args = [| eval (state.WithElement right) |]
-    call inst Reflection.IDynamic.op_ args"
-
-
-        //repl ()
-        let r =
-            Reflection.FSharpType.GetUnionCases (typeof<Machete.Compiler.SourceElement>)
-            |> Array.map (fun m -> String.Format(f, m.Name))
-        let r = String.Join ("\r\n\r\n", r)
-        System.IO.File.WriteAllText ("E:\\Temp\\result.txt", r)
-        System.Diagnostics.Process.Start "E:\\Temp\\result.txt"
-        |> ignore
-//        let r = 
-//            Assembly.GetAssembly(typeof<Machete.IDynamic>).GetTypes()
-//            |> Array.toSeq
-//            |> Seq.filter (fun t -> t.IsInterface)
-//            |> Seq.map (
-//                fun it ->
-//                    let d = "module " + it.Name + " = \r\n    let t = typeof<" + it.FullName + ">\r\n"
-//                    let r = 
-//                        it.GetMethods()
-//                        |> Array.map (fun m -> "    let " + (m.Name.[0] |> Char.ToLower |> string) + m.Name.Substring 1 + " = t.GetMethod \"" + m.Name + "\"")
-//                    d + String.Join ("\r\n", r)
-//            )       
-//        let r = String.Join ("\r\n\r\n", r)
-//        let r = 
-//            typeof<Machete.Runtime.RuntimeTypes.Interfaces.IDynamic>.GetMethods()
-//            |> Array.map (fun m -> "let " + (m.Name.[0] |> Char.ToLower |> string) + m.Name.Substring 1 + " = t.GetMethod \"" + m.Name + "\"")
-//        let r = String.Join ("\r\n", r)
-        System.IO.File.WriteAllText ("E:\\Temp\\result.txt", r)
-        System.Diagnostics.Process.Start "E:\\Temp\\result.txt"
-        |> ignore
-        ()
-
+        repl ()
 
     main()

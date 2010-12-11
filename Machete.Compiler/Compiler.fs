@@ -167,17 +167,94 @@ type Compiler (environment:IEnvironment) =
                 | _ -> failwith ""
             call left mi [| right |]
 
-    and evalRelationalExpression (state:State) = constant 1
+    and evalRelationalExpression (state:State) =    
+        match state.Element with
+        | RelationalExpression (Nil, Nil, e) | RelationalExpressionNoIn (Nil, Nil, e) ->
+            evalShiftExpression (state.WithElement e)
+        | RelationalExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) 
+        | RelationalExpressionNoIn (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
+            let left = evalRelationalExpression (state.WithElement left)
+            let right = evalShiftExpression (state.WithElement right) 
+            let mi = 
+                match v with
+                | "<" -> Reflection.IDynamic.op_Lessthan
+                | ">" -> Reflection.IDynamic.op_Greaterthan
+                | "<=" -> Reflection.IDynamic.op_LessthanOrEqual
+                | ">=" -> Reflection.IDynamic.op_GreaterthanOrEqual
+                | "instanceof" -> Reflection.IDynamic.op_Instanceof
+                | "in" -> Reflection.IDynamic.op_In
+                | _ -> failwith ""
+            call left mi [| right |]
 
-    and evalShiftExpression (state:State) = constant 1
+    and evalShiftExpression (state:State) =    
+        match state.Element with
+        | ShiftExpression (Nil, Nil, e) ->
+            evalAdditiveExpression (state.WithElement e)
+        | ShiftExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
+            let left = evalShiftExpression (state.WithElement left)
+            let right = evalAdditiveExpression (state.WithElement right) 
+            let mi = 
+                match v with
+                | "<<" -> Reflection.IDynamic.op_LeftShift
+                | ">>" -> Reflection.IDynamic.op_SignedRightShift
+                | ">>>" -> Reflection.IDynamic.op_UnsignedRightShift
+            call left mi [| right |]
 
-    and evalAdditiveExpression (state:State) = constant 1
+    and evalAdditiveExpression (state:State) =    
+        match state.Element with
+        | AdditiveExpression (Nil, Nil, e) ->
+            evalMultiplicativeExpression (state.WithElement e)
+        | AdditiveExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
+            let left = evalAdditiveExpression (state.WithElement left)
+            let right = evalMultiplicativeExpression (state.WithElement right) 
+            let mi = 
+                match v with
+                | "+" -> Reflection.IDynamic.op_Addition
+                | "-" -> Reflection.IDynamic.op_Subtraction
+            call left mi [| right |]
 
-    and evalMultiplicativeExpression (state:State) = constant 1
+    and evalMultiplicativeExpression (state:State) =    
+        match state.Element with
+        | MultiplicativeExpression (Nil, Nil, e) ->
+            evalUnaryExpression (state.WithElement e)
+        | MultiplicativeExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right)
+        | MultiplicativeExpression (left, InputElement (Lexer.DivPunctuator (Lexer.Str v)), right) ->
+            let left = evalMultiplicativeExpression (state.WithElement left)
+            let right = evalUnaryExpression (state.WithElement right) 
+            let mi = 
+                match v with
+                | "*" -> Reflection.IDynamic.op_Multiplication
+                | "/" -> Reflection.IDynamic.op_Division
+                | "%" -> Reflection.IDynamic.op_Modulus
+            call left mi [| right |]
 
-    and evalUnaryExpression (state:State) = constant 1
+    and evalUnaryExpression (state:State) =    
+        match state.Element with
+        | UnaryExpression (Nil, e) ->
+            evalPostfixExpression (state.WithElement e)
+        | UnaryExpression (InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
+            let right = evalPostfixExpression (state.WithElement right) 
+            let mi = 
+                match v with
+                | "++" -> Reflection.IDynamic.op_PrefixIncrement
+                | "--" -> Reflection.IDynamic.op_PrefixDecrement
+                | "+" -> Reflection.IDynamic.op_Plus
+                | "-" -> Reflection.IDynamic.op_Minus
+                | "~" -> Reflection.IDynamic.op_BitwiseNot
+                | "!" -> Reflection.IDynamic.op_LogicalNot
+            call right mi [| |]
 
-    and evalPostfixExpression (state:State) = constant 1
+    and evalPostfixExpression (state:State) =    
+        match state.Element with
+        | PostfixExpression (e, Nil) ->
+            evalLeftHandSideExpression (state.WithElement e)
+        | PostfixExpression (e, InputElement (Lexer.Punctuator (Lexer.Str v))) ->
+            let right = evalLeftHandSideExpression (state.WithElement e) 
+            let mi = 
+                match v with
+                | "++" -> Reflection.IDynamic.op_PostfixIncrement
+                | "--" -> Reflection.IDynamic.op_PostfixDecrement
+            call right mi [| |]
 
     and evalMemberExpression (state:State) = constant 1
 
@@ -287,7 +364,7 @@ type Compiler (environment:IEnvironment) =
         let input = Parser.parse input
         let state = State (input, Map.empty, [], [])
         let body = evalProgram state
-        exp.Lambda<Code>(body, Seq.empty).Compile()
+        exp.Lambda<Code>(body, [| environmentParam |]).Compile()
 
     member this.Compile (input:SourceElement) =
         let state = State (input, Map.empty, [], [])
@@ -297,6 +374,6 @@ type Compiler (environment:IEnvironment) =
                 evalFunctionDeclaration state
             | FunctionExpression (_, _, _) ->
                 evalFunctionExpression state
-        exp.Lambda<Code>(body, Seq.empty).Compile()
+        exp.Lambda<Code>(body, [| environmentParam |]).Compile()
 
 
