@@ -41,7 +41,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FSharp.PowerPack">
-      <HintPath>..\References\FSharpPowerPack-2.0.0.0\bin\FSharp.PowerPack.dll</HintPath>
+      <HintPath>..\References\FSharp.PowerPack.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />

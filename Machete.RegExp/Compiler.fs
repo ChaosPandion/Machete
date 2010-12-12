@@ -6,9 +6,9 @@ module internal Compiler =
     open Machete.Compiler
     open Machete.Compiler.Lexer
     open Machete.Compiler.Parsers
-    open Machete.Compiler.Lexer.NumericLiteral
-    open Machete.Compiler.Lexer.StringLiteral
-    open Machete.Compiler.Lexer.IdentifierName
+    open Machete.Compiler.Lexer.NumericLiteralParser
+    open Machete.Compiler.Lexer.StringLiteralParser
+    open Machete.Compiler.Lexer.IdentifierNameParser
 
     type Max =
     | Bounded of int
@@ -194,7 +194,7 @@ module internal Compiler =
 
     let compile source = 
         assert(source <> null)        
-        let pattern = Parser.parse source
+        let pattern = Machete.RegExp.Parser.parse source
         match pattern with
         | Pattern(capturingGroupCount, disjunction) ->  
             let rec build node : Matcher =

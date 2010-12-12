@@ -2,7 +2,7 @@
 
 module Parser =
 
-    open Machete.Tools.BacktrackingPrimitives
+    open Machete.Compiler.Tools
 
 //    open FParsec.CharParsers
 //    open FParsec.Primitives
@@ -13,10 +13,10 @@ module Parser =
     let jsonValue, jsonValueRef : Parser<Token, unit, Node> * Parser<Token, unit, Node> ref = createParserRef()
     
     let jsonElementList =
-        manySeparatedFold jsonValue (like ValueSeparator) JsonNil (fun a b -> JsonElementList (a, b))
+        manySepFold jsonValue (satisfy (fun v -> v = ValueSeparator)) JsonNil (fun a b -> JsonElementList (a, b))
     
     let jsonArray =
-        between (like BeginArray) (like EndArray) (jsonElementList <|> result JsonNil) |>> JsonArray
+        between (satisfy (fun v -> v = BeginArray)) (satisfy (fun v -> v = EndArray)) (jsonElementList <|> result JsonNil) |>> JsonArray
     
     let jsonNumber = 
         parse {
@@ -53,19 +53,19 @@ module Parser =
     let jsonMember =
         parse {
             let! name = jsonString 
-            let! _ = like NameSeparator <?> "Expecting ':' following member name in member list of object."
-            let! value = jsonValue <?> "Expecting a value following member name separator ':' in member list of object."
+            let! _ = (satisfy (fun v -> v = NameSeparator)) //like NameSeparator //<?> "Expecting ':' following member name in member list of object."
+            let! value = jsonValue //<?> "Expecting a value following member name separator ':' in member list of object."
             return JsonMember (name, value)
         }
 
     let jsonMemberList =
-        manySeparatedFold jsonMember (like ValueSeparator) JsonNil (fun a b -> JsonMemberList (a, b))
+        manySepFold jsonMember (satisfy (fun v -> v = ValueSeparator)) JsonNil (fun a b -> JsonMemberList (a, b))
 
     let jsonObject =
         parse {
-            let! _ = like BeginObject
+            let! _ = (satisfy (fun v -> v = BeginObject))//like BeginObject
             let! v = jsonMemberList <|> result JsonNil
-            let! _ = like EndObject <?> "Missing closing brace for object."
+            let! _ = (satisfy (fun v -> v = EndObject))//like EndObject //<?> "Missing closing brace for object."
             return JsonObject v
         }
 
@@ -82,5 +82,5 @@ module Parser =
                 | Success (result, state) -> 
                     yield result
                 | Failure (message, state) -> 
-                    failwith message
+                    ()
         } |> Seq.toArray

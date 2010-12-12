@@ -7,8 +7,8 @@ module Lexer =
     open FParsec.Primitives
     open Machete.Compiler
     open Machete.Compiler.Lexer
-    open Machete.Compiler.Lexer.StringLiteral
-    open Machete.Compiler.Lexer.NumericLiteral
+    open Machete.Compiler.Lexer.StringLiteralParser
+    open Machete.Compiler.Lexer.NumericLiteralParser
     open Machete.Compiler.Parsers
     
 

@@ -6,9 +6,9 @@ module internal Parser =
     open FParsec.Primitives
     open FParsec.CharParsers
     open Machete.Compiler.Parsers
-    open Machete.Compiler.Lexer.NumericLiteral
-    open Machete.Compiler.Lexer.StringLiteral
-    open Machete.Compiler.Lexer.IdentifierName
+    open Machete.Compiler.Lexer.NumericLiteralParser
+    open Machete.Compiler.Lexer.StringLiteralParser
+    open Machete.Compiler.Lexer.IdentifierNameParser
 
 
     type State = {
