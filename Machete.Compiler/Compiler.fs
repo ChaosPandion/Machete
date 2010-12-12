@@ -15,7 +15,7 @@ type internal State (element:SourceElement, labelMap:Map<string, label>, breakLi
         member this.WithElement element = State (element, labelMap, breakList, continueList)
     end
 
-type Code = delegate of Machete.IEnvironment -> Machete.IDynamic
+type Code = IEnvironment -> IArgs -> IDynamic
 
 type Compiler (environment:IEnvironment) =
 
@@ -256,7 +256,22 @@ type Compiler (environment:IEnvironment) =
                 | "--" -> Reflection.IDynamic.op_PostfixDecrement
             call right mi [| |]
 
-    and evalMemberExpression (state:State) = constant 1
+    and evalMemberExpression (state:State) =    
+        match state.Element with
+        | MemberExpression (e, Nil) ->
+            match e with
+            | PrimaryExpression (_) ->
+                evalPrimaryExpression (state.WithElement e) 
+            | FunctionExpression (_, _, _) ->
+                evalFunctionExpression (state.WithElement e) 
+        | MemberExpression (e1, e2) ->
+            match e1, e2 with
+            | MemberExpression (_, _), Expression (_, _) -> constant 1 
+            | MemberExpression (_, _), InputElement (e3) -> constant 1  
+            | MemberExpression (_, _), Arguments (_) ->
+                let left = evalMemberExpression (state.WithElement e1)
+                let right = [| evalArguments (state.WithElement e2) |]
+                call left Reflection.IDynamic.op_Construct right 
 
     and evalArguments (state:State) = constant 1
 
@@ -264,11 +279,58 @@ type Compiler (environment:IEnvironment) =
 
     and evalCallExpression (state:State) = constant 1
 
-    and evalNewExpression (state:State) = constant 1
+    and evalNewExpression (state:State) =
+        match state.Element with
+        | NewExpression e ->
+            match e with
+            | MemberExpression (_, _) ->
+                evalMemberExpression (state.WithElement e)                
+            | NewExpression _ -> 
+                evalNewExpression (state.WithElement e)
 
-    and evalLeftHandSideExpression (state:State) = constant 1
+    and evalLeftHandSideExpression (state:State) =
+        match state.Element with
+        | LeftHandSideExpression e ->
+            match e with
+            | NewExpression _ -> 
+                evalNewExpression (state.WithElement e)
+            | CallExpression (_, _) -> 
+                evalCallExpression (state.WithElement e)
 
-    and evalPrimaryExpression (state:State) = constant 1
+    and evalPrimaryExpression (state:State) =
+        match state.Element with
+        | PrimaryExpression e ->
+            match e with
+            | InputElement e ->
+                match e with
+                | Lexer.IdentifierName (_, _) ->
+                    let context = call environmentParam Reflection.IEnvironment.get_Context [||]
+                    call context Reflection.IExecutionContext.get_ThisBinding [||]
+                | Lexer.Identifier e ->
+                    let identifier = Lexer.IdentifierNameParser.evalIdentifierName e
+                    let context = call environmentParam Reflection.IEnvironment.get_Context [||]
+                    let lex = call context Reflection.IExecutionContext.get_LexicalEnviroment [||]
+                    call lex Reflection.ILexicalEnvironment.getIdentifierReference [| constant identifier; constant false|]
+                | Lexer.Literal e ->
+                    match e with
+                    | Lexer.NullLiteral "null" ->
+                        call environmentParam Reflection.IEnvironment.get_Null Array.empty
+                    | Lexer.BooleanLiteral "true" ->
+                        call environmentParam Reflection.IEnvironment.createBoolean [| constant true |]
+                    | Lexer.BooleanLiteral "false" ->
+                        call environmentParam Reflection.IEnvironment.createBoolean [| constant false |]
+                    | Lexer.NumericLiteral _ ->
+                        call environmentParam Reflection.IEnvironment.createNumber [| constant (Lexer.NumericLiteralParser.evalNumericLiteral e) |]
+                    | Lexer.StringLiteral _ ->
+                        call environmentParam Reflection.IEnvironment.createString [| constant (Lexer.StringLiteralParser.evalStringLiteral e) |]
+                    | Lexer.RegularExpressionLiteral (_, _, _, _) ->
+                        constant 1
+            | ArrayLiteral (_, _) ->
+                evalArrayLiteral (state.WithElement e)    
+            | ObjectLiteral _ ->
+                evalObjectLiteral (state.WithElement e)    
+            | Expression (_, _) ->
+                evalExpression (state.WithElement e)  
 
     and evalObjectLiteral (state:State) = constant 1
 
@@ -286,7 +348,12 @@ type Compiler (environment:IEnvironment) =
 
     and evalElementList (state:State) = constant 1
 
-    and evalStatement (state:State) = constant 1
+    and evalStatement (state:State) =
+        match state.Element with
+        | Statement e ->
+            match e with
+            | ExpressionStatement e ->
+                evalExpressionStatement (state.WithElement e) 
 
     and evalBlock (state:State) = constant 1
 
@@ -308,7 +375,10 @@ type Compiler (environment:IEnvironment) =
 
     and evalEmptyStatement (state:State) = constant 1
 
-    and evalExpressionStatement (state:State) = constant 1
+    and evalExpressionStatement (state:State) =
+        match state.Element with
+        | ExpressionStatement e ->
+            evalExpression (state.WithElement e) 
 
     and evalIfStatement (state:State) = constant 1
 
@@ -352,13 +422,32 @@ type Compiler (environment:IEnvironment) =
 
     and evalFunctionBody (state:State) = constant 1
 
-    and evalSourceElement (state:State) = constant 1
+    and evalSourceElement (state:State) =
+        match state.Element with
+        | SourceElement e ->
+            match e with
+            | Statement _ ->
+                evalStatement (state.WithElement e) 
+            | FunctionDeclaration (_, _, _) ->
+                evalFunctionDeclaration (state.WithElement e) 
 
-    and evalSourceElements (state:State) = constant 1
+    and evalSourceElements (state:State) =
+        match state.Element with
+        | SourceElements (Nil, e) ->
+            evalSourceElement (state.WithElement e) 
+        | SourceElements (e1, e2) ->
+            let e1 = evalSourceElements (state.WithElement e1) 
+            let e2 = evalSourceElement (state.WithElement e2) 
+            block [|e1;e2|]          
 
-    and evalProgram (state:State) = constant 1
-
-    
+    and evalProgram (state:State) =
+        match state.Element with
+        | Program e ->
+            match e with
+            | Nil ->
+                exp.Empty() :> exp
+            | SourceElements (_, _) ->
+                evalSourceElements (state.WithElement e)    
 
     member this.Compile (input:string) =
         let input = Parser.parse input

@@ -3,4 +3,3 @@
 type Command =
 | GetTimeout
 | SetTimeout of int
-

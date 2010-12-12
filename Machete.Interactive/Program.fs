@@ -13,7 +13,7 @@ module Program =
     let getCursorTop () = Console.CursorTop  
     let setCursorTop value () = Console.CursorTop <- value     
     let getCursorLeft () = Console.CursorLeft     
-    let setCursorLeft value () = Console.CursorLeft <- value
+    let setCursorLeft value = Console.CursorLeft <- value
 
     let readChar () = Console.Read () |> char         
     let readKey () = Console.ReadKey true
@@ -89,7 +89,11 @@ module Program =
             writeString (bsMap.[r.Length])
             read lines (line.[0..line.Length - r.Length - 1])        
         | ConsoleModifiers.Shift, ConsoleKey.Tab ->
-            read lines line  
+            read lines line 
+        | _, ConsoleKey.LeftArrow ->
+            if getCursorLeft () > 4 then
+                setCursorLeft (getCursorLeft () - 1) 
+            read lines line 
         | _, ConsoleKey.Tab ->
             writeString tab
             read lines (line + tab)                   
@@ -125,7 +129,7 @@ module Program =
                             | SetTimeout timeout ->
                                 writeNewLineStart ()
                                 writeColored ("The timeout value has been changed to " + timeout.ToString() + ".") ConsoleColor.DarkCyan 
-                                writeNewLineStart ()                        
+                                writeNewLineStart ()                       
                         | Failure (m, e, s) ->
                             writeNewLineStart ()
                             writeColored ("Error:") ConsoleColor.Red 

@@ -16,7 +16,7 @@ module Lexer =
     | MultiLineComment of string
     | SingleLineComment of string
     | Token of InputElement
-    | Identifier
+    | Identifier of InputElement
     | IdentifierName of InputElement * InputElement
     | IdentifierStart of InputElement
     | IdentifierPart of InputElement
@@ -189,7 +189,7 @@ module Lexer =
         let parseComment<'a> : Parser<InputElement, 'a> =
             (parseMultiLineComment <|> parseSingleLineComment) |>> Comment
 
-    module NumericLiteral =
+    module NumericLiteralParser =
 
         open FParsec.CharParsers
         open FParsec.Primitives
@@ -380,11 +380,21 @@ module Lexer =
                 | _ -> invalidOp "Invalid DecimalLiteral pattern found."                  
             | _ -> invalidArg "v" "Expected DecimalLiteral."
 
-    module StringLiteral =
+        let evalNumericLiteral v =
+            match v with
+            | NumericLiteral v ->
+                match v with
+                | DecimalLiteral (_, _, _, _) ->
+                    evalDecimalLiteral v
+                | HexIntegerLiteral (_, _) ->
+                    evalHexIntegerLiteral v
+                
+
+    module StringLiteralParser =
 
         open FParsec.CharParsers
         open FParsec.Primitives
-        open NumericLiteral
+        open NumericLiteralParser
     
         let singleQuote<'a> : Parser<char, 'a> = 
             pchar '\''
@@ -552,12 +562,12 @@ module Lexer =
                 | _ -> invalidOp ""                 
             | _ -> invalidArg "v" "Expected StringLiteral."
 
-    module IdentifierName =
+    module IdentifierNameParser =
 
         open FParsec.CharParsers
         open FParsec.Primitives
-        open NumericLiteral
-        open StringLiteral
+        open NumericLiteralParser
+        open StringLiteralParser
 
         let unicodeLetter<'a> : Parser<InputElement, 'a> = 
             satisfy CharSets.unicodeLetterCharSet.Contains |>> UnicodeLetter
@@ -662,7 +672,7 @@ module Lexer =
 
     module RegularExpressionLiteral =
         let parseRegularExpressionFlags<'a> : Parser<InputElement, 'a> =
-            manyFold (RegularExpressionFlags (Nil, Nil)) (fun x y -> RegularExpressionFlags (x, y)) IdentifierName.identifierPart
+            manyFold (RegularExpressionFlags (Nil, Nil)) (fun x y -> RegularExpressionFlags (x, y)) IdentifierNameParser.identifierPart
         let parseRegularExpressionNonTerminator<'a> : Parser<InputElement, 'a> =
             satisfy (fun c -> not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr |>> RegularExpressionNonTerminator
         let parseRegularExpressionBackslashSequence<'a> : Parser<InputElement, 'a> =
@@ -717,7 +727,7 @@ module Lexer =
                     | Token element ->
                         match element with
                         | IdentifierName (_, _) ->
-                            match IdentifierName.evalIdentifierName element with
+                            match IdentifierNameParser.evalIdentifierName element with
                             | "true" | "false" | "null" | "this" -> DivPunctuator.parseDivPunctuator
                             | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral   
                         | Punctuator (Str "]")
@@ -733,10 +743,10 @@ module Lexer =
             WhiteSpace.parseWhiteSpace
             LineTerminator.parseLineTerminator
             Comment.parseComment
-            IdentifierName.identifierName
+            IdentifierNameParser.identifierName
             Punctuator.parsePunctuator
-            NumericLiteral.numericLiteral
-            StringLiteral.stringLiteral
+            NumericLiteralParser.numericLiteral
+            StringLiteralParser.stringLiteral
             divChoice  
         ]
 

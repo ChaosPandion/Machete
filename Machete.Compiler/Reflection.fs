@@ -3,6 +3,7 @@
 module Reflection =
     module IEnvironment = 
         let t = typeof<Machete.IEnvironment>
+        let get_Context = t.GetMethod "get_Context"
         let get_Undefined = t.GetMethod "get_Undefined"
         let get_Null = t.GetMethod "get_Null"
         let createBoolean = t.GetMethod "CreateBoolean"
@@ -12,6 +13,22 @@ module Reflection =
         let createObjectEnvironmentRecord = t.GetMethod "CreateObjectEnvironmentRecord"
         let constructArray = t.GetMethod "ConstructArray"
         let constructObject = t.GetMethod "ConstructObject"
+
+
+    module IExecutionContext =
+        let t = typeof<Machete.IExecutionContext>
+        let get_LexicalEnviroment = t.GetMethod "get_LexicalEnviroment"
+        let set_LexicalEnviroment = t.GetMethod "set_LexicalEnviroment"
+        let get_VariableEnviroment = t.GetMethod "get_VariableEnviroment"
+        let set_VariableEnviroment = t.GetMethod "set_VariableEnviroment"
+        let get_ThisBinding = t.GetMethod "get_ThisBinding"
+        let set_ThisBinding = t.GetMethod "set_ThisBinding"
+
+    module ILexicalEnvironment =
+        let t = typeof<Machete.ILexicalEnvironment>
+        let get_Record = t.GetMethod "get_Record"
+        let get_Parent = t.GetMethod "get_Parent"
+        let getIdentifierReference = t.GetMethod "GetIdentifierReference"    
 
     module IDynamic = 
         let t = typeof<Machete.IDynamic>

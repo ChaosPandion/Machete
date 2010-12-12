@@ -37,7 +37,7 @@ module Parser =
             let! v = passLineTerminator ()
             match v with
             | IdentifierName (x, y) 
-                when IdentifierName.evalIdentifierName v = value ->
+                when IdentifierNameParser.evalIdentifierName v = value ->
                         return v
             | _ -> ()
         }
@@ -47,7 +47,7 @@ module Parser =
             let! v = passLineTerminator ()
             match v with
             | IdentifierName (_, _) 
-                when value.Contains (IdentifierName.evalIdentifierName v) -> 
+                when value.Contains (IdentifierNameParser.evalIdentifierName v) -> 
                     return v
             | _ -> ()
         } 
@@ -57,8 +57,8 @@ module Parser =
             let! v = passLineTerminator ()
             match v with
             | IdentifierName (x, y)
-                when not (CharSets.reservedWordSet.Contains (IdentifierName.evalIdentifierName v)) ->
-                    return v
+                when not (CharSets.reservedWordSet.Contains (IdentifierNameParser.evalIdentifierName v)) ->
+                    return Identifier v
             | _ -> ()
         }  
             
@@ -140,7 +140,7 @@ module Parser =
             let! v = passLineTerminator ()
             match v with
             | IdentifierName (_, _) ->
-                match IdentifierName.evalIdentifierName v with
+                match IdentifierNameParser.evalIdentifierName v with
                 | "true" | "false" as s -> return Literal (BooleanLiteral s)
                 | "null" as s -> return Literal (NullLiteral s)
                 | _ -> ()
@@ -719,7 +719,7 @@ module Parser =
                 parse {
                     let! e1 = memberExpression
                     do! skip expectFullStop
-                    let! e2 = expression
+                    let! e2 = expectIdentifierName |>> InputElement
                     return MemberExpression (e1, e2)
                 }
                 parse {

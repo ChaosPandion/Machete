@@ -5,16 +5,30 @@ open System
 type IEnvironment = interface
         abstract member Undefined : IUndefined with get
         abstract member Null : INull with get
+        abstract member Context : IExecutionContext with get
         abstract member CreateBoolean : bool -> IBoolean
         abstract member CreateString : string -> IString
         abstract member CreateNumber : double -> INumber
         abstract member CreateDeclarativeEnvironmentRecord : unit -> IDeclarativeEnvironmentRecord
         abstract member CreateObjectEnvironmentRecord : unit -> IObjectEnvironmentRecord
+        abstract member ConstructArgs : seq<IDynamic> -> IArgs
         abstract member ConstructArray : unit -> IObject
         abstract member ConstructObject : unit -> IObject
         abstract member ConstructReferenceError : unit -> IObject
         abstract member ConstructTypeError : unit -> IObject
         abstract member ConstructSyntaxError : unit -> IObject
+    end
+
+and IExecutionContext = interface
+        abstract member LexicalEnviroment : IEnvironmentRecord with get, set
+        abstract member VariableEnviroment : ILexicalEnvironment with get, set
+        abstract member ThisBinding : IEnvironment with get, set
+    end
+
+and ILexicalEnvironment = interface
+        abstract member Record : IEnvironmentRecord with get
+        abstract member Parent : ILexicalEnvironment with get
+        abstract member GetIdentifierReference : string -> bool -> IDynamic
     end
 
 and IDynamic = interface
