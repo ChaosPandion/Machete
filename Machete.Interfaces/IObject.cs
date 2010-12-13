@@ -1,6 +1,6 @@
 ﻿namespace Machete.Interfaces
 {
-    public interface IObject : IDynamic
+    public interface IObject : IDynamic, IReferenceBase
     {
         IObject Prototype { get; set; }
         string Class { get; set; }
