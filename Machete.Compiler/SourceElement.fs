@@ -113,7 +113,7 @@
     | PropertyName of InputElement
     | PropertySetParameterList of InputElement
     | ArrayLiteral of SourceElement * SourceElement
-    | Elision of SourceElement * InputElement
+    | Elision of SourceElement
     | ElementList of SourceElement * SourceElement * SourceElement     
     | Statement of SourceElement
     | Block of SourceElement

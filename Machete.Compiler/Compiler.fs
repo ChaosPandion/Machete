@@ -342,9 +342,33 @@ type Compiler (environment:IEnvironment) =
 
     and evalPropertySetParameterList (state:State) = constant 1
 
-    and evalArrayLiteral (state:State) = constant 1
+    and evalArrayLiteral (state:State) =
+        match state.Element with
+        | ArrayLiteral (Nil, e) ->
+            let var = exp.Variable(Reflection.IObject.t, "array")
+            let construct = call environmentParam Reflection.IEnvironment.constructArray Array.empty
+            let assign = exp.Assign (var, construct) :> exp
+            let pad = call environmentParam Reflection.IEnvironment.createNumber [| constant (evalElision (state.WithElement e)) |]
+            let args = [| constant "length"; pad; constant false  |]
+            let put = call var Reflection.IObject.put args
+            exp.Block ([|var|], [|assign; put|]) :> exp
+        | ArrayLiteral (e, Nil) ->
+            evalElementList (state.WithElement e)
+        | ArrayLiteral (e1, e2) ->
+            let var = exp.Variable(Reflection.IObject.t, "array")
+            let assign = exp.Assign (var, evalElementList (state.WithElement e1)) :> exp
+            let pad = call environmentParam Reflection.IEnvironment.createNumber [| constant (evalElision (state.WithElement e2)) |]
+            let get = call var Reflection.IObject.get [| constant "length" |] 
+            let value = call (call pad Reflection.IDynamic.op_Addition [| get |]) Reflection.IDynamic.convertToUInt32 Array.empty
+            let put = call var Reflection.IObject.put [| constant "length"; value; constant false  |]
+            exp.Block ([|var|], [|assign; put|]) :> exp
 
-    and evalElision (state:State) = constant 1
+    and evalElision (state:State) =
+        match state.Element with
+        | Elision (Nil) -> 
+            1.0
+        | Elision (e) -> 
+            evalElision (state.WithElement e) + 1.0
 
     and evalElementList (state:State) = constant 1
 
@@ -355,7 +379,12 @@ type Compiler (environment:IEnvironment) =
             | ExpressionStatement e ->
                 evalExpressionStatement (state.WithElement e) 
 
-    and evalBlock (state:State) = constant 1
+    and evalBlock (state:State) =
+        match state.Element with
+        | Block Nil ->
+            exp.Empty() :> exp
+        | Block e ->
+            evalStatementList (state.WithElement e)    
 
     and evalStatementList (state:State) = constant 1
 

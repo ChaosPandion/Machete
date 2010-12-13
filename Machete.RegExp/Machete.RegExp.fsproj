@@ -40,6 +40,12 @@
     <DocumentationFile>bin\Release\Machete.Parsers.RegExp.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FParsec">
+      <HintPath>..\References\FParsec.dll</HintPath>
+    </Reference>
+    <Reference Include="FParsecCS">
+      <HintPath>..\References\FParsecCS.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
@@ -55,16 +61,6 @@
     <Compile Include="RegExp.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FParsecCS\FParsecCS.csproj">
-      <Name>FParsecCS</Name>
-      <Project>{d0204851-598c-4502-bb34-07a972741536}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\FParsec\FParsec.fsproj">
-      <Name>FParsec</Name>
-      <Project>{cbf9a79a-0316-4aad-ad31-c7947402ebe7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">
       <Name>Machete.Compiler</Name>
       <Project>{f4056a29-8845-4dfa-b551-35d7b27d5954}</Project>

@@ -3,14 +3,19 @@
 open System
 
 type IEnvironment = interface
+        abstract member Context : IExecutionContext with get
+
         abstract member Undefined : IUndefined with get
         abstract member Null : INull with get
-        abstract member Context : IExecutionContext with get
         abstract member CreateBoolean : bool -> IBoolean
         abstract member CreateString : string -> IString
         abstract member CreateNumber : double -> INumber
+
         abstract member CreateDeclarativeEnvironmentRecord : unit -> IDeclarativeEnvironmentRecord
         abstract member CreateObjectEnvironmentRecord : unit -> IObjectEnvironmentRecord
+        abstract member CreateDataDescriptor : IDynamic -> bool -> bool -> bool -> IPropertyDescriptor
+        abstract member CreateAccessorDescriptor : IDynamic -> IDynamic -> bool -> bool -> IPropertyDescriptor
+
         abstract member ConstructArgs : seq<IDynamic> -> IArgs
         abstract member ConstructArray : unit -> IObject
         abstract member ConstructObject : unit -> IObject

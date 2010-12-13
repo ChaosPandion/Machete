@@ -174,7 +174,7 @@ module Parser =
         manySepFold (tuple2 (elision <|> nil) assignmentExpression (fun t -> t)) expectComma SourceElement.Nil (fun x (y, z) -> ElementList (x, y, z))
 
     and elision = 
-        many1Fold expectComma SourceElement.Nil (fun x y -> Elision (x, y))
+        many1Fold expectComma SourceElement.Nil (fun x y -> Elision (x))
 
     and objectLiteral =
         parse {

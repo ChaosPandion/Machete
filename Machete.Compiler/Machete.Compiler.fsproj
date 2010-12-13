@@ -40,6 +40,12 @@
     <DocumentationFile>bin\Release\Machete.Compilers.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FParsec">
+      <HintPath>..\References\FParsec.dll</HintPath>
+    </Reference>
+    <Reference Include="FParsecCS">
+      <HintPath>..\References\FParsecCS.dll</HintPath>
+    </Reference>
     <Reference Include="FSharp.PowerPack">
       <HintPath>..\References\FSharp.PowerPack.dll</HintPath>
       <Private>True</Private>
@@ -63,16 +69,6 @@
     <Compile Include="SourceElementParser.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FParsecCS\FParsecCS.csproj">
-      <Name>FParsecCS</Name>
-      <Project>{d0204851-598c-4502-bb34-07a972741536}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\FParsec\FParsec.fsproj">
-      <Name>FParsec</Name>
-      <Project>{cbf9a79a-0316-4aad-ad31-c7947402ebe7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Machete\Machete.fsproj">
       <Name>Machete</Name>
       <Project>{882914a4-65af-444b-9c79-362361998e70}</Project>
