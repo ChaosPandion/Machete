@@ -6,11 +6,11 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.NativeObjects.BuiltinObjects;
 using System.Diagnostics.Contracts;
 using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
-using Machete.Runtime.RuntimeTypes.Interfaces;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public sealed class SObjectEnvironmentRecord : SEnvironmentRecord
+    public sealed class SObjectEnvironmentRecord : IObjectEnvironmentRecord
     {
         private readonly LObject _bindingObject;
         private readonly bool _provideThis;
@@ -22,13 +22,13 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             _provideThis = provideThis;
         }
 
-        public override bool HasBinding(string n)
+        public bool HasBinding(string n)
         {
             Contract.Assert(n != null);
             return _bindingObject.HasProperty(n);
         }
 
-        public override void CreateMutableBinding(string n, bool d)
+        public void CreateMutableBinding(string n, bool d)
         {
             Contract.Assert(n != null);
             var desc = new SPropertyDescriptor() { 
@@ -40,14 +40,14 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             _bindingObject.DefineOwnProperty(n, desc, false);
         }
 
-        public override void SetMutableBinding(string n, IDynamic v, bool s)
+        public void SetMutableBinding(string n, IDynamic v, bool s)
         {
             Contract.Assert(n != null);
             Contract.Assert(v != null);
             _bindingObject.Put(n, v, s);
         }
 
-        public override IDynamic GetBindingValue(string n, bool s)
+        public IDynamic GetBindingValue(string n, bool s)
         {
             Contract.Assert(n != null);
             if (!_bindingObject.HasProperty(n))
@@ -58,15 +58,25 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             return _bindingObject.Get(n);
         }
 
-        public override bool DeleteBinding(string n)
+        public bool DeleteBinding(string n)
         {
             Contract.Assert(n != null);
             return _bindingObject.Delete(n, false);
         }
 
-        public override IDynamic ImplicitThisValue()
+        public IDynamic ImplicitThisValue()
         {
             return _provideThis ? (IDynamic)_bindingObject : (IDynamic)LUndefined.Instance;
+        }
+
+        public IDynamic Get(string name, bool strict)
+        {
+            return GetBindingValue(name, strict);
+        }
+
+        public void Set(string name, IDynamic value, bool strict)
+        {
+            SetMutableBinding(name, value, strict);
         }
     }
 }

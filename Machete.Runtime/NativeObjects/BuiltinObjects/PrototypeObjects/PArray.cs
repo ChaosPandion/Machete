@@ -5,7 +5,6 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
-using Machete.Runtime.RuntimeTypes.Interfaces;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -41,622 +40,622 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //DefineOwnProperty("valueOf", SPropertyDescriptor.Create(new NFunction(null, () => ValueOf)), false);
         }
 
-        private IDynamic ToString(ExecutionContext context, SList args)
-        {
-            var obj = context.ThisBinding.ConvertToObject();
-            var func = obj.Get("join") as ICallable;
-            if (func == null) return new LString(string.Format("[object, {0}]", obj.Class));
-            return func.Call(obj, SList.Empty);  
-        }
+        //private IDynamic ToString(ExecutionContext context, SList args)
+        //{
+        //    var obj = context.ThisBinding.ConvertToObject();
+        //    var func = obj.Get("join") as ICallable;
+        //    if (func == null) return new LString(string.Format("[object, {0}]", obj.Class));
+        //    return func.Call(obj, SList.Empty);  
+        //}
 
-        private IDynamic ToLocaleString(ExecutionContext context, SList args)
-        {
-            var obj = context.ThisBinding.ConvertToObject();
-            var func = obj.Get("toString") as ICallable;
-            if (func == null) Environment.ThrowTypeError(); 
-            return func.Call(obj, SList.Empty);
-        }
+        //private IDynamic ToLocaleString(ExecutionContext context, SList args)
+        //{
+        //    var obj = context.ThisBinding.ConvertToObject();
+        //    var func = obj.Get("toString") as ICallable;
+        //    if (func == null) Environment.ThrowTypeError(); 
+        //    return func.Call(obj, SList.Empty);
+        //}
 
-        private IDynamic Concat(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = context.ThisBinding.ConvertToObject();
-            //var array = Engine.ConstructArray();
-            //var current = default(LType);
-            //var count = 0;
+        //private IDynamic Concat(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = context.ThisBinding.ConvertToObject();
+        //    //var array = Engine.ConstructArray();
+        //    //var current = default(LType);
+        //    //var count = 0;
 
-            //for (int i = -1; i < args.Count; i++)
-            //{
-            //    current = i < 0 ? obj : args[i];
-            //    if (!(current is LObject))
-            //    {
-            //        var desc = new SPropertyDescriptor(current, true, true, true);
-            //        array.DefineOwnProperty((count++).ToString(), desc, false);
-            //    }
-            //    else
-            //    {
-            //        var inner = current as NArray;
-            //        if (inner != null)
-            //        {
-            //            var length = (uint)inner.Get("length").ConvertToUInt32().Value;
-            //            for (int j = 0; j < length; j++)
-            //            {
-            //                var key = j.ToString();
-            //                if (inner.HasProperty(key))
-            //                {
-            //                    var desc = new SPropertyDescriptor(inner.Get(key), true, true, true);
-            //                    array.DefineOwnProperty((count++).ToString(), desc, false);
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-            //return array;
-        }
+        //    //for (int i = -1; i < args.Count; i++)
+        //    //{
+        //    //    current = i < 0 ? obj : args[i];
+        //    //    if (!(current is LObject))
+        //    //    {
+        //    //        var desc = new SPropertyDescriptor(current, true, true, true);
+        //    //        array.DefineOwnProperty((count++).ToString(), desc, false);
+        //    //    }
+        //    //    else
+        //    //    {
+        //    //        var inner = current as NArray;
+        //    //        if (inner != null)
+        //    //        {
+        //    //            var length = (uint)inner.Get("length").ConvertToUInt32().Value;
+        //    //            for (int j = 0; j < length; j++)
+        //    //            {
+        //    //                var key = j.ToString();
+        //    //                if (inner.HasProperty(key))
+        //    //                {
+        //    //                    var desc = new SPropertyDescriptor(inner.Get(key), true, true, true);
+        //    //                    array.DefineOwnProperty((count++).ToString(), desc, false);
+        //    //                }
+        //    //            }
+        //    //        }
+        //    //    }
+        //    //}
+        //    //return array;
+        //}
 
-        private IDynamic Join(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = context.ThisBinding.ConvertToObject();
-            //var length = (uint)obj.Get("length").ConvertToUInt32().Value;
-            //var separator = ", ";
+        //private IDynamic Join(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = context.ThisBinding.ConvertToObject();
+        //    //var length = (uint)obj.Get("length").ConvertToUInt32().Value;
+        //    //var separator = ", ";
 
-            //if (length == 0)
-            //{
-            //    return LString.Empty;
-            //}
+        //    //if (length == 0)
+        //    //{
+        //    //    return LString.Empty;
+        //    //}
 
-            //if (args.Count > 0)
-            //{
-            //    separator = args[0].ConvertToString().Value;
-            //}
+        //    //if (args.Count > 0)
+        //    //{
+        //    //    separator = args[0].ConvertToString().Value;
+        //    //}
 
-            //var sb = new StringBuilder();
-            //for (int i = 0; i < length; i++)
-            //{
-            //    if (sb.Length > 0)
-            //    {
-            //        sb.Append(separator);
-            //    }
-            //    sb.Append(obj.Get(i.ToString()).Value.ConvertToString().Value);
-            //}
-            //return new LString(sb.ToString());
-        }
+        //    //var sb = new StringBuilder();
+        //    //for (int i = 0; i < length; i++)
+        //    //{
+        //    //    if (sb.Length > 0)
+        //    //    {
+        //    //        sb.Append(separator);
+        //    //    }
+        //    //    sb.Append(obj.Get(i.ToString()).Value.ConvertToString().Value);
+        //    //}
+        //    //return new LString(sb.ToString());
+        //}
                 
-        private IDynamic Pop(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = context.ThisBinding.ConvertToObject();
-            //var length = obj.Get("length").ConvertToUInt32();
-            //if (length.Value == 0.0) return LUndefined.Instance;
-            //var index = (length.Value - 1).ToString();
-            //var element = obj.Get(index);
-            //obj.Delete(index, true);
-            //obj.Put("length", new LNumber(length.Value - 1.0), true);
-            //return element;
-        }
+        //private IDynamic Pop(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = context.ThisBinding.ConvertToObject();
+        //    //var length = obj.Get("length").ConvertToUInt32();
+        //    //if (length.Value == 0.0) return LUndefined.Instance;
+        //    //var index = (length.Value - 1).ToString();
+        //    //var element = obj.Get(index);
+        //    //obj.Delete(index, true);
+        //    //obj.Put("length", new LNumber(length.Value - 1.0), true);
+        //    //return element;
+        //}
 
-        private IDynamic Push(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //if (args.Count > 0)
-            //{
-            //    for (int i = 0; i < args.Count; i++, length++)
-            //    {
-            //        obj.Put(length.ToString(), args[i], true);
-            //    }
-            //    obj.Put("length", new NumberPrimitive(length), true);
-            //}
-            //return new NumberPrimitive(length);
-        }
+        //private IDynamic Push(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //if (args.Count > 0)
+        //    //{
+        //    //    for (int i = 0; i < args.Count; i++, length++)
+        //    //    {
+        //    //        obj.Put(length.ToString(), args[i], true);
+        //    //    }
+        //    //    obj.Put("length", new NumberPrimitive(length), true);
+        //    //}
+        //    //return new NumberPrimitive(length);
+        //}
 
-        private IDynamic Reverse(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var middle = Math.Floor(length / 2D);
-            //var lowerValue = default(IDynamic);
-            //var lowerExists = default(bool);
-            //var lowerKey = default(string);
-            //var lower = 0D;
-            //var upperValue = default(IDynamic);
-            //var upperExists = default(bool);
-            //var upperKey = default(string);
-            //var upper = 0D;
+        //private IDynamic Reverse(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var middle = Math.Floor(length / 2D);
+        //    //var lowerValue = default(IDynamic);
+        //    //var lowerExists = default(bool);
+        //    //var lowerKey = default(string);
+        //    //var lower = 0D;
+        //    //var upperValue = default(IDynamic);
+        //    //var upperExists = default(bool);
+        //    //var upperKey = default(string);
+        //    //var upper = 0D;
 
-            //while (lower != middle)
-            //{
-            //    upper = length - lower - 1D;
-            //    lowerKey = lower.ToString();
-            //    upperKey = upper.ToString();
-            //    lowerValue = obj.Get(lowerKey);
-            //    upperValue = obj.Get(upperKey);
-            //    lowerExists = obj.HasProperty(lowerKey);
-            //    upperExists = obj.HasProperty(upperKey);
-            //    if (lowerExists && upperExists)
-            //    {
-            //        obj.Put(lowerKey, upperValue, true);
-            //        obj.Put(upperKey, lowerValue, true);
-            //    }
-            //    else if (!lowerExists && upperExists)
-            //    {
-            //        obj.Put(lowerKey, upperValue, true);
-            //        obj.Delete(upperKey, true);
-            //    }
-            //    else if (lowerExists && !upperExists)
-            //    {
-            //        obj.Delete(lowerKey, true);
-            //        obj.Put(upperKey, lowerValue, true);
-            //    }
-            //    lower++;
-            //}
-            //return obj;
-        }
+        //    //while (lower != middle)
+        //    //{
+        //    //    upper = length - lower - 1D;
+        //    //    lowerKey = lower.ToString();
+        //    //    upperKey = upper.ToString();
+        //    //    lowerValue = obj.Get(lowerKey);
+        //    //    upperValue = obj.Get(upperKey);
+        //    //    lowerExists = obj.HasProperty(lowerKey);
+        //    //    upperExists = obj.HasProperty(upperKey);
+        //    //    if (lowerExists && upperExists)
+        //    //    {
+        //    //        obj.Put(lowerKey, upperValue, true);
+        //    //        obj.Put(upperKey, lowerValue, true);
+        //    //    }
+        //    //    else if (!lowerExists && upperExists)
+        //    //    {
+        //    //        obj.Put(lowerKey, upperValue, true);
+        //    //        obj.Delete(upperKey, true);
+        //    //    }
+        //    //    else if (lowerExists && !upperExists)
+        //    //    {
+        //    //        obj.Delete(lowerKey, true);
+        //    //        obj.Put(upperKey, lowerValue, true);
+        //    //    }
+        //    //    lower++;
+        //    //}
+        //    //return obj;
+        //}
 
-        private IDynamic Shift(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //if (length == 0)
-            //{
-            //    return new UndefinedPrimitive();
-            //}
-            //var first = obj.Get("0");
-            //var from = "";
-            //var to = "";
-            //for (int i = 1; i < length; i++)
-            //{
-            //    from = i.ToString();
-            //    to = (i - 1).ToString();
-            //    if (obj.HasProperty(from))
-            //    {
-            //        obj.Put(to, obj.Get(from), true);
-            //    }
-            //    else
-            //    {
-            //        obj.Delete(to, true);
-            //    }
-            //}
-            //obj.Delete((length - 1).ToString(), true);
-            //obj.Put("length", new NumberPrimitive(length - 1D), true);
-            //return first;
-        }
+        //private IDynamic Shift(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //if (length == 0)
+        //    //{
+        //    //    return new UndefinedPrimitive();
+        //    //}
+        //    //var first = obj.Get("0");
+        //    //var from = "";
+        //    //var to = "";
+        //    //for (int i = 1; i < length; i++)
+        //    //{
+        //    //    from = i.ToString();
+        //    //    to = (i - 1).ToString();
+        //    //    if (obj.HasProperty(from))
+        //    //    {
+        //    //        obj.Put(to, obj.Get(from), true);
+        //    //    }
+        //    //    else
+        //    //    {
+        //    //        obj.Delete(to, true);
+        //    //    }
+        //    //}
+        //    //obj.Delete((length - 1).ToString(), true);
+        //    //obj.Put("length", new NumberPrimitive(length - 1D), true);
+        //    //return first;
+        //}
 
-        private IDynamic Slice(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var start = Math.Floor(args[0].ToNumberPrimitive().Value);
-            //var end = args[1].IsUndefined ? length : Math.Floor(args[1].ToNumberPrimitive().Value);
-            //var currentIndex = (int)(start < 0 ? Math.Max(length + start, 0) : Math.Min(start, length)) - 1;
-            //var endIndex = (int)(end < 0 ? Math.Max(length + end, 0) : Math.Min(end, length));
-            //var splicedIndex = 0;
+        //private IDynamic Slice(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var start = Math.Floor(args[0].ToNumberPrimitive().Value);
+        //    //var end = args[1].IsUndefined ? length : Math.Floor(args[1].ToNumberPrimitive().Value);
+        //    //var currentIndex = (int)(start < 0 ? Math.Max(length + start, 0) : Math.Min(start, length)) - 1;
+        //    //var endIndex = (int)(end < 0 ? Math.Max(length + end, 0) : Math.Min(end, length));
+        //    //var splicedIndex = 0;
 
-            //while (++currentIndex < endIndex)
-            //{
-            //    if (obj.HasProperty(currentIndex.ToString()))
-            //    {
-            //        result.DefineOwnProperty((splicedIndex++).ToString(), Property.Create(obj.Get(currentIndex.ToString()), true, true, true), false);
-            //    }
-            //}
+        //    //while (++currentIndex < endIndex)
+        //    //{
+        //    //    if (obj.HasProperty(currentIndex.ToString()))
+        //    //    {
+        //    //        result.DefineOwnProperty((splicedIndex++).ToString(), Property.Create(obj.Get(currentIndex.ToString()), true, true, true), false);
+        //    //    }
+        //    //}
 
-            //return result;
-        }
+        //    //return result;
+        //}
 
-        private IDynamic Sort(ExecutionContext context, SList args)
-        {
+        //private IDynamic Sort(ExecutionContext context, SList args)
+        //{
 
-            throw new NotImplementedException();
+        //    throw new NotImplementedException();
 
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var callback = args[0]; // function(x, y) { }
-            //var isSparse = false;
-            //var hasNonConfigurable = false;
-            //var hasAccessor = false;
-            //var hasNonWritable = false;
-            //var protoHasProp = false;
-            //var defined = false;
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var callback = args[0]; // function(x, y) { }
+        //    //var isSparse = false;
+        //    //var hasNonConfigurable = false;
+        //    //var hasAccessor = false;
+        //    //var hasNonWritable = false;
+        //    //var protoHasProp = false;
+        //    //var defined = false;
 
-            //for (int i = 0; i < length; i++)
-            //{
-            //    var prop = obj.GetOwnProperty(i.ToString());
-            //    if (prop.IsUndefined)
-            //    {
-            //        isSparse = true;
-            //    }
-            //    else
-            //    {
-            //        if (prop.IsData)
-            //        {
-            //            if (!prop.Configurable.ToBooleanPrimitive())
-            //            {
-            //                hasNonConfigurable = true;
-            //            }
-            //            if (!prop.Writable.ToBooleanPrimitive())
-            //            {
-            //                hasNonWritable = true;
-            //            }
-            //        }
-            //        else if (prop.IsAccessor)
-            //        {
-            //            hasAccessor = true;
-            //        }
-            //    }
-            //}
+        //    //for (int i = 0; i < length; i++)
+        //    //{
+        //    //    var prop = obj.GetOwnProperty(i.ToString());
+        //    //    if (prop.IsUndefined)
+        //    //    {
+        //    //        isSparse = true;
+        //    //    }
+        //    //    else
+        //    //    {
+        //    //        if (prop.IsData)
+        //    //        {
+        //    //            if (!prop.Configurable.ToBooleanPrimitive())
+        //    //            {
+        //    //                hasNonConfigurable = true;
+        //    //            }
+        //    //            if (!prop.Writable.ToBooleanPrimitive())
+        //    //            {
+        //    //                hasNonWritable = true;
+        //    //            }
+        //    //        }
+        //    //        else if (prop.IsAccessor)
+        //    //        {
+        //    //            hasAccessor = true;
+        //    //        }
+        //    //    }
+        //    //}
 
-            //if (!callback.IsUndefined)
-            //{
-            //    var proto = obj.Prototype;
-            //    if (proto != null)
-            //    {
-            //        for (int i = 0; i < length; i++)
-            //        {
-            //            if (proto.HasProperty(i.ToString()))
-            //            {
-            //                protoHasProp = true;
-            //            }
-            //        }
-            //    }
-            //}
+        //    //if (!callback.IsUndefined)
+        //    //{
+        //    //    var proto = obj.Prototype;
+        //    //    if (proto != null)
+        //    //    {
+        //    //        for (int i = 0; i < length; i++)
+        //    //        {
+        //    //            if (proto.HasProperty(i.ToString()))
+        //    //            {
+        //    //                protoHasProp = true;
+        //    //            }
+        //    //        }
+        //    //    }
+        //    //}
 
-            //defined = (isSparse && (hasNonConfigurable || hasNonWritable || hasAccessor || protoHasProp));
-        }
+        //    //defined = (isSparse && (hasNonConfigurable || hasNonWritable || hasAccessor || protoHasProp));
+        //}
 
-        private IDynamic Splice(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-        }
+        //private IDynamic Splice(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        private IDynamic Unshift(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-        }
+        //private IDynamic Unshift(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        private IDynamic IndexOf(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //private IDynamic IndexOf(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
 
-            //if (length == 0)
-            //{
-            //    return new NumberPrimitive(-1D);
-            //}
+        //    //if (length == 0)
+        //    //{
+        //    //    return new NumberPrimitive(-1D);
+        //    //}
 
-            //var searchElement = args[0];
-            //var fromIndex = Math.Max(Math.Floor(args[1].ToNumberPrimitive().Value), 0D);
+        //    //var searchElement = args[0];
+        //    //var fromIndex = Math.Max(Math.Floor(args[1].ToNumberPrimitive().Value), 0D);
 
-            //if (fromIndex >= length)
-            //{
-            //    return new NumberPrimitive(-1D);
-            //}
+        //    //if (fromIndex >= length)
+        //    //{
+        //    //    return new NumberPrimitive(-1D);
+        //    //}
 
-            //for (int i = (int)fromIndex; i < length; i++)
-            //{
-            //    if (obj.HasProperty(i.ToString()))
-            //    {
-            //        if (obj.Get(i.ToString()).Execute(BinaryOp.StrictEqual, searchElement).ToBooleanPrimitive())
-            //        {
-            //            return new NumberPrimitive(i);
-            //        }
-            //    }
-            //}
+        //    //for (int i = (int)fromIndex; i < length; i++)
+        //    //{
+        //    //    if (obj.HasProperty(i.ToString()))
+        //    //    {
+        //    //        if (obj.Get(i.ToString()).Execute(BinaryOp.StrictEqual, searchElement).ToBooleanPrimitive())
+        //    //        {
+        //    //            return new NumberPrimitive(i);
+        //    //        }
+        //    //    }
+        //    //}
 
-            //return new NumberPrimitive(-1D);
-        }
+        //    //return new NumberPrimitive(-1D);
+        //}
 
-        private IDynamic LastIndexOf(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //private IDynamic LastIndexOf(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
 
-            //if (length == 0)
-            //{
-            //    return new NumberPrimitive(-1D);
-            //}
+        //    //if (length == 0)
+        //    //{
+        //    //    return new NumberPrimitive(-1D);
+        //    //}
 
-            //var searchElement = args[0];
-            //var fromIndex = Math.Max(Math.Floor(args[1].ToNumberPrimitive().Value), 0D);
+        //    //var searchElement = args[0];
+        //    //var fromIndex = Math.Max(Math.Floor(args[1].ToNumberPrimitive().Value), 0D);
 
-            //if (fromIndex >= length)
-            //{
-            //    return new NumberPrimitive(-1D);
-            //}
-            //else if (fromIndex == 0D)
-            //{
-            //    fromIndex = (double)(length - 1);
-            //}
-            //else if (fromIndex > 0)
-            //{
-            //    fromIndex = Math.Min(fromIndex, (double)(length - 1));
-            //}
+        //    //if (fromIndex >= length)
+        //    //{
+        //    //    return new NumberPrimitive(-1D);
+        //    //}
+        //    //else if (fromIndex == 0D)
+        //    //{
+        //    //    fromIndex = (double)(length - 1);
+        //    //}
+        //    //else if (fromIndex > 0)
+        //    //{
+        //    //    fromIndex = Math.Min(fromIndex, (double)(length - 1));
+        //    //}
 
-            //for (int i = (int)fromIndex; i >= 0; --i)
-            //{
-            //    if (obj.HasProperty(i.ToString()))
-            //    {
-            //        if (obj.Get(i.ToString()).Execute(BinaryOp.StrictEqual, searchElement).ToBooleanPrimitive())
-            //        {
-            //            return new NumberPrimitive(i);
-            //        }
-            //    }
-            //}
+        //    //for (int i = (int)fromIndex; i >= 0; --i)
+        //    //{
+        //    //    if (obj.HasProperty(i.ToString()))
+        //    //    {
+        //    //        if (obj.Get(i.ToString()).Execute(BinaryOp.StrictEqual, searchElement).ToBooleanPrimitive())
+        //    //        {
+        //    //            return new NumberPrimitive(i);
+        //    //        }
+        //    //    }
+        //    //}
 
-            //return new NumberPrimitive(-1D);
-        }
+        //    //return new NumberPrimitive(-1D);
+        //}
 
-        private IDynamic Every(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var callback = args.Get<ICallable>(0);
-            //var thisArg = args[1];
+        //private IDynamic Every(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var callback = args.Get<ICallable>(0);
+        //    //var thisArg = args[1];
 
-            //if (callback == null)
-            //{
-            //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-            //}
+        //    //if (callback == null)
+        //    //{
+        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
+        //    //}
 
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-            //for (int i = 0; i < length; i++)
-            //{
-            //    if (obj.HasProperty(i.ToString()))
-            //    {
-            //        callbackArgs[0] = obj.Get(i.ToString());
-            //        callbackArgs[1] = new NumberPrimitive(i);
-            //        if (!callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
-            //        {
-            //            return new BooleanPrimitive(false);
-            //        }
-            //    }
-            //}
-            //return new BooleanPrimitive(true);
-        }
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
+        //    //for (int i = 0; i < length; i++)
+        //    //{
+        //    //    if (obj.HasProperty(i.ToString()))
+        //    //    {
+        //    //        callbackArgs[0] = obj.Get(i.ToString());
+        //    //        callbackArgs[1] = new NumberPrimitive(i);
+        //    //        if (!callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
+        //    //        {
+        //    //            return new BooleanPrimitive(false);
+        //    //        }
+        //    //    }
+        //    //}
+        //    //return new BooleanPrimitive(true);
+        //}
 
-        private IDynamic Some(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var callback = args.Get<ICallable>(0);
-            //var thisArg = args[1];
+        //private IDynamic Some(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var callback = args.Get<ICallable>(0);
+        //    //var thisArg = args[1];
 
-            //if (callback == null)
-            //{
-            //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-            //}
+        //    //if (callback == null)
+        //    //{
+        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
+        //    //}
 
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-            //var key = default(string);
-            //for (int i = 0; i < length; i++)
-            //{
-            //    key = i.ToString();
-            //    if (obj.HasProperty(key))
-            //    {
-            //        callbackArgs[0] = obj.Get(key);
-            //        callbackArgs[1] = new NumberPrimitive(i);
-            //        if (callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
-            //        {
-            //            return new BooleanPrimitive(true);
-            //        }
-            //    }
-            //}
-            //return new BooleanPrimitive(false);
-        }
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
+        //    //var key = default(string);
+        //    //for (int i = 0; i < length; i++)
+        //    //{
+        //    //    key = i.ToString();
+        //    //    if (obj.HasProperty(key))
+        //    //    {
+        //    //        callbackArgs[0] = obj.Get(key);
+        //    //        callbackArgs[1] = new NumberPrimitive(i);
+        //    //        if (callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
+        //    //        {
+        //    //            return new BooleanPrimitive(true);
+        //    //        }
+        //    //    }
+        //    //}
+        //    //return new BooleanPrimitive(false);
+        //}
 
-        private IDynamic ForEach(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var callback = args.Get<ICallable>(0);
-            //var thisArg = args[1];
+        //private IDynamic ForEach(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var callback = args.Get<ICallable>(0);
+        //    //var thisArg = args[1];
 
-            //if (callback == null)
-            //{
-            //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-            //}
+        //    //if (callback == null)
+        //    //{
+        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
+        //    //}
 
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-            //var key = default(string);
-            //for (int i = 0; i < length; i++)
-            //{
-            //    key = i.ToString();
-            //    if (obj.HasProperty(key))
-            //    {
-            //        callbackArgs[0] = obj.Get(key);
-            //        callbackArgs[1] = new NumberPrimitive(i);
-            //        callback.Call(thisArg, callbackArgs);
-            //    }
-            //}
-            //return new UndefinedPrimitive();
-        }
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
+        //    //var key = default(string);
+        //    //for (int i = 0; i < length; i++)
+        //    //{
+        //    //    key = i.ToString();
+        //    //    if (obj.HasProperty(key))
+        //    //    {
+        //    //        callbackArgs[0] = obj.Get(key);
+        //    //        callbackArgs[1] = new NumberPrimitive(i);
+        //    //        callback.Call(thisArg, callbackArgs);
+        //    //    }
+        //    //}
+        //    //return new UndefinedPrimitive();
+        //}
 
-        private IDynamic Map(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var callback = args.Get<ICallable>(0);
-            //var thisArg = args[1];
+        //private IDynamic Map(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var callback = args.Get<ICallable>(0);
+        //    //var thisArg = args[1];
 
-            //if (callback == null)
-            //{
-            //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-            //}
+        //    //if (callback == null)
+        //    //{
+        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
+        //    //}
 
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-            //var key = default(string);
-            //for (int i = 0; i < length; i++)
-            //{
-            //    key = i.ToString();
-            //    if (obj.HasProperty(key))
-            //    {
-            //        callbackArgs[0] = obj.Get(key);
-            //        callbackArgs[1] = new NumberPrimitive(i);
-            //        result.DefineOwnProperty(key, Property.Create(callback.Call(thisArg, callbackArgs), true, true, true), false);
-            //    }
-            //}
-            //return result;
-        }
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
+        //    //var key = default(string);
+        //    //for (int i = 0; i < length; i++)
+        //    //{
+        //    //    key = i.ToString();
+        //    //    if (obj.HasProperty(key))
+        //    //    {
+        //    //        callbackArgs[0] = obj.Get(key);
+        //    //        callbackArgs[1] = new NumberPrimitive(i);
+        //    //        result.DefineOwnProperty(key, Property.Create(callback.Call(thisArg, callbackArgs), true, true, true), false);
+        //    //    }
+        //    //}
+        //    //return result;
+        //}
 
-        private IDynamic Filter(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var callback = args.Get<ICallable>(0);
-            //var thisArg = args[1];
+        //private IDynamic Filter(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var callback = args.Get<ICallable>(0);
+        //    //var thisArg = args[1];
 
-            //if (callback == null)
-            //{
-            //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-            //}
+        //    //if (callback == null)
+        //    //{
+        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
+        //    //}
 
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-            //var key = default(string);
-            //var to = 0D;
-            //for (int i = 0; i < length; i++)
-            //{
-            //    key = i.ToString();
-            //    if (obj.HasProperty(key))
-            //    {
-            //        callbackArgs[0] = obj.Get(key);
-            //        callbackArgs[1] = new NumberPrimitive(i);
-            //        if (callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
-            //        {
-            //            result.DefineOwnProperty(to.ToString(), Property.Create(callbackArgs[0], true, true, true), false);
-            //            to++;
-            //        }
-            //    }
-            //}
-            //return result;
-        }
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
+        //    //var key = default(string);
+        //    //var to = 0D;
+        //    //for (int i = 0; i < length; i++)
+        //    //{
+        //    //    key = i.ToString();
+        //    //    if (obj.HasProperty(key))
+        //    //    {
+        //    //        callbackArgs[0] = obj.Get(key);
+        //    //        callbackArgs[1] = new NumberPrimitive(i);
+        //    //        if (callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
+        //    //        {
+        //    //            result.DefineOwnProperty(to.ToString(), Property.Create(callbackArgs[0], true, true, true), false);
+        //    //            to++;
+        //    //        }
+        //    //    }
+        //    //}
+        //    //return result;
+        //}
 
-        private IDynamic Reduce(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var callback = args.Get<ICallable>(0);
-            //var initialValue = args[1];
+        //private IDynamic Reduce(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var callback = args.Get<ICallable>(0);
+        //    //var initialValue = args[1];
 
-            //if (callback == null)
-            //{
-            //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-            //}
-            //else if (length == 0 && args.Count == 1)
-            //{
-            //    throw new TypeError("For a zero length array an initial value is required.");
-            //}
+        //    //if (callback == null)
+        //    //{
+        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
+        //    //}
+        //    //else if (length == 0 && args.Count == 1)
+        //    //{
+        //    //    throw new TypeError("For a zero length array an initial value is required.");
+        //    //}
 
-            //var callArgs = new Args(new IDynamic[] { null, null, null, obj });
-            //var accumulator = args.Count == 1 ? default(IDynamic) : initialValue;
-            //var index = -1;
-            //var present = false;
+        //    //var callArgs = new Args(new IDynamic[] { null, null, null, obj });
+        //    //var accumulator = args.Count == 1 ? default(IDynamic) : initialValue;
+        //    //var index = -1;
+        //    //var present = false;
 
-            //while (++index < length)
-            //{
-            //    if ((present = obj.HasProperty(index.ToString())))
-            //    {
-            //        accumulator = obj.Get(index.ToString());
-            //        break;
-            //    }
-            //}
+        //    //while (++index < length)
+        //    //{
+        //    //    if ((present = obj.HasProperty(index.ToString())))
+        //    //    {
+        //    //        accumulator = obj.Get(index.ToString());
+        //    //        break;
+        //    //    }
+        //    //}
 
-            //if (!present)
-            //{
-            //    throw new TypeError("An accumulator value could not be found.");
-            //}
+        //    //if (!present)
+        //    //{
+        //    //    throw new TypeError("An accumulator value could not be found.");
+        //    //}
 
-            //while (++index < length)
-            //{
-            //    if (obj.HasProperty(index.ToString()))
-            //    {
-            //        callArgs[0] = accumulator;
-            //        callArgs[1] = obj.Get(index.ToString());
-            //        callArgs[2] = new NumberPrimitive(index);
-            //        callArgs[3] = obj;
-            //        accumulator = callback.Call(new UndefinedPrimitive(), callArgs);
-            //    }
-            //}
+        //    //while (++index < length)
+        //    //{
+        //    //    if (obj.HasProperty(index.ToString()))
+        //    //    {
+        //    //        callArgs[0] = accumulator;
+        //    //        callArgs[1] = obj.Get(index.ToString());
+        //    //        callArgs[2] = new NumberPrimitive(index);
+        //    //        callArgs[3] = obj;
+        //    //        accumulator = callback.Call(new UndefinedPrimitive(), callArgs);
+        //    //    }
+        //    //}
 
-            //return accumulator;
-        }
+        //    //return accumulator;
+        //}
 
-        private IDynamic ReduceRight(ExecutionContext context, SList args)
-        {
-            throw new NotImplementedException();
-            //var obj = engine.Context.ThisBinding.ToObject();
-            //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-            //var callback = args.Get<ICallable>(0);
-            //var initialValue = args[1];
+        //private IDynamic ReduceRight(ExecutionContext context, SList args)
+        //{
+        //    throw new NotImplementedException();
+        //    //var obj = engine.Context.ThisBinding.ToObject();
+        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+        //    //var callback = args.Get<ICallable>(0);
+        //    //var initialValue = args[1];
 
-            //if (callback == null)
-            //{
-            //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-            //}
-            //else if (length == 0 && args.Count == 1)
-            //{
-            //    throw new TypeError("For a zero length array an initial value is required.");
-            //}
+        //    //if (callback == null)
+        //    //{
+        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
+        //    //}
+        //    //else if (length == 0 && args.Count == 1)
+        //    //{
+        //    //    throw new TypeError("For a zero length array an initial value is required.");
+        //    //}
 
-            //var callArgs = new Args(new IDynamic[] { null, null, null, obj });
-            //var accumulator = args.Count == 1 ? default(IDynamic) : initialValue;
-            //var index = length;
-            //var present = false;
+        //    //var callArgs = new Args(new IDynamic[] { null, null, null, obj });
+        //    //var accumulator = args.Count == 1 ? default(IDynamic) : initialValue;
+        //    //var index = length;
+        //    //var present = false;
 
-            //while (--index >= 0)
-            //{
-            //    if ((present = obj.HasProperty(index.ToString())))
-            //    {
-            //        accumulator = obj.Get(index.ToString());
-            //        break;
-            //    }
-            //}
+        //    //while (--index >= 0)
+        //    //{
+        //    //    if ((present = obj.HasProperty(index.ToString())))
+        //    //    {
+        //    //        accumulator = obj.Get(index.ToString());
+        //    //        break;
+        //    //    }
+        //    //}
 
-            //if (!present)
-            //{
-            //    throw new TypeError("An accumulator value could not be found.");
-            //}
+        //    //if (!present)
+        //    //{
+        //    //    throw new TypeError("An accumulator value could not be found.");
+        //    //}
 
-            //while (--index >= 0)
-            //{
-            //    if (obj.HasProperty(index.ToString()))
-            //    {
-            //        callArgs[0] = accumulator;
-            //        callArgs[1] = obj.Get(index.ToString());
-            //        callArgs[2] = new NumberPrimitive(index);
-            //        callArgs[3] = obj;
-            //        accumulator = callback.Call(new UndefinedPrimitive(), callArgs);
-            //    }
-            //}
+        //    //while (--index >= 0)
+        //    //{
+        //    //    if (obj.HasProperty(index.ToString()))
+        //    //    {
+        //    //        callArgs[0] = accumulator;
+        //    //        callArgs[1] = obj.Get(index.ToString());
+        //    //        callArgs[2] = new NumberPrimitive(index);
+        //    //        callArgs[3] = obj;
+        //    //        accumulator = callback.Call(new UndefinedPrimitive(), callArgs);
+        //    //    }
+        //    //}
 
-            //return accumulator;
-        }
+        //    //return accumulator;
+        //}
 
-        private bool IsSparse(LObject obj, int length)
-        {
-            throw new NotImplementedException();
-            //for (int i = 0; i < length; i++)
-            //{
-            //    if (obj.GetOwnProperty(i.ToString()).IsUndefined)
-            //    {
-            //        return true;
-            //    }
-            //}
-            //return false;
-        }
+        //private bool IsSparse(LObject obj, int length)
+        //{
+        //    throw new NotImplementedException();
+        //    //for (int i = 0; i < length; i++)
+        //    //{
+        //    //    if (obj.GetOwnProperty(i.ToString()).IsUndefined)
+        //    //    {
+        //    //        return true;
+        //    //    }
+        //    //}
+        //    //return false;
+        //}
     }
 }

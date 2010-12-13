@@ -5,26 +5,26 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.NativeObjects.BuiltinObjects;
 using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
-using Machete.Runtime.RuntimeTypes.Interfaces;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public sealed class SDeclarativeEnvironmentRecord : SEnvironmentRecord
+    public sealed class SDeclarativeEnvironmentRecord : IDeclarativeEnvironmentRecord
     {
         private readonly Dictionary<string, Binding> _bindings = new Dictionary<string, Binding>();
 
 
-        public override bool HasBinding(string n)
+        public bool HasBinding(string n)
         {
             return _bindings.ContainsKey(n);
         }
 
-        public override void CreateMutableBinding(string n, bool d)
+        public void CreateMutableBinding(string n, bool d)
         {
             _bindings.Add(n, new Binding(d ? BFlags.Deletable : BFlags.None));
         }
 
-        public override void SetMutableBinding(string n, IDynamic v, bool s)
+        public void SetMutableBinding(string n, IDynamic v, bool s)
         {
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Immutable) == BFlags.Immutable)
@@ -34,7 +34,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             binding.Value = v;
         }
 
-        public override IDynamic GetBindingValue(string n, bool s)
+        public IDynamic GetBindingValue(string n, bool s)
         {
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Uninitialized) == BFlags.Uninitialized)
@@ -45,7 +45,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             return binding.Value;
         }
 
-        public override bool DeleteBinding(string n)
+        public bool DeleteBinding(string n)
         {
             var binding = default(Binding);
             if (!_bindings.TryGetValue(n, out binding))
@@ -60,9 +60,19 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             return true;
         }
 
-        public override IDynamic ImplicitThisValue()
+        public IDynamic ImplicitThisValue()
         {
             return LUndefined.Instance;
+        }
+
+        public IDynamic Get(string name, bool strict)
+        {
+            return GetBindingValue(name, strict);
+        }
+
+        public void Set(string name, IDynamic value, bool strict)
+        {
+            SetMutableBinding(name, value, strict);
         }
 
         public void CreateImmutableBinding(string n)

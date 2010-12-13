@@ -5,26 +5,22 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using System.Reflection;
-using Machete.Runtime.RuntimeTypes.Interfaces;
+using Machete.Interfaces;
 
 namespace Machete.Runtime
 {
-    public class ExecutionContext
+    public sealed class ExecutionContext : IExecutionContext
     {
-        public SLexicalEnvironment LexicalEnviroment { get; set; }
-        public SLexicalEnvironment VariableEnviroment { get; set; }
+        public ILexicalEnvironment LexicalEnviroment { get; set; }
+        public ILexicalEnvironment VariableEnviroment { get; set; }
         public IDynamic ThisBinding { get; set; }
 
 
-        public ExecutionContext(SLexicalEnvironment enviroment, IDynamic thisBinding)
+        public ExecutionContext(ILexicalEnvironment enviroment, IDynamic thisBinding)
         {
             LexicalEnviroment = enviroment;
             VariableEnviroment = enviroment;
             ThisBinding = thisBinding;
         }
-
-
-
-
     }
 }

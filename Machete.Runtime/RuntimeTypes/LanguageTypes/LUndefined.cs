@@ -1,26 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Machete.Runtime.RuntimeTypes.Interfaces;
-using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+﻿using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LUndefined : IDynamic, IReferenceBase
+    public struct LUndefined : IUndefined
     {
         public static readonly LUndefined Instance = new LUndefined();
         public static readonly LString UndefinedString = new LString("undefined");
         
 
-        public LTypeCode TypeCode
+        public LanguageTypeCode TypeCode
         {
-            get { return LTypeCode.LUndefined; }
+            get { return LanguageTypeCode.Undefined; }
         }
 
         public bool IsPrimitive
         {
             get { return true; }
+        }
+
+        public IDynamic Value
+        {
+            get { return this; }
+            set { }
         }
 
 
@@ -63,8 +64,8 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LNull:
-                case LTypeCode.LUndefined:
+                case LanguageTypeCode.Null:
+                case LanguageTypeCode.Undefined:
                     return LBoolean.True;
                 default:
                     return LBoolean.False;
@@ -80,7 +81,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LUndefined:
+                case LanguageTypeCode.Undefined:
                     return LBoolean.True;
                 default:
                     return LBoolean.False;
@@ -217,12 +218,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             LType.Op_SetProperty(this, name, value);
         }
 
-        public IDynamic Op_Call(SList args)
+        public IDynamic Op_Call(IArgs args)
         {
             return LType.Op_Call(this, args);
         }
 
-        public IDynamic Op_Construct(SList args)
+        public IObject Op_Construct(IArgs args)
         {
             return LType.Op_Construct(this, args);
         }
@@ -232,57 +233,57 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             LType.Op_Throw(this);
         }
 
-        public IDynamic ConvertToPrimitive(string preferredType = null)
+        public IDynamic ConvertToPrimitive(string preferredType)
         {
             return this;
         }
 
-        public LBoolean ConvertToBoolean()
+        public IBoolean ConvertToBoolean()
         {
             return LBoolean.False;
         }
 
-        public LNumber ConvertToNumber()
+        public INumber ConvertToNumber()
         {
             return LNumber.Zero;
         }
 
-        public LString ConvertToString()
+        public IString ConvertToString()
         {
             return UndefinedString;
         }
 
-        public LObject ConvertToObject()
+        public IObject ConvertToObject()
         {
             throw Environment.ThrowTypeError();
         }
 
-        public LNumber ConvertToInteger()
+        public INumber ConvertToInteger()
         {
             return LType.ConvertToInteger(this);
         }
 
-        public LNumber ConvertToInt32()
+        public INumber ConvertToInt32()
         {
             return LType.ConvertToInt32(this);
         }
 
-        public LNumber ConvertToUInt32()
+        public INumber ConvertToUInt32()
         {
             return LType.ConvertToUInt32(this);
         }
 
-        public LNumber ConvertToUInt16()
+        public INumber ConvertToUInt16()
         {
             return LType.ConvertToUInt16(this);
         }
         
-        public IDynamic GetValue(string name, bool strict)
+        public IDynamic Get(string name, bool strict)
         {
             throw Environment.ThrowReferenceError();
         }
 
-        public void SetValue(string name, IDynamic value, bool strict)
+        public void Set(string name, IDynamic value, bool strict)
         {
             if (strict)
             {

@@ -3,36 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
-using Machete.Runtime.RuntimeTypes.Interfaces;
 using Machete.Runtime.NativeObjects;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public class LObject : IDynamic, IReferenceBase
+    public class LObject : IObject
     {
         private readonly Dictionary<string, SPropertyDescriptor> _map = new Dictionary<string, SPropertyDescriptor>();
 
         public static readonly LString ObjectString = new LString("object");
 
         
-        public LObject Prototype { get; set; }
+        public IObject Prototype { get; set; }
 
         public string Class { get; set; }
 
         public bool Extensible { get; set; }
 
-        public LTypeCode TypeCode
+        public LanguageTypeCode TypeCode
         {
-            get { return LTypeCode.LObject; }
+            get { return LanguageTypeCode.Object; }
         }
 
         public bool IsPrimitive
         {
             get { return false; }
         }
+
+        public IDynamic Value
+        {
+            get { return this; }
+            set { }
+        }
         
 
-        public virtual SPropertyDescriptor GetOwnProperty(string p)
+        public virtual IPropertyDescriptor GetOwnProperty(string p)
         {
             SPropertyDescriptor value;
             if (_map.TryGetValue(p, out value))
@@ -45,7 +51,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
         }
 
-        public virtual SPropertyDescriptor GetProperty(string p)
+        public virtual IPropertyDescriptor GetProperty(string p)
         {
             var prop = GetOwnProperty(p);
             if (prop != null)
@@ -79,7 +85,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
             else
             {
-                return ((ICallable)desc.Get).Call(this, SList.Empty);
+                return ((ICallable)desc.Get).Call(null, this, SArgs.Empty);
             }
         }
 
@@ -140,7 +146,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var desc = GetProperty(p);
             if (desc.IsAccessorDescriptor)
             {
-                ((ICallable)desc.Set).Call(this, new SList(value));
+                ((ICallable)desc.Set).Call(null, this, new SArgs(value));
             }
             var newDesc = new SPropertyDescriptor(value, true, true, true);
             DefineOwnProperty(p, newDesc, @throw);
@@ -180,7 +186,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 var func = Get("toString") as ICallable ?? Get("valueOf") as ICallable;
                 if (func != null)
                 {
-                    var result = func.Call(this, SList.Empty);
+                    var result = func.Call(null, this, SArgs.Empty);
                     if (result.IsPrimitive)
                     {
                         return result;
@@ -193,7 +199,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 var func = Get("valueOf") as ICallable ?? Get("toString") as ICallable;
                 if (func != null)
                 {
-                    var result = func.Call(this, SList.Empty);
+                    var result = func.Call(null, this, SArgs.Empty);
                     if (result.IsPrimitive)
                     {
                         return result;
@@ -203,7 +209,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
         }
 
-        public virtual bool DefineOwnProperty(string p, SPropertyDescriptor desc, bool @throw)
+        public virtual bool DefineOwnProperty(string p, IPropertyDescriptor desc, bool @throw)
         {
             var reject = new Func<bool>(() => {
                 if (!@throw) return false;
@@ -235,7 +241,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 );
                 return true;
             }
-            else if (desc.IsEmpty || current.Matches(desc))
+            else if (desc.IsEmpty || ((SPropertyDescriptor)current).Matches(desc))
             {
                 return true;
             }
@@ -350,10 +356,10 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LString:
-                case LTypeCode.LNumber:
+                case LanguageTypeCode.String:
+                case LanguageTypeCode.Number:
                     return ConvertToPrimitive().Op_Equals(other);
-                case LTypeCode.LObject:
+                case LanguageTypeCode.Object:
                     return (LBoolean)(this == other);
                 default:
                     return LBoolean.False;
@@ -369,7 +375,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LObject:
+                case LanguageTypeCode.Object:
                     return (LBoolean)(this == other);
                 default:
                     return LBoolean.False;
@@ -506,12 +512,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             LType.Op_SetProperty(this, name, value);
         }
 
-        public IDynamic Op_Call(SList args)
+        public IDynamic Op_Call(IArgs args)
         {
             return LType.Op_Call(this, args);
         }
 
-        public IDynamic Op_Construct(SList args)
+        public IObject Op_Construct(IArgs args)
         {
             return LType.Op_Construct(this, args);
         }
@@ -526,59 +532,61 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return DefaultValue(preferredType);
         }
 
-        public LBoolean ConvertToBoolean()
+        public IBoolean ConvertToBoolean()
         {
             return LBoolean.True;
         }
 
-        public LNumber ConvertToNumber()
+        public INumber ConvertToNumber()
         {
             return DefaultValue("Number").ConvertToNumber();
         }
 
-        public LString ConvertToString()
+        public IString ConvertToString()
         {
             return DefaultValue("String").ConvertToString();
         }
 
-        public LObject ConvertToObject()
+        public IObject ConvertToObject()
         {
             return this;
         }
 
-        public LNumber ConvertToInteger()
+        public INumber ConvertToInteger()
         {
             return LType.ConvertToInteger(this);
         }
 
-        public LNumber ConvertToInt32()
+        public INumber ConvertToInt32()
         {
             return LType.ConvertToInt32(this);
         }
 
-        public LNumber ConvertToUInt32()
+        public INumber ConvertToUInt32()
         {
             return LType.ConvertToUInt32(this);
         }
 
-        public LNumber ConvertToUInt16()
+        public INumber ConvertToUInt16()
         {
             return LType.ConvertToUInt16(this);
         }
 
-        public IDynamic GetValue(string name, bool strict)
+
+        IDynamic IReferenceBase.Get(string name, bool strict)
         {
             return Get(name);
         }
 
-        public void SetValue(string name, IDynamic value, bool strict)
+        void IReferenceBase.Set(string name, IDynamic value, bool strict)
         {
             Put(name, value, strict);
         }
 
+
         public override string ToString()
         {
-            return (string)ConvertToString();
+            return (string)ConvertToString().BaseValue;
         }
     }
 }

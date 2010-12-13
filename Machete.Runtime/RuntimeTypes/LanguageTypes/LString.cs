@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Machete.Runtime.RuntimeTypes.Interfaces;
-using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using Machete.Runtime.NativeObjects;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LString : IDynamic, IReferenceBase, IEquatable<LString>
+    public struct LString : IString, IEquatable<LString>
     {
         private readonly string _value;
         public static readonly LString Empty = new LString(string.Empty);
@@ -21,14 +17,25 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         }
 
 
-        public LTypeCode TypeCode
+        public string BaseValue
         {
-            get { return LTypeCode.LString; }
+            get { return _value; }
+        }
+
+        public LanguageTypeCode TypeCode
+        {
+            get { return LanguageTypeCode.String; }
         }
 
         public bool IsPrimitive
         {
             get { return true; }
+        }
+
+        public IDynamic Value
+        {
+            get { return this; }
+            set { }
         }
 
 
@@ -71,12 +78,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LString:
+                case LanguageTypeCode.String:
                     return (LBoolean)(this._value == ((LString)other)._value);
-                case LTypeCode.LNumber:
+                case LanguageTypeCode.Number:
                     return this.ConvertToNumber().Op_Equals(other);
-                case LTypeCode.LObject:
-                    return this.ConvertToPrimitive().Op_Equals(other);
+                case LanguageTypeCode.Object:
+                    return this.ConvertToPrimitive(null).Op_Equals(other);
                 default:
                     return LBoolean.False;
             }
@@ -91,7 +98,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LString:
+                case LanguageTypeCode.String:
                     return (LBoolean)(this._value == ((LString)other)._value);
                 default:
                     return LBoolean.False;
@@ -228,12 +235,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             LType.Op_SetProperty(this, name, value);
         }
 
-        public IDynamic Op_Call(SList args)
+        public IDynamic Op_Call(IArgs args)
         {
             return LType.Op_Call(this, args);
         }
 
-        public IDynamic Op_Construct(SList args)
+        public IObject Op_Construct(IArgs args)
         {
             return LType.Op_Construct(this, args);
         }
@@ -243,61 +250,63 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             LType.Op_Throw(this);
         }
 
-        public IDynamic ConvertToPrimitive(string preferredType = null)
+        public IDynamic ConvertToPrimitive(string preferredType)
         {
             return this;
         }
 
-        public LBoolean ConvertToBoolean()
+        public IBoolean ConvertToBoolean()
         {
             return (LBoolean)(_value.Length > 0);
         }
 
-        public LNumber ConvertToNumber()
+        public INumber ConvertToNumber()
         {
             return LNumber.Zero;
             //return (LNumber)Machete.Compiler.StringNumericLiteral.eval(_value);
         }
 
-        public LString ConvertToString()
+        public IString ConvertToString()
         {
             return StringString;
         }
 
-        public LObject ConvertToObject()
+        public IObject ConvertToObject()
         {
             return new NString(this);
         }
 
-        public LNumber ConvertToInteger()
+        public INumber ConvertToInteger()
         {
             return LType.ConvertToInteger(this);
         }
 
-        public LNumber ConvertToInt32()
+        public INumber ConvertToInt32()
         {
             return LType.ConvertToInt32(this);
         }
 
-        public LNumber ConvertToUInt32()
+        public INumber ConvertToUInt32()
         {
             return LType.ConvertToUInt32(this);
         }
 
-        public LNumber ConvertToUInt16()
+        public INumber ConvertToUInt16()
         {
             return LType.ConvertToUInt16(this);
         }
         
-        public IDynamic GetValue(string name, bool strict)
+
+        IDynamic IReferenceBase.Get(string name, bool strict)
         {
             return LType.GetValue(this, name, strict);
         }
 
-        public void SetValue(string name, IDynamic value, bool strict)
+        void IReferenceBase.Set(string name, IDynamic value, bool strict)
         {
             LType.SetValue(this, name, value, strict);
         }
+
 
         public override bool Equals(object obj)
         {
@@ -338,6 +347,5 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             return new LString(value);
         }
-
     }
 }

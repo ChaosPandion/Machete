@@ -4,16 +4,17 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Diagnostics;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public class SLexicalEnvironment
+    public sealed class SLexicalEnvironment : ILexicalEnvironment
     {
-        public SEnvironmentRecord Record { get; private set; }
-        public SLexicalEnvironment Parent { get; private set; }
+        public IEnvironmentRecord Record { get; set; }
+        public ILexicalEnvironment Parent { get; set; }
 
 
-        public SLexicalEnvironment(SEnvironmentRecord record, SLexicalEnvironment parent)
+        public SLexicalEnvironment(IEnvironmentRecord record, ILexicalEnvironment parent)
         {
             Debug.Assert(record != null);
             Debug.Assert(parent != null);

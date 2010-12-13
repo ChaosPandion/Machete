@@ -6,11 +6,11 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.NativeObjects.BuiltinObjects;
 using Machete.Runtime.NativeObjects;
 using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
-using Machete.Runtime.RuntimeTypes.Interfaces;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public sealed class SReference : IDynamic
+    public sealed class SReference : IReference
     {
         private readonly IReferenceBase _base;
         private readonly string _referencedName;
@@ -25,13 +25,43 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         }
 
 
-        private IDynamic Value
+        public IReferenceBase Base
         {
-            get { return _base.GetValue(_referencedName, _strictReference); }
-            set { _base.SetValue(_referencedName, value, _strictReference); }
+            get { return _base; }
         }
 
-        public LTypeCode TypeCode
+        public string Name
+        {
+            get { return _referencedName; }
+        }
+
+        public bool IsStrictReference
+        {
+            get { return _strictReference; }
+        }
+
+        public bool HasPrimitiveBase
+        {
+            get { return false; }
+        }
+
+        public bool IsPropertyReference
+        {
+            get { return false; }
+        }
+
+        public bool IsUnresolvableReference
+        {
+            get { return false; }
+        }
+
+        public IDynamic Value
+        {
+            get { return _base.Get(_referencedName, _strictReference); }
+            set { _base.Set(_referencedName, value, _strictReference); }
+        }
+
+        public LanguageTypeCode TypeCode
         {
             get { return Value.TypeCode; }
         }
@@ -177,13 +207,13 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                 }
                 return LBoolean.True;
             }
-            else if (_base is SEnvironmentRecord)
+            else if (_base is IEnvironmentRecord)
             {
                 if (_strictReference)
                 {
                     throw Environment.ThrowSyntaxError();
                 }
-                return (LBoolean)((SEnvironmentRecord)_base).DeleteBinding(_referencedName);
+                return (LBoolean)((IEnvironmentRecord)_base).DeleteBinding(_referencedName);
             }
             else
             {
@@ -205,13 +235,13 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         public IDynamic Op_PrefixIncrement()
         {
             StrictReferenceCondition();
-            return Value = (LNumber)((double)Value.ConvertToNumber() + 1.0);
+            return Value = (LNumber)(Value.ConvertToNumber().BaseValue + 1.0);
         }
 
         public IDynamic Op_PrefixDecrement()
         {
             StrictReferenceCondition();
-            return Value = (LNumber)((double)Value.ConvertToNumber() - 1.0);
+            return Value = (LNumber)(Value.ConvertToNumber().BaseValue - 1.0);
         }
 
         public IDynamic Op_Plus()
@@ -228,7 +258,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             StrictReferenceCondition();
             var oldValue = Value.ConvertToNumber();
-            Value = (LNumber)((double)oldValue + 1.0);
+            Value = (LNumber)(oldValue.BaseValue + 1.0);
             return oldValue;
         }
 
@@ -236,7 +266,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             StrictReferenceCondition();
             var oldValue = Value.ConvertToNumber();
-            Value = (LNumber)((double)oldValue - 1.0);
+            Value = (LNumber)(oldValue.BaseValue - 1.0);
             return oldValue;
         }
 
@@ -250,12 +280,12 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             Value.Op_SetProperty(name, value);
         }
 
-        public IDynamic Op_Call(SList args)
+        public IDynamic Op_Call(IArgs args)
         {
             return Value.Op_Call(args);
         }
 
-        public IDynamic Op_Construct(SList args)
+        public IObject Op_Construct(IArgs args)
         {
             return Value.Op_Construct(args);
         }
@@ -270,49 +300,50 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             return Value.ConvertToPrimitive(preferredType);
         }
 
-        public LBoolean ConvertToBoolean()
+        public IBoolean ConvertToBoolean()
         {
             return Value.ConvertToBoolean();
         }
 
-        public LNumber ConvertToNumber()
+        public INumber ConvertToNumber()
         {
             return Value.ConvertToNumber();
         }
 
-        public LString ConvertToString()
+        public IString ConvertToString()
         {
             return Value.ConvertToString();
         }
 
-        public LObject ConvertToObject()
+        public IObject ConvertToObject()
         {
             return Value.ConvertToObject();
         }
 
-        public LNumber ConvertToInteger()
+        public INumber ConvertToInteger()
         {
             return Value.ConvertToInteger();
         }
 
-        public LNumber ConvertToInt32()
+        public INumber ConvertToInt32()
         {
             return Value.ConvertToInt32();
         }
 
-        public LNumber ConvertToUInt32()
+        public INumber ConvertToUInt32()
         {
             return Value.ConvertToUInt32();
         }
 
-        public LNumber ConvertToUInt16()
+        public INumber ConvertToUInt16()
         {
             return Value.ConvertToUInt16();
         }
 
+
         private void StrictReferenceCondition()
         {
-            if (_strictReference && _base is SEnvironmentRecord && (_referencedName == "eval" || _referencedName == "arguments"))
+            if (_strictReference && _base is IEnvironmentRecord && (_referencedName == "eval" || _referencedName == "arguments"))
             {
                 throw Environment.ThrowSyntaxError();
             }

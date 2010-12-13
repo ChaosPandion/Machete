@@ -185,42 +185,42 @@ namespace Machete.Runtime
 
         internal static NArray ConstructArray()
         {
-            return (NArray)Instance.Value.ArrayConstructor.Op_Construct(SList.Empty);
+            return (NArray)Instance.Value.ArrayConstructor.Op_Construct(SArgs.Empty);
         }
 
         internal static Exception ThrowEvalError()
         {
-            Instance.Value.EvalErrorConstructor.Op_Construct(SList.Empty).Op_Throw();
+            Instance.Value.EvalErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
             return null;
         }
 
         internal static Exception ThrowRangeError()
         {
-            Instance.Value.RangeErrorConstructor.Op_Construct(SList.Empty).Op_Throw();
+            Instance.Value.RangeErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
             return null;
         }
 
         internal static Exception ThrowReferenceError()
         {
-            Instance.Value.ReferenceErrorConstructor.Op_Construct(SList.Empty).Op_Throw();
+            Instance.Value.ReferenceErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
             return null;
         }
 
         internal static Exception ThrowSyntaxError()
         {
-            Instance.Value.SyntaxErrorConstructor.Op_Construct(SList.Empty).Op_Throw();
+            Instance.Value.SyntaxErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
             return null;
         }
 
         internal static Exception ThrowTypeError()
         {
-            Instance.Value.TypeErrorConstructor.Op_Construct(SList.Empty).Op_Throw();
+            Instance.Value.TypeErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
             return null;
         }
 
         internal static Exception ThrowUriError()
         {
-            Instance.Value.UriErrorConstructor.Op_Construct(SList.Empty).Op_Throw();
+            Instance.Value.UriErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
             return null;
         }
     }

@@ -4,6 +4,7 @@
     {
         LanguageTypeCode TypeCode { get; }
         bool IsPrimitive { get; }
+        IDynamic Value { get; set; }
 
         IDynamic Op_LogicalNot();
         IDynamic Op_LogicalOr(IDynamic other);

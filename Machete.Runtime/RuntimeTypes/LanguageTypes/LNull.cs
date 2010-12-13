@@ -2,25 +2,31 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Machete.Runtime.RuntimeTypes.Interfaces;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LNull : IDynamic
+    public struct LNull : INull
     {
         public static readonly LNull Instance = new LNull();
         public static readonly LString NullString = new LString("null");
         
 
-        public LTypeCode TypeCode
+        public LanguageTypeCode TypeCode
         {
-            get { return LTypeCode.LNull; }
+            get { return LanguageTypeCode.Null; }
         }
 
         public bool IsPrimitive
         {
             get { return true; }
+        }
+
+        public IDynamic Value
+        {
+            get { return this; }
+            set { }
         }
 
 
@@ -63,8 +69,8 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LNull:
-                case LTypeCode.LUndefined:
+                case LanguageTypeCode.Null:
+                case LanguageTypeCode.Undefined:
                     return LBoolean.True;
                 default:
                     return LBoolean.False;
@@ -80,7 +86,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LNull:
+                case LanguageTypeCode.Null:
                     return LBoolean.True;
                 default:
                     return LBoolean.False;
@@ -217,12 +223,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             LType.Op_SetProperty(this, name, value);
         }
 
-        public IDynamic Op_Call(SList args)
+        public IDynamic Op_Call(IArgs args)
         {
             return LType.Op_Call(this, args);
         }
 
-        public IDynamic Op_Construct(SList args)
+        public IObject Op_Construct(IArgs args)
         {
             return LType.Op_Construct(this, args);
         }
@@ -237,42 +243,42 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return this;
         }
 
-        public LBoolean ConvertToBoolean()
+        public IBoolean ConvertToBoolean()
         {
             return LBoolean.False;
         }
 
-        public LNumber ConvertToNumber()
+        public INumber ConvertToNumber()
         {
             return LNumber.Zero;
         }
 
-        public LString ConvertToString()
+        public IString ConvertToString()
         {
             return NullString;
         }
 
-        public LObject ConvertToObject()
+        public IObject ConvertToObject()
         {
             throw Environment.ThrowTypeError();
         }
 
-        public LNumber ConvertToInteger()
+        public INumber ConvertToInteger()
         {
             return LType.ConvertToInteger(this);
         }
 
-        public LNumber ConvertToInt32()
+        public INumber ConvertToInt32()
         {
             return LType.ConvertToInt32(this);
         }
 
-        public LNumber ConvertToUInt32()
+        public INumber ConvertToUInt32()
         {
             return LType.ConvertToUInt32(this);
         }
 
-        public LNumber ConvertToUInt16()
+        public INumber ConvertToUInt16()
         {
             return LType.ConvertToUInt16(this);
         }

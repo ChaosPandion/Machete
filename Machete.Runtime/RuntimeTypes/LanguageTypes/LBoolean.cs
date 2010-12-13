@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
-using Machete.Runtime.RuntimeTypes.Interfaces;
 using Machete.Runtime.NativeObjects;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LBoolean : IDynamic, IReferenceBase, IEquatable<LBoolean>
+    public struct LBoolean : IBoolean, IEquatable<LBoolean>
     {
         private readonly bool _value;
         public static readonly LBoolean True = new LBoolean(true);
@@ -23,15 +23,26 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             _value = value;
         }
 
-        
-        public LTypeCode TypeCode
+
+        public bool BaseValue
         {
-            get { return LTypeCode.LBoolean; }
+            get { return _value; }
+        }
+
+        public LanguageTypeCode TypeCode
+        {
+            get { return LanguageTypeCode.Boolean; }
         }
 
         public bool IsPrimitive
         {
             get { return true; }
+        }
+
+        public IDynamic Value
+        {
+            get { return this; }
+            set { }
         }
 
 
@@ -64,7 +75,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LBoolean:
+                case LanguageTypeCode.Boolean:
                     return (LBoolean)(this._value == ((LBoolean)other)._value);
                 default:
                     return this.ConvertToNumber().Op_Equals(other);
@@ -80,7 +91,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             switch (other.TypeCode)
             {
-                case LTypeCode.LBoolean:
+                case LanguageTypeCode.Boolean:
                     return (LBoolean)(this._value == ((LBoolean)other)._value);
                 default:
                     return LBoolean.False;
@@ -227,12 +238,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             LType.Op_SetProperty(this, name, value);
         }
 
-        public IDynamic Op_Call(SList args)
+        public IDynamic Op_Call(IArgs args)
         {
             return LType.Op_Call(this, args);
         }
 
-        public IDynamic Op_Construct(SList args)
+        public IObject Op_Construct(IArgs args)
         {
             return LType.Op_Construct(this, args);
         }
@@ -247,52 +258,52 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return this;
         }
 
-        public LBoolean ConvertToBoolean()
+        public IBoolean ConvertToBoolean()
         {
             return this;
         }
 
-        public LNumber ConvertToNumber()
+        public INumber ConvertToNumber()
         {
             return _value ? LNumber.One : LNumber.Zero;
         }
 
-        public LString ConvertToString()
+        public IString ConvertToString()
         {
             return _value ? TrueString : FalseString;
         }
 
-        public LObject ConvertToObject()
+        public IObject ConvertToObject()
         {
             return new NBoolean(this);
         }
 
-        public LNumber ConvertToInteger()
+        public INumber ConvertToInteger()
         {
             return LType.ConvertToInteger(this);
         }
 
-        public LNumber ConvertToInt32()
+        public INumber ConvertToInt32()
         {
             return LType.ConvertToInt32(this);
         }
 
-        public LNumber ConvertToUInt32()
+        public INumber ConvertToUInt32()
         {
             return LType.ConvertToUInt32(this);
         }
 
-        public LNumber ConvertToUInt16()
+        public INumber ConvertToUInt16()
         {
             return LType.ConvertToUInt16(this);
         }
 
-        public IDynamic GetValue(string name, bool strict)
+        public IDynamic Get(string name, bool strict)
         {
             return LType.GetValue(this, name, strict);
         }
 
-        public void SetValue(string name, IDynamic value, bool strict)
+        public void Set(string name, IDynamic value, bool strict)
         {
             LType.SetValue(this, name, value, strict);
         }

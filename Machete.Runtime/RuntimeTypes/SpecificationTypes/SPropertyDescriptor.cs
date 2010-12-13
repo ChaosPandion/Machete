@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
-using Machete.Runtime.RuntimeTypes.Interfaces;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public class SPropertyDescriptor
+    public sealed class SPropertyDescriptor : IPropertyDescriptor
     {
         public IDynamic Value { get; set; }
         public bool? Writable { get; set; }
@@ -69,7 +69,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         }
 
 
-        public bool Matches(SPropertyDescriptor other)
+        public bool Matches(IPropertyDescriptor other)
         {
             return Value == other.Value 
                 && Writable == other.Writable 

@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Diagnostics;
-using Machete.Runtime.RuntimeTypes.Interfaces;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
-    public class SList
+    public sealed class SArgs : IArgs
     {
         private readonly IDynamic[] _items;
-        public static readonly SList Empty = new SList();
+        public static readonly SArgs Empty = new SArgs();
 
         public IDynamic this[int index]
         {
@@ -28,21 +28,15 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public int Count
         {
-            get
-            {
-                return _items.Length;
-            }
+            get { return _items.Length; }
         }
 
         public bool IsEmpty
         {
-            get
-            {
-                return _items.Length == 0;
-            }
+            get { return _items.Length == 0; }
         }
 
-        public SList(params IDynamic[] items)
+        public SArgs(params IDynamic[] items)
         {
             Debug.Assert(items != null);
             Debug.Assert(!items.Any(o => o == null));

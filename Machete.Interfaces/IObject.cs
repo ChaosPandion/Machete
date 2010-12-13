@@ -10,6 +10,7 @@
         IPropertyDescriptor GetProperty(string name);
         IDynamic Get(string name);
         void Put(string name, IDynamic value, bool strict);
+        bool CanPut(string name);
         bool HasProperty(string name);
         bool Delete(string name, bool strict);
         IDynamic DefaultValue(string hint);
