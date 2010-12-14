@@ -96,8 +96,8 @@
     | RelationalExpression of SourceElement * SourceElement * SourceElement
     | RelationalExpressionNoIn of SourceElement * SourceElement * SourceElement
     | ShiftExpression of SourceElement * SourceElement * SourceElement
-    | AdditiveExpression of SourceElement * SourceElement * SourceElement
-    | MultiplicativeExpression of SourceElement * SourceElement * SourceElement
+    | AdditiveExpression of SourceElement * AdditiveOperator * SourceElement
+    | MultiplicativeExpression of SourceElement * MultiplicativeOperator * SourceElement
     | UnaryExpression of SourceElement * SourceElement
     | PostfixExpression of SourceElement * SourceElement
     | MemberExpression of SourceElement * SourceElement

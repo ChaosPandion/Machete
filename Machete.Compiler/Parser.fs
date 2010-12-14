@@ -122,8 +122,19 @@ module Parser =
     let expectRelationalOperator = expectPunctuators (set ["<"; ">"; "<="; ">="; "instanceof"; "in"]) |>> InputElement
     let expectRelationalOperatorNoIn = expectPunctuators (set ["<"; ">"; "<="; ">="; "instanceof"]) |>> InputElement
     let expectShiftOperator = expectPunctuators (set ["<<"; ">>"; ">>>"]) |>> InputElement
-    let expectAdditiveOperator = expectPunctuators (set ["+"; "-"]) |>> InputElement
-    let expectMultiplicativeOperator = expectPunctuators (set ["*"; "%"; "/"]) |>> InputElement
+    let expectAdditiveOperator = 
+        expectPunctuators (set ["+"; "-"]) 
+            >>= fun p -> match p with
+                         | Punctuator (Str "+") -> result AdditiveOperator.Plus
+                         | Punctuator (Str "-") -> result AdditiveOperator.Minus
+
+    let expectMultiplicativeOperator = 
+        expectPunctuators (set ["*"; "%"; "/"])          
+            >>= fun p -> match p with
+                         | Punctuator (Str "*") -> result MultiplicativeOperator.Multiply
+                         | Punctuator (Str "%") -> result MultiplicativeOperator.Modulus
+                         | Punctuator (Str "/") -> result MultiplicativeOperator.Divide
+
     let expectPostfixOperator = expectPunctuators (set ["++"; "--"]) |>> InputElement
     let expectUnaryOperator = expectPunctuators (set ["++"; "--"; "+"; "-"; "~"; "!"; "delete"; "void"; "typeof"])
 
@@ -247,9 +258,9 @@ module Parser =
             return! parse {
                 let! e2 = expectMultiplicativeOperator
                 let! e3 = multiplicativeExpression
-                return MultiplicativeExpression (e1, e2, e3)
+                return MultiplicativeExpression (e3, e2, e1)
             } 
-            return MultiplicativeExpression (SourceElement.Nil, SourceElement.Nil, e1)
+            return MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, e1)
         } 
     
     and additiveExpression =
@@ -258,9 +269,9 @@ module Parser =
             return! parse {
                 let! e2 = expectAdditiveOperator
                 let! e3 = additiveExpression
-                return AdditiveExpression (e1, e2, e3)
+                return AdditiveExpression (e3, e2, e1)
             } 
-            return AdditiveExpression (SourceElement.Nil, SourceElement.Nil, e1)
+            return AdditiveExpression (SourceElement.Nil, AdditiveOperator.Nil, e1)
         } 
     
     and shiftExpression =

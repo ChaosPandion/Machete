@@ -204,31 +204,33 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
 
     and evalAdditiveExpression (state:State) =    
         match state.Element with
-        | AdditiveExpression (Nil, Nil, e) ->
+        | AdditiveExpression (Nil, AdditiveOperator.Nil, e) ->
             evalMultiplicativeExpression (state.WithElement e)
-        | AdditiveExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
-            let left = evalAdditiveExpression (state.WithElement left)
-            let right = evalMultiplicativeExpression (state.WithElement right) 
-            let mi = 
-                match v with
-                | "+" -> Reflection.IDynamic.op_Addition
-                | "-" -> Reflection.IDynamic.op_Subtraction
-            call left mi [| right |]
+        | AdditiveExpression (e1, AdditiveOperator.Plus, e2) ->
+            call (evalAdditiveExpression (state.WithElement e1)) Reflection.IDynamic.op_Addition [| (evalMultiplicativeExpression (state.WithElement e2)) |]
+        | AdditiveExpression (e1, AdditiveOperator.Minus, e2) ->
+            call (evalAdditiveExpression (state.WithElement e1)) Reflection.IDynamic.op_Subtraction [| (evalMultiplicativeExpression (state.WithElement e2)) |]
 
     and evalMultiplicativeExpression (state:State) =    
         match state.Element with
-        | MultiplicativeExpression (Nil, Nil, e) ->
+        | MultiplicativeExpression (Nil, MultiplicativeOperator.Nil, e) ->
             evalUnaryExpression (state.WithElement e)
-        | MultiplicativeExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right)
-        | MultiplicativeExpression (left, InputElement (Lexer.DivPunctuator (Lexer.Str v)), right) ->
-            let left = evalMultiplicativeExpression (state.WithElement left)
-            let right = evalUnaryExpression (state.WithElement right) 
-            let mi = 
-                match v with
-                | "*" -> Reflection.IDynamic.op_Multiplication
-                | "/" -> Reflection.IDynamic.op_Division
-                | "%" -> Reflection.IDynamic.op_Modulus
-            call left mi [| right |]
+        | MultiplicativeExpression (e1, MultiplicativeOperator.Multiply, e2) ->
+            call (evalMultiplicativeExpression (state.WithElement e1)) Reflection.IDynamic.op_Multiplication [| (evalUnaryExpression (state.WithElement e2)) |]
+        | MultiplicativeExpression (e1, MultiplicativeOperator.Modulus, e2) ->
+            call (evalMultiplicativeExpression (state.WithElement e1)) Reflection.IDynamic.op_Modulus [| (evalUnaryExpression (state.WithElement e2)) |]
+        | MultiplicativeExpression (e1, MultiplicativeOperator.Divide, e2) ->
+            call (evalMultiplicativeExpression (state.WithElement e1)) Reflection.IDynamic.op_Division [| (evalUnaryExpression (state.WithElement e2)) |]
+//        | MultiplicativeExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right)
+//        | MultiplicativeExpression (left, InputElement (Lexer.DivPunctuator (Lexer.Str v)), right) ->
+//            let left = evalMultiplicativeExpression (state.WithElement left)
+//            let right = evalUnaryExpression (state.WithElement right) 
+//            let mi = 
+//                match v with
+//                | "*" -> Reflection.IDynamic.op_Multiplication
+//                | "/" -> Reflection.IDynamic.op_Division
+//                | "%" -> Reflection.IDynamic.op_Modulus
+//            call left mi [| right |]
 
     and evalUnaryExpression (state:State) =    
         match state.Element with
