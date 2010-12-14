@@ -16,6 +16,7 @@ namespace Machete.Runtime
 {
     public sealed class Environment : IEnvironment
     {
+        private readonly IArgs _empty;
         private readonly Stack<IExecutionContext> _contextStack;
         private IExecutionContext _currentContext;
     
@@ -23,6 +24,7 @@ namespace Machete.Runtime
         public Environment()
         {
             _contextStack = new Stack<IExecutionContext>();
+            _empty = new SArgs(this);
 
             GlobalObject = new BGlobal(this);
             MathObject = new BMath(this);
@@ -205,7 +207,7 @@ namespace Machete.Runtime
             get { throw new NotImplementedException(); }
         }
 
-
+        
         public IBoolean CreateBoolean(bool value)
         {
             throw new NotImplementedException();
@@ -218,12 +220,12 @@ namespace Machete.Runtime
 
         public INumber CreateNumber(double value)
         {
-            throw new NotImplementedException();
+            return new LNumber(this, value);
         }
 
         public IArgs CreateArgs(IEnumerable<IDynamic> values)
         {
-            throw new NotImplementedException();
+            return _empty;
         }
 
         public IObject CreateArray()

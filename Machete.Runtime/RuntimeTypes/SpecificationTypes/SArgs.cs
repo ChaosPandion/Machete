@@ -14,9 +14,10 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         private readonly IDynamic[] _items;
 
 
-        public SArgs(IEnvironment environment)
+        public SArgs(IEnvironment environment, params IDynamic[] items)
         {
             _environment = environment;
+            _items = items;
         }
 
         public IDynamic this[int index]
@@ -42,11 +43,5 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             get { return _items.Length == 0; }
         }
 
-        public SArgs(params IDynamic[] items)
-        {
-            Debug.Assert(items != null);
-            Debug.Assert(!items.Any(o => o == null));
-            _items = items;
-        }
     }
 }

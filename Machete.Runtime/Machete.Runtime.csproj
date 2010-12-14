@@ -135,6 +135,10 @@
     <Compile Include="RuntimeTypes\LanguageTypes\LType.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">
+      <Project>{F4056A29-8845-4DFA-B551-35D7B27D5954}</Project>
+      <Name>Machete.Compiler</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Machete.Interfaces\Machete.Interfaces.csproj">
       <Project>{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}</Project>
       <Name>Machete.Interfaces</Name>

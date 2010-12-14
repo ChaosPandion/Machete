@@ -115,7 +115,9 @@ module Program =
             let text = read [] ""
             if text.Length > 0 then
                 if not (commandStart.IsMatch text) then
-                    Console.WriteLine (engine.Value.ExecuteScript text)
+                        writeNewLineStart ()
+                        writeColored (engine.Value.ExecuteScript text |> string) ConsoleColor.DarkCyan
+                        writeNewLineStart ()
                 else
                     try
                         let r = run CommandParser.parse text

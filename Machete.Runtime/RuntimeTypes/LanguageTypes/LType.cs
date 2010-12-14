@@ -415,7 +415,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var desc = obj.GetProperty(name);
             if (desc.IsAccessorDescriptor)
             {
-                desc.Set.Op_Call(new SArgs(value));
+                desc.Set.Op_Call(new SArgs(environment, value));
                 return;
             }
             else

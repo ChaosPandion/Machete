@@ -10,11 +10,14 @@ type Engine () =
     let proccessMessages (inbox:MailboxProcessor<Message>) = async {
         do! Async.SwitchToNewThread ()
         let environment = new Environment()
+        let compiler = new Machete.Compiler.Compiler(environment :> Machete.Interfaces.IEnvironment)
         while true do
             let! msg = inbox.Receive ()
             match msg with
             | ExecuteScript (script, channel) ->
-                channel.Reply (null)
+                let r = compiler.Compile(script)
+                let r = r.Invoke(environment, environment.CreateArgs(Seq.empty))
+                channel.Reply (r.ToString():>obj)
     }
     
     let agent = lazy(MailboxProcessor.Start proccessMessages)

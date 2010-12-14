@@ -17,8 +17,6 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public SLexicalEnvironment(IEnvironment environment, IEnvironmentRecord record, ILexicalEnvironment parent)
         {
-            Debug.Assert(record != null);
-            Debug.Assert(parent != null);
             _environment = environment;
             Record = record;
             Parent = parent;

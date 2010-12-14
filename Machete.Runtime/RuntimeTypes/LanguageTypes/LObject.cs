@@ -156,7 +156,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var desc = GetProperty(p);
             if (desc.IsAccessorDescriptor)
             {
-                ((ICallable)desc.Set).Call(null, this, new SArgs(value));
+                ((ICallable)desc.Set).Call(null, this, new SArgs(_environment, value));
             }
             var newDesc = new SPropertyDescriptor(value, true, true, true);
             DefineOwnProperty(p, newDesc, @throw);

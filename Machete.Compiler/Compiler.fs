@@ -5,7 +5,7 @@ open Machete
 type internal exp = System.Linq.Expressions.Expression
 type internal label = System.Linq.Expressions.LabelExpression
 type internal methodinfo = System.Reflection.MethodInfo
-type internal dyn = Machete.IDynamic
+type internal dyn = Machete.Interfaces.IDynamic
 
 type internal State (element:SourceElement, labelMap:Map<string, label>, breakList:list<label>, continueList:list<label>) = struct
         member this.Element = element
@@ -15,9 +15,9 @@ type internal State (element:SourceElement, labelMap:Map<string, label>, breakLi
         member this.WithElement element = State (element, labelMap, breakList, continueList)
     end
 
-type Code = IEnvironment -> IArgs -> IDynamic
+type Code = delegate of Machete.Interfaces.IEnvironment * Machete.Interfaces.IArgs -> Machete.Interfaces.IDynamic
 
-type Compiler (environment:IEnvironment) =
+type Compiler (environment:Machete.Interfaces.IEnvironment) =
 
     let call (e:exp) (m:methodinfo) (a:exp[]) = exp.Call (e, m, a) :> exp
     let invoke (e:exp) (a:exp[]) = exp.Invoke (e, a) :> exp
@@ -26,22 +26,23 @@ type Compiler (environment:IEnvironment) =
     let block es = exp.Block es :> exp      
     
     let environmentParam = exp.Parameter (Reflection.IEnvironment.t, "environment")
+    let argsParam = exp.Parameter (Reflection.IArgs.t, "args")
 
-    let checkReference (value:Machete.IDynamic) =
+    let checkReference (value:Machete.Interfaces.IDynamic) =
         match value with
-        | :? IReference as ref ->
+        | :? Machete.Interfaces.IReference as ref ->
             match ref.IsStrictReference, ref.Base, ref.Name with
-            | true, :? IEnvironmentRecord, "eval" 
-            | true, :? IEnvironmentRecord, "arguments" ->
-                environment.ConstructSyntaxError().Op_Throw();
+            | true, :? Machete.Interfaces.IEnvironmentRecord, "eval" 
+            | true, :? Machete.Interfaces.IEnvironmentRecord, "arguments" ->
+                environment.CreateSyntaxError().Op_Throw();
             | _ -> ()
         | _ -> ()
 
-    let simpleAssignment (left:Machete.IDynamic) (right:Machete.IDynamic) =
+    let simpleAssignment (left:Machete.Interfaces.IDynamic) (right:Machete.Interfaces.IDynamic) =
         checkReference left
         left.Value <- right.Value
 
-    let compoundAssignment (left:Machete.IDynamic) (right:Machete.IDynamic) op =
+    let compoundAssignment (left:Machete.Interfaces.IDynamic) (right:Machete.Interfaces.IDynamic) op =
         let value = op left right
         checkReference left
         left.Value <- value
@@ -50,11 +51,12 @@ type Compiler (environment:IEnvironment) =
     let rec evalExpression (state:State) =
         match state.Element with
         | Expression (Nil, right) | ExpressionNoIn (Nil, right) ->
-            let inst = evalAssignmentExpression (state.WithElement right)
-            let test = exp.TypeIs (inst, Reflection.IReferenceBase.t)
-            let ifTrue = call (exp.Convert(inst, Reflection.IReferenceBase.t)) Reflection.IReferenceBase.get [||] 
-            let ifFalse = call environmentParam Reflection.IEnvironment.get_Undefined [||]
-            condition test ifTrue ifFalse
+            evalAssignmentExpression (state.WithElement right)
+//            let inst = evalAssignmentExpression (state.WithElement right)
+//            let test = exp.TypeIs (inst, Reflection.IReferenceBase.t)
+//            let ifTrue = call (exp.Convert(inst, Reflection.IReferenceBase.t)) Reflection.IReferenceBase.get [||] 
+//            let ifFalse = call environmentParam Reflection.IEnvironment.get_Undefined [||]
+//            condition test ifTrue ifFalse
         | Expression (left, right) | ExpressionNoIn (left, right) ->
             let left = evalExpression (state.WithElement left)
             let inst = evalAssignmentExpression (state.WithElement right)
@@ -258,7 +260,7 @@ type Compiler (environment:IEnvironment) =
 
     and evalMemberExpression (state:State) =    
         match state.Element with
-        | MemberExpression (e, Nil) ->
+        | MemberExpression (Nil, e) ->
             match e with
             | PrimaryExpression (_) ->
                 evalPrimaryExpression (state.WithElement e) 
@@ -376,7 +378,7 @@ type Compiler (environment:IEnvironment) =
         match state.Element with
         | Statement e ->
             match e with
-            | ExpressionStatement e ->
+            | ExpressionStatement _ ->
                 evalExpressionStatement (state.WithElement e) 
 
     and evalBlock (state:State) =
@@ -482,7 +484,7 @@ type Compiler (environment:IEnvironment) =
         let input = Parser.parse input
         let state = State (input, Map.empty, [], [])
         let body = evalProgram state
-        exp.Lambda<Code>(body, [| environmentParam |]).Compile()
+        exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
 
     member this.Compile (input:SourceElement) =
         let state = State (input, Map.empty, [], [])
@@ -492,6 +494,6 @@ type Compiler (environment:IEnvironment) =
                 evalFunctionDeclaration state
             | FunctionExpression (_, _, _) ->
                 evalFunctionExpression state
-        exp.Lambda<Code>(body, [| environmentParam |]).Compile()
+        exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
 
 

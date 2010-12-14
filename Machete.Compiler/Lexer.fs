@@ -257,9 +257,9 @@ module Lexer =
                 match v with
                 | Chr c -> 
                     match c with
-                    | c when c >= '0' && c <= '9' -> int c - 48   
-                    | c when c >= 'a' && c <= 'f' -> int c - 87  
-                    | c when c >= 'A' && c <= 'F' -> int c - 55    
+                    | c when c >= '0' && c <= '9' -> int c - 48 |> double   
+                    | c when c >= 'a' && c <= 'f' -> int c - 87 |> double  
+                    | c when c >= 'A' && c <= 'F' -> int c - 55 |> double    
                     | _ ->  invalidOp ("Unexpected value '" + c.ToString() + "' found while evaluating HexDigit.")        
                 | _ -> invalidOp "Unexpected pattern for HexDigit."     
             | _ -> invalidArg "v" "Expected HexDigit."
@@ -269,9 +269,9 @@ module Lexer =
             | HexIntegerLiteral (l, r) -> 
                 match l, r with
                 | Nil, HexDigit _ ->
-                    evalHexDigit r 
+                    evalHexDigit r |> double 
                 | HexIntegerLiteral (_, _), HexDigit _ ->
-                    16 * evalHexIntegerLiteral l + evalHexDigit r  
+                    (16.0 * evalHexIntegerLiteral l + evalHexDigit r) |> double  
                 | _ -> invalidOp "Unexpected pattern for HexIntegerLiteral."       
             | _ -> invalidArg "v" "Expected HexDigit."
 
@@ -358,25 +358,25 @@ module Lexer =
                 match a, b, c, d with
                 | DecimalIntegerLiteral (_, _), Nil, Nil, Nil
                 | DecimalIntegerLiteral (_, _), DecimalPoint, Nil, Nil ->
-                    evalDecimalIntegerLiteral a
+                    evalDecimalIntegerLiteral a |> double
                 | DecimalIntegerLiteral (_, _), DecimalPoint, DecimalDigits (_, _), Nil -> 
                     let n = int (10.0 ** -float (countDecimalDigits c 0)) 
-                    evalDecimalIntegerLiteral a + (n * evalDecimalDigits c) 
+                    evalDecimalIntegerLiteral a + (n * evalDecimalDigits c) |> double
                 | DecimalIntegerLiteral (_, _), Nil, Nil, ExponentPart (_, _)
                 | DecimalIntegerLiteral (_, _), DecimalPoint, Nil, ExponentPart (_, _) ->
                     let e = int (10.0 ** -float (evalExponentPart d))
-                    evalDecimalIntegerLiteral a * e
+                    evalDecimalIntegerLiteral a * e |> double
                 | DecimalIntegerLiteral (_, _), DecimalPoint, DecimalDigits (_, _), ExponentPart (_, _) -> 
                     let n = int (10.0 ** -float (countDecimalDigits c 0))
                     let e = int (10.0 ** -float (evalExponentPart d))
-                    evalDecimalIntegerLiteral a + (n * evalDecimalDigits c) * e
+                    evalDecimalIntegerLiteral a + (n * evalDecimalDigits c) * e |> double
                 | Nil, DecimalPoint, DecimalDigits (_, _), Nil -> 
                     let n = int (10.0 ** -float (countDecimalDigits c 0))
-                    n * evalDecimalDigits c
+                    n * evalDecimalDigits c |> double
                 | Nil, DecimalPoint, DecimalDigits (_, _), ExponentPart (_, _) -> 
                     let n = countDecimalDigits c 0
                     let e = evalExponentPart d
-                    evalDecimalDigits c * int (10.0 ** float (e - n))
+                    evalDecimalDigits c * int (10.0 ** float (e - n)) |> double
                 | _ -> invalidOp "Invalid DecimalLiteral pattern found."                  
             | _ -> invalidArg "v" "Expected DecimalLiteral."
 
@@ -455,13 +455,13 @@ module Lexer =
         let evalUnicodeEscapeSequence v =
             match v with
             | UnicodeEscapeSequence (a, b, c, d) -> 
-                char (4096 * evalHexDigit a + 256 * evalHexDigit b + 16 * evalHexDigit c + evalHexDigit d)                  
+                char (4096.0 * evalHexDigit a + 256.0 * evalHexDigit b + 16.0 * evalHexDigit c + evalHexDigit d)                  
             | _ -> invalidArg "v" "Expected UnicodeEscapeSequence." 
 
         let evalHexEscapeSequence v =
             match v with
             | HexEscapeSequence (h, l) -> 
-                char (16 * evalHexDigit h + evalHexDigit l)                  
+                char (16.0 * evalHexDigit h + evalHexDigit l)                  
             | _ -> invalidArg "v" "Expected HexEscapeSequence." 
 
         let evalNonEscapeCharacter v =
