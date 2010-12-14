@@ -12,13 +12,15 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
     public sealed class SReference : IReference
     {
+        private readonly IEnvironment _environment;
         private readonly IReferenceBase _base;
         private readonly string _referencedName;
         private readonly bool _strictReference;
 
 
-        public SReference(IReferenceBase @base, string referencedName, bool strictReference)
+        public SReference(IEnvironment environment, IReferenceBase @base, string referencedName, bool strictReference)
         {
+            _environment = environment;
             _base = @base;
             _referencedName = referencedName;
             _strictReference = strictReference;
@@ -203,28 +205,30 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 if (_strictReference)
                 {
-                    throw Environment.ThrowSyntaxError();
+                    _environment.CreateSyntaxError().Op_Throw();
+                    return null;
                 }
-                return LBoolean.True;
+                return _environment.BooleanTrue;
             }
             else if (_base is IEnvironmentRecord)
             {
                 if (_strictReference)
                 {
-                    throw Environment.ThrowSyntaxError();
+                    _environment.CreateSyntaxError().Op_Throw();
+                    return null;
                 }
-                return (LBoolean)((IEnvironmentRecord)_base).DeleteBinding(_referencedName);
+                return _environment.CreateBoolean(((IEnvironmentRecord)_base).DeleteBinding(_referencedName));
             }
             else
             {
-                return (LBoolean)((IDynamic)_base).ConvertToObject().Delete(_referencedName, _strictReference);
+                return _environment.CreateBoolean(((IDynamic)_base).ConvertToObject().Delete(_referencedName, _strictReference));
             }
         }
 
         public IDynamic Op_Void()
         {
             var v = Value;
-            return LUndefined.Instance;
+            return _environment.Undefined;
         }
 
         public IDynamic Op_Typeof()
@@ -235,13 +239,13 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         public IDynamic Op_PrefixIncrement()
         {
             StrictReferenceCondition();
-            return Value = (LNumber)(Value.ConvertToNumber().BaseValue + 1.0);
+            return Value = _environment.CreateNumber(Value.ConvertToNumber().BaseValue + 1.0);
         }
 
         public IDynamic Op_PrefixDecrement()
         {
             StrictReferenceCondition();
-            return Value = (LNumber)(Value.ConvertToNumber().BaseValue - 1.0);
+            return Value = _environment.CreateNumber(Value.ConvertToNumber().BaseValue - 1.0);
         }
 
         public IDynamic Op_Plus()
@@ -258,7 +262,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             StrictReferenceCondition();
             var oldValue = Value.ConvertToNumber();
-            Value = (LNumber)(oldValue.BaseValue + 1.0);
+            Value = _environment.CreateNumber(oldValue.BaseValue + 1.0);
             return oldValue;
         }
 
@@ -266,7 +270,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             StrictReferenceCondition();
             var oldValue = Value.ConvertToNumber();
-            Value = (LNumber)(oldValue.BaseValue - 1.0);
+            Value = _environment.CreateNumber(oldValue.BaseValue - 1.0);
             return oldValue;
         }
 
@@ -345,7 +349,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             if (_strictReference && _base is IEnvironmentRecord && (_referencedName == "eval" || _referencedName == "arguments"))
             {
-                throw Environment.ThrowSyntaxError();
+                _environment.CreateSyntaxError().Op_Throw();
             }
         }
     }

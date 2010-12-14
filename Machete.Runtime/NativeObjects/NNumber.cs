@@ -11,7 +11,8 @@ namespace Machete.Runtime.NativeObjects
     {
         public IDynamic PrimitiveValue { get; set; }
 
-        public NNumber(LNumber value)
+        public NNumber(IEnvironment environment, LNumber value)
+            : base(environment)
         {
             PrimitiveValue = value;
         }

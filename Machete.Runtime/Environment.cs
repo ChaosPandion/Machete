@@ -10,88 +10,56 @@ using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
 using Machete.Runtime.NativeObjects;
 using Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
+using Machete.Interfaces;
 
 namespace Machete.Runtime
 {
-    public sealed class Environment
+    public sealed class Environment : IEnvironment
     {
-        public static readonly ThreadLocal<Environment> Instance = new ThreadLocal<Environment>();
+        private readonly Stack<IExecutionContext> _contextStack;
+        private IExecutionContext _currentContext;
+    
 
-
-        internal BGlobal GlobalObject { get; private set; }
-        internal CObject ObjectConstructor { get; private set; }
-        internal PObject ObjectPrototype { get; private set; }
-        internal CFunction FunctionConstructor { get; private set; }
-        internal PFunction FunctionPrototype { get; private set; }
-        internal CArray ArrayConstructor { get; private set; }
-        internal PArray ArrayPrototype { get; private set; }
-        internal CString StringConstructor { get; private set; }
-        internal PString StringPrototype { get; private set; }
-        internal CBoolean BooleanConstructor { get; private set; }
-        internal PBoolean BooleanPrototype { get; private set; }
-        internal CNumber NumberConstructor { get; private set; }
-        internal PNumber NumberPrototype { get; private set; }
-        internal BMath MathObject { get; private set; }
-        internal CDate DateConstructor { get; private set; }
-        internal PDate DatePrototype { get; private set; }
-        internal CRegExp RegExpConstructor { get; private set; }
-        internal PRegExp RegExpPrototype { get; private set; }
-        internal CError ErrorConstructor { get; private set; }
-        internal PError ErrorPrototype { get; private set; }
-        internal CEvalError EvalErrorConstructor { get; private set; }
-        internal PEvalError EvalErrorPrototype { get; private set; }
-        internal CRangeError RangeErrorConstructor { get; private set; }
-        internal PRangeError RangeErrorPrototype { get; private set; }
-        internal CReferenceError ReferenceErrorConstructor { get; private set; }
-        internal PReferenceError ReferenceErrorPrototype { get; private set; }
-        internal CSyntaxError SyntaxErrorConstructor { get; private set; }
-        internal PSyntaxError SyntaxErrorPrototype { get; private set; }
-        internal CTypeError TypeErrorConstructor { get; private set; }
-        internal PTypeError TypeErrorPrototype { get; private set; }
-        internal CUriError UriErrorConstructor { get; private set; }
-        internal PUriError UriErrorPrototype { get; private set; }
-        internal BJson JsonObject { get; private set; }
-        internal SLexicalEnvironment GlobalEnvironment { get; private set; }
-        
-
-        private Environment()
+        public Environment()
         {
-            GlobalObject = new BGlobal();
-            MathObject = new BMath();
-            JsonObject = new BJson();
-            GlobalEnvironment = new SLexicalEnvironment(new SObjectEnvironmentRecord(GlobalObject, false), null);
+            _contextStack = new Stack<IExecutionContext>();
 
-            ObjectConstructor = new CObject();
-            FunctionConstructor = new CFunction();
-            ArrayConstructor = new CArray();
-            StringConstructor = new CString();
-            BooleanConstructor = new CBoolean();
-            NumberConstructor = new CNumber();
-            DateConstructor = new CDate();
-            RegExpConstructor = new CRegExp();
-            ErrorConstructor = new CError();
-            EvalErrorConstructor = new CEvalError();
-            RangeErrorConstructor = new CRangeError();
-            ReferenceErrorConstructor = new CReferenceError();
-            SyntaxErrorConstructor = new CSyntaxError();
-            TypeErrorConstructor = new CTypeError();
-            UriErrorConstructor = new CUriError();
+            GlobalObject = new BGlobal(this);
+            MathObject = new BMath(this);
+            JsonObject = new BJson(this);
+            GlobalEnvironment = new SLexicalEnvironment(this, new SObjectEnvironmentRecord(this, GlobalObject, false), null);
 
-            ObjectPrototype = new PObject();
-            FunctionPrototype = new PFunction();
-            ArrayPrototype = new PArray();
-            StringPrototype = new PString();
-            BooleanPrototype = new PBoolean();
-            NumberPrototype = new PNumber();
-            DatePrototype = new PDate();
-            RegExpPrototype = new PRegExp();
-            ErrorPrototype = new PError();
-            EvalErrorPrototype = new PEvalError();
-            RangeErrorPrototype = new PRangeError();
-            ReferenceErrorPrototype = new PReferenceError();
-            SyntaxErrorPrototype = new PSyntaxError();
-            TypeErrorPrototype = new PTypeError();
-            UriErrorPrototype = new PUriError();
+            ObjectConstructor = new CObject(this);
+            FunctionConstructor = new CFunction(this);
+            ArrayConstructor = new CArray(this);
+            StringConstructor = new CString(this);
+            BooleanConstructor = new CBoolean(this);
+            NumberConstructor = new CNumber(this);
+            DateConstructor = new CDate(this);
+            RegExpConstructor = new CRegExp(this);
+            ErrorConstructor = new CError(this);
+            EvalErrorConstructor = new CEvalError(this);
+            RangeErrorConstructor = new CRangeError(this);
+            ReferenceErrorConstructor = new CReferenceError(this);
+            SyntaxErrorConstructor = new CSyntaxError(this);
+            TypeErrorConstructor = new CTypeError(this);
+            UriErrorConstructor = new CUriError(this);
+
+            ObjectPrototype = new PObject(this);
+            FunctionPrototype = new PFunction(this);
+            ArrayPrototype = new PArray(this);
+            StringPrototype = new PString(this);
+            BooleanPrototype = new PBoolean(this);
+            NumberPrototype = new PNumber(this);
+            DatePrototype = new PDate(this);
+            RegExpPrototype = new PRegExp(this);
+            ErrorPrototype = new PError(this);
+            EvalErrorPrototype = new PEvalError(this);
+            RangeErrorPrototype = new PRangeError(this);
+            ReferenceErrorPrototype = new PReferenceError(this);
+            SyntaxErrorPrototype = new PSyntaxError(this);
+            TypeErrorPrototype = new PTypeError(this);
+            UriErrorPrototype = new PUriError(this);
 
             ObjectConstructor.Prototype = FunctionPrototype;
             FunctionConstructor.Prototype = FunctionPrototype;
@@ -177,51 +145,110 @@ namespace Machete.Runtime
         }
 
 
-        public object ExecuteScript(string script)
-        {
-            return null;
-        }
-                
+        public IObject GlobalObject { get; private set; }
+        internal CObject ObjectConstructor { get; private set; }
+        internal PObject ObjectPrototype { get; private set; }
+        internal CFunction FunctionConstructor { get; private set; }
+        internal PFunction FunctionPrototype { get; private set; }
+        internal CArray ArrayConstructor { get; private set; }
+        internal PArray ArrayPrototype { get; private set; }
+        internal CString StringConstructor { get; private set; }
+        internal PString StringPrototype { get; private set; }
+        internal CBoolean BooleanConstructor { get; private set; }
+        internal PBoolean BooleanPrototype { get; private set; }
+        internal CNumber NumberConstructor { get; private set; }
+        internal PNumber NumberPrototype { get; private set; }
+        internal BMath MathObject { get; private set; }
+        internal CDate DateConstructor { get; private set; }
+        internal PDate DatePrototype { get; private set; }
+        internal CRegExp RegExpConstructor { get; private set; }
+        internal PRegExp RegExpPrototype { get; private set; }
+        internal CError ErrorConstructor { get; private set; }
+        internal PError ErrorPrototype { get; private set; }
+        internal CEvalError EvalErrorConstructor { get; private set; }
+        internal PEvalError EvalErrorPrototype { get; private set; }
+        internal CRangeError RangeErrorConstructor { get; private set; }
+        internal PRangeError RangeErrorPrototype { get; private set; }
+        internal CReferenceError ReferenceErrorConstructor { get; private set; }
+        internal PReferenceError ReferenceErrorPrototype { get; private set; }
+        internal CSyntaxError SyntaxErrorConstructor { get; private set; }
+        internal PSyntaxError SyntaxErrorPrototype { get; private set; }
+        internal CTypeError TypeErrorConstructor { get; private set; }
+        internal PTypeError TypeErrorPrototype { get; private set; }
+        internal CUriError UriErrorConstructor { get; private set; }
+        internal PUriError UriErrorPrototype { get; private set; }
+        internal BJson JsonObject { get; private set; }
+        internal SLexicalEnvironment GlobalEnvironment { get; private set; }
 
-        internal static NArray ConstructArray()
+        public IExecutionContext Context
         {
-            return (NArray)Instance.Value.ArrayConstructor.Op_Construct(SArgs.Empty);
+            get { return _currentContext; }
         }
 
-        internal static Exception ThrowEvalError()
+        public IUndefined Undefined
         {
-            Instance.Value.EvalErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
-            return null;
+            get { throw new NotImplementedException(); }
         }
 
-        internal static Exception ThrowRangeError()
+        public IBoolean BooleanTrue
         {
-            Instance.Value.RangeErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
-            return null;
+            get { throw new NotImplementedException(); }
         }
 
-        internal static Exception ThrowReferenceError()
+        public IBoolean BooleanFalse
         {
-            Instance.Value.ReferenceErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
-            return null;
+            get { throw new NotImplementedException(); }
         }
 
-        internal static Exception ThrowSyntaxError()
+        public INull Null
         {
-            Instance.Value.SyntaxErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
-            return null;
+            get { throw new NotImplementedException(); }
         }
 
-        internal static Exception ThrowTypeError()
+
+        public IBoolean CreateBoolean(bool value)
         {
-            Instance.Value.TypeErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
-            return null;
+            throw new NotImplementedException();
         }
 
-        internal static Exception ThrowUriError()
+        public IString CreateString(string value)
         {
-            Instance.Value.UriErrorConstructor.Op_Construct(SArgs.Empty).Op_Throw();
-            return null;
+            throw new NotImplementedException();
+        }
+
+        public INumber CreateNumber(double value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IArgs CreateArgs(IEnumerable<IDynamic> values)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IObject CreateArray()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IObject CreateObject()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IObject CreateReferenceError()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IObject CreateTypeError()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IObject CreateSyntaxError()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -7,6 +7,9 @@ namespace Machete.Interfaces
         IExecutionContext Context { get; }
         IUndefined Undefined { get; }
         INull Null { get; }
+        IBoolean BooleanTrue { get; }
+        IBoolean BooleanFalse { get; }
+        IObject GlobalObject { get; }
 
         IBoolean CreateBoolean(bool value);
         IString CreateString(string value);

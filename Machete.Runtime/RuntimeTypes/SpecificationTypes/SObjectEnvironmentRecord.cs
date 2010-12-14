@@ -12,27 +12,26 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
     public sealed class SObjectEnvironmentRecord : IObjectEnvironmentRecord
     {
-        private readonly LObject _bindingObject;
+        private readonly IEnvironment _environment;
+        private readonly IObject _bindingObject;
         private readonly bool _provideThis;
 
-        public SObjectEnvironmentRecord(LObject bindingObject, bool provideThis)
+        public SObjectEnvironmentRecord(IEnvironment environment, IObject bindingObject, bool provideThis)
         {
-            Contract.Assert(bindingObject != null);
+            _environment = environment;
             _bindingObject = bindingObject;
             _provideThis = provideThis;
         }
 
         public bool HasBinding(string n)
         {
-            Contract.Assert(n != null);
             return _bindingObject.HasProperty(n);
         }
 
         public void CreateMutableBinding(string n, bool d)
         {
-            Contract.Assert(n != null);
             var desc = new SPropertyDescriptor() { 
-                Value = LUndefined.Instance, 
+                Value = _environment.Undefined, 
                 Writable = true, 
                 Enumerable = true, 
                 Configurable = d 
@@ -52,8 +51,9 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             Contract.Assert(n != null);
             if (!_bindingObject.HasProperty(n))
             {
-                if (!s) return LUndefined.Instance;
-                Environment.ThrowReferenceError();
+                if (!s) return _environment.Undefined;
+                _environment.CreateReferenceError().Op_Throw();
+                return null;
             }
             return _bindingObject.Get(n);
         }
@@ -66,7 +66,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public IDynamic ImplicitThisValue()
         {
-            return _provideThis ? (IDynamic)_bindingObject : (IDynamic)LUndefined.Instance;
+            return _provideThis ? (IDynamic)_bindingObject : (IDynamic)_environment.Undefined;
         }
 
         public IDynamic Get(string name, bool strict)

@@ -5,29 +5,36 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Threading;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects
 {
     public sealed class BGlobal : LObject
     {
-        internal BGlobal()
+        public BGlobal(IEnvironment environment)
+            : base(environment)
         {
-            Class = "Global";
-            Prototype = null;
-            Extensible = true;
-            //DefineOwnProperty("NaN", new SPropertyDescriptor(LNumber.NaN), false);
-            //DefineOwnProperty("Infinity", new SPropertyDescriptor(LNumber.PositiveInfinity), false);
-            //DefineOwnProperty("undefined", new SPropertyDescriptor(LUndefined.Instance), false);
-            //DefineOwnProperty("eval", new SPropertyDescriptor(new NFunction(new[] { "x" }, () => Eval)), false);
-            //DefineOwnProperty("parseInt", new SPropertyDescriptor(new NFunction(new[] { "string", "radix" }, () => ParseInt)), false);
-            //DefineOwnProperty("parseFloat", new SPropertyDescriptor(new NFunction(new[] { "string" }, () => ParseFloat)), false);
-            //DefineOwnProperty("isNaN", new SPropertyDescriptor(new NFunction(new[] { "number" }, () => IsNan)), false);
-            //DefineOwnProperty("isFinite", new SPropertyDescriptor(new NFunction(new[] { "number" }, () => IsFinite)), false);
-            //DefineOwnProperty("decodeURI", new SPropertyDescriptor(new NFunction(new[] { "encodedURI" }, () => DecodeUri)), false);
-            //DefineOwnProperty("decodeURIComponent", new SPropertyDescriptor(new NFunction(new[] { "encodedURIComponent" }, () => DecodeUriComponent)), false);
-            //DefineOwnProperty("encodeURI", new SPropertyDescriptor(new NFunction(new[] { "uri" }, () => EncodeUri)), false);
-            //DefineOwnProperty("encodeURIComponent", new SPropertyDescriptor(new NFunction(new[] { "uriComponent" }, () => EncodeUriComponent)), false);
+
         }
+
+        //internal BGlobal()
+        //{
+        //    Class = "Global";
+        //    Prototype = null;
+        //    Extensible = true;
+        //    //DefineOwnProperty("NaN", new SPropertyDescriptor(LNumber.NaN), false);
+        //    //DefineOwnProperty("Infinity", new SPropertyDescriptor(LNumber.PositiveInfinity), false);
+        //    //DefineOwnProperty("undefined", new SPropertyDescriptor(LUndefined.Instance), false);
+        //    //DefineOwnProperty("eval", new SPropertyDescriptor(new NFunction(new[] { "x" }, () => Eval)), false);
+        //    //DefineOwnProperty("parseInt", new SPropertyDescriptor(new NFunction(new[] { "string", "radix" }, () => ParseInt)), false);
+        //    //DefineOwnProperty("parseFloat", new SPropertyDescriptor(new NFunction(new[] { "string" }, () => ParseFloat)), false);
+        //    //DefineOwnProperty("isNaN", new SPropertyDescriptor(new NFunction(new[] { "number" }, () => IsNan)), false);
+        //    //DefineOwnProperty("isFinite", new SPropertyDescriptor(new NFunction(new[] { "number" }, () => IsFinite)), false);
+        //    //DefineOwnProperty("decodeURI", new SPropertyDescriptor(new NFunction(new[] { "encodedURI" }, () => DecodeUri)), false);
+        //    //DefineOwnProperty("decodeURIComponent", new SPropertyDescriptor(new NFunction(new[] { "encodedURIComponent" }, () => DecodeUriComponent)), false);
+        //    //DefineOwnProperty("encodeURI", new SPropertyDescriptor(new NFunction(new[] { "uri" }, () => EncodeUri)), false);
+        //    //DefineOwnProperty("encodeURIComponent", new SPropertyDescriptor(new NFunction(new[] { "uriComponent" }, () => EncodeUriComponent)), false);
+        //}
 
         //private IDynamic Eval(ExecutionContext context, SList args)
         //{

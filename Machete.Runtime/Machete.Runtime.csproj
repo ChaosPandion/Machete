@@ -71,7 +71,6 @@
   <ItemGroup>
     <Compile Include="Environment.cs" />
     <Compile Include="ExecutionContext.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\BObject.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CBoolean.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CDate.cs" />

@@ -24,20 +24,26 @@ namespace Machete.Runtime.NativeObjects
         public object BoundThis { get; set; }
         public object BoundArguments { get; set; }
 
-
-        internal NFunction(string[] formalParameterList, Func<object> getCode)
+        public NFunction(IEnvironment enviroment)
+            : base(enviroment)
         {
-            //_formalParameterList = formalParameterList ?? new string[0];
-            //_code = new Lazy<Code>(getCode);
-            //_scope = Environment.Instance.Value.GlobalEnvironment;
+
         }
 
-        internal NFunction(string[] formalParameterList, Func<object> getCode, SLexicalEnvironment scope)
-        {
-            //_formalParameterList = formalParameterList ?? new string[0];
-            //_code = new Lazy<Code>(getCode);
-            //_scope = scope;
-        }
+
+        //internal NFunction(string[] formalParameterList, Func<object> getCode)
+        //{
+        //    //_formalParameterList = formalParameterList ?? new string[0];
+        //    //_code = new Lazy<Code>(getCode);
+        //    //_scope = Environment.Instance.Value.GlobalEnvironment;
+        //}
+
+        //internal NFunction(string[] formalParameterList, Func<object> getCode, SLexicalEnvironment scope)
+        //{
+        //    //_formalParameterList = formalParameterList ?? new string[0];
+        //    //_code = new Lazy<Code>(getCode);
+        //    //_scope = scope;
+        //}
 
 
         IDynamic ICallable.Call(IEnvironment environment, IDynamic thisBinding, IArgs args)

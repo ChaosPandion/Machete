@@ -10,10 +10,20 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
     public class LObject : IObject
     {
+        private readonly IEnvironment _environment;
         private readonly Dictionary<string, SPropertyDescriptor> _map = new Dictionary<string, SPropertyDescriptor>();
 
-        public static readonly LString ObjectString = new LString("object");
 
+        public LObject(IEnvironment environment)
+        {
+            _environment = environment;
+        }
+
+
+        protected IEnvironment Environment
+        {
+            get { return _environment; }
+        }
         
         public IObject Prototype { get; set; }
 
@@ -73,7 +83,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var desc = GetProperty(p);
             if (desc == null)
             {
-                return LUndefined.Instance;
+                return Environment.Undefined;
             }
             else if (desc.IsDataDescriptor)
             {
@@ -81,11 +91,11 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
             else if (desc.Get is LUndefined)
             {
-                return LUndefined.Instance;
+                return Environment.Undefined;
             }
             else
             {
-                return ((ICallable)desc.Get).Call(null, this, SArgs.Empty);
+                return ((ICallable)desc.Get).Call(null, this, new SArgs(Environment));
             }
         }
 
@@ -133,7 +143,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (@throw)
                 {
-                    throw Environment.ThrowTypeError();
+                    Environment.CreateTypeError().Op_Throw();
                 }
                 return;
             }
@@ -171,7 +181,8 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
             else if (@throw)
             {
-                throw Environment.ThrowTypeError();
+                Environment.CreateTypeError().Op_Throw();
+                return false;
             }
             else
             {
@@ -186,34 +197,35 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 var func = Get("toString") as ICallable ?? Get("valueOf") as ICallable;
                 if (func != null)
                 {
-                    var result = func.Call(null, this, SArgs.Empty);
+                    var result = func.Call(null, this, new SArgs(Environment));
                     if (result.IsPrimitive)
                     {
                         return result;
                     }
                 }
-                throw Environment.ThrowTypeError();
             }
             else
             {
                 var func = Get("valueOf") as ICallable ?? Get("toString") as ICallable;
                 if (func != null)
                 {
-                    var result = func.Call(null, this, SArgs.Empty);
+                    var result = func.Call(null, this, new SArgs(Environment));
                     if (result.IsPrimitive)
                     {
                         return result;
                     }
                 }
-                throw Environment.ThrowTypeError();  
             }
+            Environment.CreateTypeError().Op_Throw(); 
+            return null;
         }
 
         public virtual bool DefineOwnProperty(string p, IPropertyDescriptor desc, bool @throw)
         {
             var reject = new Func<bool>(() => {
                 if (!@throw) return false;
-                throw Environment.ThrowTypeError();
+                Environment.CreateTypeError().Op_Throw();
+                return false;
             });
             var current = GetOwnProperty(p);
             if (current == null)
@@ -226,15 +238,15 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                     desc.IsGenericDescriptor || desc.IsDataDescriptor 
                     ? new SPropertyDescriptor()
                         {
-                            Value = desc.Value ?? LUndefined.Instance,
+                            Value = desc.Value ?? Environment.Undefined,
                             Writable = desc.Writable ?? false,
                             Enumerable = desc.Enumerable ?? false,
                             Configurable = desc.Configurable ?? false
                         } 
                     : new SPropertyDescriptor()
                         {
-                            Get = desc.Get ?? LUndefined.Instance,
-                            Set = desc.Set ?? LUndefined.Instance,
+                            Get = desc.Get ?? Environment.Undefined,
+                            Set = desc.Set ?? Environment.Undefined,
                             Enumerable = desc.Enumerable ?? false,
                             Configurable = desc.Configurable ?? false
                         }
@@ -319,37 +331,37 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         
         public IDynamic Op_LogicalNot()
         {
-            return LType.Op_LogicalNot(this);
+            return LType.Op_LogicalNot(_environment, this);
         }
 
         public IDynamic Op_LogicalOr(IDynamic other)
         {
-            return LType.Op_LogicalOr(this, other);
+            return LType.Op_LogicalOr(_environment, this, other);
         }
 
         public IDynamic Op_LogicalAnd(IDynamic other)
         {
-            return LType.Op_LogicalAnd(this, other);
+            return LType.Op_LogicalAnd(_environment, this, other);
         }
 
         public IDynamic Op_BitwiseNot()
         {
-            return LType.Op_BitwiseNot(this);
+            return LType.Op_BitwiseNot(_environment, this);
         }
 
         public IDynamic Op_BitwiseOr(IDynamic other)
         {
-            return LType.Op_BitwiseOr(this, other);
+            return LType.Op_BitwiseOr(_environment, this, other);
         }
 
         public IDynamic Op_BitwiseXor(IDynamic other)
         {
-            return LType.Op_BitwiseXor(this, other);
+            return LType.Op_BitwiseXor(_environment, this, other);
         }
 
         public IDynamic Op_BitwiseAnd(IDynamic other)
         {
-            return LType.Op_BitwiseAnd(this, other);
+            return LType.Op_BitwiseAnd(_environment, this, other);
         }
 
         public IDynamic Op_Equals(IDynamic other)
@@ -358,17 +370,17 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 case LanguageTypeCode.String:
                 case LanguageTypeCode.Number:
-                    return ConvertToPrimitive().Op_Equals(other);
+                    return ConvertToPrimitive(null).Op_Equals(other);
                 case LanguageTypeCode.Object:
-                    return (LBoolean)(this == other);
+                    return Environment.CreateBoolean(this == other);
                 default:
-                    return LBoolean.False;
+                    return Environment.BooleanFalse;
             }
         }
 
         public IDynamic Op_DoesNotEquals(IDynamic other)
         {
-            return LType.Op_DoesNotEquals(this, other);
+            return LType.Op_DoesNotEquals(_environment, this, other);
         }
 
         public IDynamic Op_StrictEquals(IDynamic other)
@@ -376,110 +388,112 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             switch (other.TypeCode)
             {
                 case LanguageTypeCode.Object:
-                    return (LBoolean)(this == other);
+                    return _environment.CreateBoolean(this == other);
                 default:
-                    return LBoolean.False;
+                    return _environment.CreateBoolean(false);
             }
         }
 
         public IDynamic Op_StrictDoesNotEquals(IDynamic other)
         {
-            return LType.Op_StrictDoesNotEquals(this, other);
+            return LType.Op_StrictDoesNotEquals(_environment, this, other);
         }
 
         public IDynamic Op_Lessthan(IDynamic other)
         {
-            return LType.Op_Lessthan(this, other);
+            return LType.Op_Lessthan(_environment, this, other);
         }
 
         public IDynamic Op_Greaterthan(IDynamic other)
         {
-            return LType.Op_Greaterthan(this, other);
+            return LType.Op_Greaterthan(_environment, this, other);
         }
 
         public IDynamic Op_LessthanOrEqual(IDynamic other)
         {
-            return LType.Op_LessthanOrEqual(this, other);
+            return LType.Op_LessthanOrEqual(_environment, this, other);
         }
 
         public IDynamic Op_GreaterthanOrEqual(IDynamic other)
         {
-            return LType.Op_GreaterthanOrEqual(this, other);
+            return LType.Op_GreaterthanOrEqual(_environment, this, other);
         }
 
         public IDynamic Op_Instanceof(IDynamic other)
         {
-            return LType.Op_GreaterthanOrEqual(this, other);
+            return LType.Op_GreaterthanOrEqual(_environment, this, other);
         }
 
         public IDynamic Op_In(IDynamic other)
         {
-            return LType.Op_In(this, other);
+            return LType.Op_In(_environment, this, other);
         }
 
         public IDynamic Op_LeftShift(IDynamic other)
         {
-            return LType.Op_LeftShift(this, other);
+            return LType.Op_LeftShift(_environment, this, other);
         }
 
         public IDynamic Op_SignedRightShift(IDynamic other)
         {
-            return LType.Op_SignedRightShift(this, other);
+            return LType.Op_SignedRightShift(_environment, this, other);
         }
 
         public IDynamic Op_UnsignedRightShift(IDynamic other)
         {
-            return LType.Op_UnsignedRightShift(this, other);
+            return LType.Op_UnsignedRightShift(_environment, this, other);
         }
 
         public IDynamic Op_Addition(IDynamic other)
         {
-            return LType.Op_Addition(this, other);
+            return LType.Op_Addition(_environment, this, other);
         }
 
         public IDynamic Op_Subtraction(IDynamic other)
         {
-            return LType.Op_Subtraction(this, other);
+            return LType.Op_Subtraction(_environment, this, other);
         }
 
         public IDynamic Op_Multiplication(IDynamic other)
         {
-            return LType.Op_Multiplication(this, other);
+            return LType.Op_Multiplication(_environment, this, other);
         }
 
         public IDynamic Op_Division(IDynamic other)
         {
-            return LType.Op_Division(this, other);
+            return LType.Op_Division(_environment, this, other);
         }
 
         public IDynamic Op_Modulus(IDynamic other)
         {
-            return LType.Op_Modulus(this, other);
+            return LType.Op_Modulus(_environment, this, other);
         }
 
         public IDynamic Op_Delete()
         {
-            return LBoolean.True;
+            return Environment.CreateBoolean(true);
         }
 
         public IDynamic Op_Void()
         {
-            return LUndefined.Instance;
+            return Environment.Undefined;
         }
 
         public IDynamic Op_Typeof()
         {
-            return LObject.ObjectString;
+            return Environment.CreateString("object");
         }
 
         public IDynamic Op_PrefixIncrement()
         {
-            throw Environment.ThrowReferenceError();
+            _environment.CreateReferenceError().Op_Throw();
+            return null;
         }
 
         public IDynamic Op_PrefixDecrement()
         {
-            throw Environment.ThrowReferenceError();
+            _environment.CreateReferenceError().Op_Throw();
+            return null;
         }
 
         public IDynamic Op_Plus()
@@ -489,52 +503,54 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Minus()
         {
-            return LType.Op_Minus(this);
+            return LType.Op_Minus(_environment, this);
         }
 
         public IDynamic Op_PostfixIncrement()
         {
-            throw Environment.ThrowReferenceError();
+            _environment.CreateReferenceError().Op_Throw();
+            return null;
         }
 
         public IDynamic Op_PostfixDecrement()
         {
-            throw Environment.ThrowReferenceError();
+            _environment.CreateReferenceError().Op_Throw();
+            return null;
         }
 
         public IDynamic Op_GetProperty(IDynamic name)
         {
-            return LType.Op_GetProperty(this, name);
+            return LType.Op_GetProperty(_environment, this, name);
         }
 
         public void Op_SetProperty(IDynamic name, IDynamic value)
         {
-            LType.Op_SetProperty(this, name, value);
+            LType.Op_SetProperty(_environment, this, name, value);
         }
 
         public IDynamic Op_Call(IArgs args)
         {
-            return LType.Op_Call(this, args);
+            return LType.Op_Call(_environment, this, args);
         }
 
         public IObject Op_Construct(IArgs args)
         {
-            return LType.Op_Construct(this, args);
+            return LType.Op_Construct(_environment, this, args);
         }
 
         public void Op_Throw()
         {
-            LType.Op_Throw(this);
+            LType.Op_Throw(_environment, this);
         }
 
-        public IDynamic ConvertToPrimitive(string preferredType = null)
+        public IDynamic ConvertToPrimitive(string preferredType)
         {
             return DefaultValue(preferredType);
         }
 
         public IBoolean ConvertToBoolean()
         {
-            return LBoolean.True;
+            return Environment.CreateBoolean(true);
         }
 
         public INumber ConvertToNumber()
@@ -554,22 +570,22 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public INumber ConvertToInteger()
         {
-            return LType.ConvertToInteger(this);
+            return LType.ConvertToInteger(_environment, this);
         }
 
         public INumber ConvertToInt32()
         {
-            return LType.ConvertToInt32(this);
+            return LType.ConvertToInt32(_environment, this);
         }
 
         public INumber ConvertToUInt32()
         {
-            return LType.ConvertToUInt32(this);
+            return LType.ConvertToUInt32(_environment, this);
         }
 
         public INumber ConvertToUInt16()
         {
-            return LType.ConvertToUInt16(this);
+            return LType.ConvertToUInt16(_environment, this);
         }
 
 

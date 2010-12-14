@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Machete.Runtime.RuntimeTypes.SpecificationTypes;
+﻿using Machete.Interfaces;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
     public sealed class PObject : LObject
     {
+        public PObject(IEnvironment environment)
+            : base(environment)
+        {
+
+        }
         //private IDynamic ToString(ExecutionContext context, SList args)
         //{
         //    return new LString(string.Format("[object, {0}]", context.ThisBinding.ConvertToObject().Class));

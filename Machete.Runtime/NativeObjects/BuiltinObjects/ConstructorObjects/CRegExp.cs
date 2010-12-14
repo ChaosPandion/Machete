@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Machete.Interfaces;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
     public sealed class CRegExp : LObject
     {
+        public CRegExp(IEnvironment environment)
+            : base(environment)
+        {
+
+        }
     }
 }

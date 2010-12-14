@@ -10,16 +10,13 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
     public struct LBoolean : IBoolean, IEquatable<LBoolean>
     {
+        private readonly IEnvironment _environment;
         private readonly bool _value;
-        public static readonly LBoolean True = new LBoolean(true);
-        public static readonly LBoolean False = new LBoolean(false);
-        public static readonly LString TrueString = new LString("true");
-        public static readonly LString FalseString = new LString("false");
-        public static readonly LString BooleanString = new LString("boolean");
           
 
-        private LBoolean(bool value)
+        private LBoolean(IEnvironment environment, bool value)
         {
+            _environment = environment;
             _value = value;
         }
 
@@ -58,17 +55,17 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_BitwiseOr(IDynamic other)
         {
-            return LType.Op_BitwiseOr(this, other);
+            return LType.Op_BitwiseOr(_environment, this, other);
         }
 
         public IDynamic Op_BitwiseXor(IDynamic other)
         {
-            return LType.Op_BitwiseXor(this, other);
+            return LType.Op_BitwiseXor(_environment, this, other);
         }
 
         public IDynamic Op_BitwiseAnd(IDynamic other)
         {
-            return LType.Op_BitwiseAnd(this, other);
+            return LType.Op_BitwiseAnd(_environment, this, other);
         }
 
         public IDynamic Op_Equals(IDynamic other)
@@ -76,7 +73,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             switch (other.TypeCode)
             {
                 case LanguageTypeCode.Boolean:
-                    return (LBoolean)(this._value == ((LBoolean)other)._value);
+                    return _environment.CreateBoolean(this._value == ((LBoolean)other).BaseValue);
                 default:
                     return this.ConvertToNumber().Op_Equals(other);
             }
@@ -84,7 +81,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_DoesNotEquals(IDynamic other)
         {
-            return LType.Op_DoesNotEquals(this, other);
+            return LType.Op_DoesNotEquals(_environment, this, other);
         }
 
         public IDynamic Op_StrictEquals(IDynamic other)
@@ -92,165 +89,169 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             switch (other.TypeCode)
             {
                 case LanguageTypeCode.Boolean:
-                    return (LBoolean)(this._value == ((LBoolean)other)._value);
+                    return _environment.CreateBoolean(this._value == ((LBoolean)other)._value);
                 default:
-                    return LBoolean.False;
+                    return _environment.CreateBoolean(false);
             }
         }
 
         public IDynamic Op_StrictDoesNotEquals(IDynamic other)
         {
-            return LType.Op_StrictDoesNotEquals(this, other);
+            return LType.Op_StrictDoesNotEquals(_environment, this, other);
         }
 
         public IDynamic Op_Lessthan(IDynamic other)
         {
-            return LType.Op_Lessthan(this, other);
+            return LType.Op_Lessthan(_environment, this, other);
         }
 
         public IDynamic Op_Greaterthan(IDynamic other)
         {
-            return LType.Op_Greaterthan(this, other);
+            return LType.Op_Greaterthan(_environment, this, other);
         }
 
         public IDynamic Op_LessthanOrEqual(IDynamic other)
         {
-            return LType.Op_LessthanOrEqual(this, other);
+            return LType.Op_LessthanOrEqual(_environment, this, other);
         }
 
         public IDynamic Op_GreaterthanOrEqual(IDynamic other)
         {
-            return LType.Op_GreaterthanOrEqual(this, other);
+            return LType.Op_GreaterthanOrEqual(_environment, this, other);
         }
 
         public IDynamic Op_Instanceof(IDynamic other)
         {
-            return LType.Op_Instanceof(this, other);
+            return LType.Op_Instanceof(_environment, this, other);
         }
 
         public IDynamic Op_In(IDynamic other)
         {
-            return LType.Op_In(this, other);
+            return LType.Op_In(_environment, this, other);
         }
 
         public IDynamic Op_LeftShift(IDynamic other)
         {
-            return LType.Op_LeftShift(this, other);
+            return LType.Op_LeftShift(_environment, this, other);
         }
 
         public IDynamic Op_SignedRightShift(IDynamic other)
         {
-            return LType.Op_SignedRightShift(this, other);
+            return LType.Op_SignedRightShift(_environment, this, other);
         }
 
         public IDynamic Op_UnsignedRightShift(IDynamic other)
         {
-            return LType.Op_UnsignedRightShift(this, other);
+            return LType.Op_UnsignedRightShift(_environment, this, other);
         }
 
         public IDynamic Op_Addition(IDynamic other)
         {
-            return LType.Op_Addition(this, other);
+            return LType.Op_Addition(_environment, this, other);
         }
 
         public IDynamic Op_Subtraction(IDynamic other)
         {
-            return LType.Op_Subtraction(this, other);
+            return LType.Op_Subtraction(_environment, this, other);
         }
 
         public IDynamic Op_Multiplication(IDynamic other)
         {
-            return LType.Op_Multiplication(this, other);
+            return LType.Op_Multiplication(_environment, this, other);
         }
 
         public IDynamic Op_Division(IDynamic other)
         {
-            return LType.Op_Division(this, other);
+            return LType.Op_Division(_environment, this, other);
         }
 
         public IDynamic Op_Modulus(IDynamic other)
         {
-            return LType.Op_Modulus(this, other);
+            return LType.Op_Modulus(_environment, this, other);
         }
 
         public IDynamic Op_Delete()
         {
-            return LBoolean.True;
+            return _environment.CreateBoolean(true);
         }
 
         public IDynamic Op_Void()
         {
-            return LUndefined.Instance;
+            return _environment.Undefined;
         }
 
         public IDynamic Op_Typeof()
         {
-            return BooleanString;
+            return _environment.CreateString("boolean");
         }
 
         public IDynamic Op_PrefixIncrement()
         {
-            throw Environment.ThrowReferenceError();
+            _environment.CreateReferenceError();
+            return null;
         }
 
         public IDynamic Op_PrefixDecrement()
         {
-            throw Environment.ThrowReferenceError();
+            _environment.CreateReferenceError();
+            return null;
         }
 
         public IDynamic Op_Plus()
         {
-            return LType.Op_Plus(this);
+            return LType.Op_Plus(_environment, this);
         }
 
         public IDynamic Op_Minus()
         {
-            return LType.Op_Minus(this);
+            return LType.Op_Minus(_environment, this);
         }
 
         public IDynamic Op_BitwiseNot()
         {
-            return LType.Op_BitwiseNot(this);
+            return LType.Op_BitwiseNot(_environment, this);
         }
 
         public IDynamic Op_LogicalNot()
         {
-            return LType.Op_LogicalNot(this);
+            return LType.Op_LogicalNot(_environment, this);
         }
 
         public IDynamic Op_PostfixIncrement()
         {
-            throw Environment.ThrowReferenceError();
+            _environment.CreateReferenceError();
+            return null;
         }
 
         public IDynamic Op_PostfixDecrement()
         {
-            throw Environment.ThrowReferenceError();
+            _environment.CreateReferenceError();
+            return null;
         }
 
         public IDynamic Op_GetProperty(IDynamic name)
         {
-            return LType.Op_GetProperty(this, name);
+            return LType.Op_GetProperty(_environment, this, name);
         }
 
         public void Op_SetProperty(IDynamic name, IDynamic value)
         {
-            LType.Op_SetProperty(this, name, value);
+            LType.Op_SetProperty(_environment, this, name, value);
         }
 
         public IDynamic Op_Call(IArgs args)
         {
-            return LType.Op_Call(this, args);
+            return LType.Op_Call(_environment, this, args);
         }
 
         public IObject Op_Construct(IArgs args)
         {
-            return LType.Op_Construct(this, args);
+            return LType.Op_Construct(_environment, this, args);
         }
 
         public void Op_Throw()
         {
-            LType.Op_Throw(this);
+            LType.Op_Throw(_environment, this);
         }
 
         public IDynamic ConvertToPrimitive(string preferredType = null)
@@ -265,47 +266,47 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public INumber ConvertToNumber()
         {
-            return _value ? LNumber.One : LNumber.Zero;
+            return _value ? _environment.CreateNumber(1) : _environment.CreateNumber(0);
         }
 
         public IString ConvertToString()
         {
-            return _value ? TrueString : FalseString;
+            return _value ? _environment.CreateString("true") : _environment.CreateString("false");
         }
 
         public IObject ConvertToObject()
         {
-            return new NBoolean(this);
+            return new NBoolean(_environment, this);
         }
 
         public INumber ConvertToInteger()
         {
-            return LType.ConvertToInteger(this);
+            return LType.ConvertToInteger(_environment, this);
         }
 
         public INumber ConvertToInt32()
         {
-            return LType.ConvertToInt32(this);
+            return LType.ConvertToInt32(_environment, this);
         }
 
         public INumber ConvertToUInt32()
         {
-            return LType.ConvertToUInt32(this);
+            return LType.ConvertToUInt32(_environment, this);
         }
 
         public INumber ConvertToUInt16()
         {
-            return LType.ConvertToUInt16(this);
+            return LType.ConvertToUInt16(_environment, this);
         }
 
         public IDynamic Get(string name, bool strict)
         {
-            return LType.GetValue(this, name, strict);
+            return LType.GetValue(_environment, this, name, strict);
         }
 
         public void Set(string name, IDynamic value, bool strict)
         {
-            LType.SetValue(this, name, value, strict);
+            LType.SetValue(_environment, this, name, value, strict);
         }
 
         public override bool Equals(object obj)
@@ -341,11 +342,6 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         public static explicit operator bool(LBoolean value)
         {
             return value._value;
-        }
-
-        public static explicit operator LBoolean(bool value)
-        {
-            return value ? LBoolean.True : LBoolean.False;
         }
     }
 }

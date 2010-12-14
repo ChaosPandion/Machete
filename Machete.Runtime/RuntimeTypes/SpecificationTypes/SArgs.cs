@@ -10,8 +10,14 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
     public sealed class SArgs : IArgs
     {
+        private readonly IEnvironment _environment;
         private readonly IDynamic[] _items;
-        public static readonly SArgs Empty = new SArgs();
+
+
+        public SArgs(IEnvironment environment)
+        {
+            _environment = environment;
+        }
 
         public IDynamic this[int index]
         {
@@ -20,7 +26,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                 Debug.Assert(index >= 0);
                 if (index > _items.Length - 1)
                 {
-                    return LUndefined.Instance;
+                    return _environment.Undefined;
                 }
                 return _items[index];
             }

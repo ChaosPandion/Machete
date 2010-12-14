@@ -10,14 +10,16 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
     public sealed class SLexicalEnvironment : ILexicalEnvironment
     {
+        private readonly IEnvironment _environment;
         public IEnvironmentRecord Record { get; set; }
         public ILexicalEnvironment Parent { get; set; }
 
 
-        public SLexicalEnvironment(IEnvironmentRecord record, ILexicalEnvironment parent)
+        public SLexicalEnvironment(IEnvironment environment, IEnvironmentRecord record, ILexicalEnvironment parent)
         {
             Debug.Assert(record != null);
             Debug.Assert(parent != null);
+            _environment = environment;
             Record = record;
             Parent = parent;
         }
@@ -25,13 +27,13 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public SLexicalEnvironment NewDeclarativeEnvironment()
         {
-            return new SLexicalEnvironment(new SDeclarativeEnvironmentRecord(), this);
+            return new SLexicalEnvironment(_environment, new SDeclarativeEnvironmentRecord(_environment), this);
         }
 
         public SLexicalEnvironment NewObjectEnvironment(LObject o)
         {
             Debug.Assert(o != null);
-            return new SLexicalEnvironment(new SDeclarativeEnvironmentRecord(), this);
+            return new SLexicalEnvironment(_environment, new SDeclarativeEnvironmentRecord(_environment), this);
         }
     }
 }

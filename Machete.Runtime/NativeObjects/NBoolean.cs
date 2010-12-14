@@ -11,7 +11,8 @@ namespace Machete.Runtime.NativeObjects
     {
         public IDynamic PrimitiveValue { get; set; }
 
-        public NBoolean(LBoolean value)
+        public NBoolean(IEnvironment environment, LBoolean value)
+            : base(environment)
         {
             PrimitiveValue = value;
         }

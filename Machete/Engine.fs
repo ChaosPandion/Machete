@@ -9,12 +9,12 @@ type Engine () =
 
     let proccessMessages (inbox:MailboxProcessor<Message>) = async {
         do! Async.SwitchToNewThread ()
-        let environment = Environment.Instance.Value
+        let environment = new Environment()
         while true do
             let! msg = inbox.Receive ()
             match msg with
             | ExecuteScript (script, channel) ->
-                channel.Reply (environment.ExecuteScript script)
+                channel.Reply (null)
     }
     
     let agent = lazy(MailboxProcessor.Start proccessMessages)

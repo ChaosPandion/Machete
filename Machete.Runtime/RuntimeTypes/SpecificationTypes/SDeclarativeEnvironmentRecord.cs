@@ -11,7 +11,14 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
     public sealed class SDeclarativeEnvironmentRecord : IDeclarativeEnvironmentRecord
     {
+        private readonly IEnvironment _environment;
         private readonly Dictionary<string, Binding> _bindings = new Dictionary<string, Binding>();
+
+
+        public SDeclarativeEnvironmentRecord(IEnvironment environment)
+        {
+            _environment = environment;
+        }
 
 
         public bool HasBinding(string n)
@@ -21,7 +28,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public void CreateMutableBinding(string n, bool d)
         {
-            _bindings.Add(n, new Binding(d ? BFlags.Deletable : BFlags.None));
+            _bindings.Add(n, new Binding(_environment.Undefined, d ? BFlags.Deletable : BFlags.None));
         }
 
         public void SetMutableBinding(string n, IDynamic v, bool s)
@@ -29,7 +36,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Immutable) == BFlags.Immutable)
             {
-                Environment.ThrowTypeError();
+                _environment.CreateTypeError().Op_Throw();
             }
             binding.Value = v;
         }
@@ -39,8 +46,9 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Uninitialized) == BFlags.Uninitialized)
             {
-                if (!s) return LUndefined.Instance;
-                Environment.ThrowReferenceError();
+                if (!s) return _environment.Undefined;
+                _environment.CreateReferenceError().Op_Throw();
+                return null;
             }
             return binding.Value;
         }
@@ -62,7 +70,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public IDynamic ImplicitThisValue()
         {
-            return LUndefined.Instance;
+            return _environment.Undefined;
         }
 
         public IDynamic Get(string name, bool strict)
@@ -77,7 +85,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public void CreateImmutableBinding(string n)
         {
-            _bindings.Add(n, new Binding(BFlags.Immutable | BFlags.Uninitialized));
+            _bindings.Add(n, new Binding(_environment.Undefined, BFlags.Immutable | BFlags.Uninitialized));
         }
 
         public void InitializeImmutableBinding(string n, IDynamic v)
@@ -101,9 +109,9 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             public IDynamic Value;
             public BFlags Flags;
 
-            public Binding(BFlags flags)
+            public Binding(IDynamic value, BFlags flags)
             {
-                Value = LUndefined.Instance;
+                Value = value;
                 Flags = flags;
             }
         }

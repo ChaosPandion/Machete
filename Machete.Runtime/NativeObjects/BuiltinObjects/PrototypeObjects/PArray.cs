@@ -1,44 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Machete.Interfaces;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
-using Machete.Runtime.RuntimeTypes.SpecificationTypes;
-using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
     public sealed class PArray : LObject
     {
-        internal PArray()
+        public PArray(IEnvironment environment)
+            : base(environment)
         {
-            Class = "Array";
-            Extensible = true;
-            //DefineOwnProperty("length", SPropertyDescriptor.Create(LNumber.Zero), false);
-            //DefineOwnProperty("toString", SPropertyDescriptor.Create(new NFunction(null, ToString)), false);
-            //DefineOwnProperty("toLocaleString", SPropertyDescriptor.Create(new NFunction(null, ToLocaleString)), false);
-            //DefineOwnProperty("concat", SPropertyDescriptor.Create(new NFunction(new[] { "item1" }, Concat)), false);
-            //DefineOwnProperty("join", SPropertyDescriptor.Create(new NFunction(new[] { "separator" }, Join)), false);
-            //DefineOwnProperty("pop", SPropertyDescriptor.Create(new NFunction(null, Pop)), false);
-            //DefineOwnProperty("push", SPropertyDescriptor.Create(new NFunction(new[] { "item1" }, Push)), false);
-            //DefineOwnProperty("reverse", SPropertyDescriptor.Create(new NFunction(null, Reverse)), false);
-            //DefineOwnProperty("shift", SPropertyDescriptor.Create(new NFunction(null, Shift)), false);
-            //DefineOwnProperty("slice", SPropertyDescriptor.Create(new FunctionObject("slice", new[] { "start", "end" }, Slice)), false);
-            //DefineOwnProperty("sort", SPropertyDescriptor.Create(new FunctionObject("sort", new[] { "comparefn" }, Sort)), false);
-            //DefineOwnProperty("splice", SPropertyDescriptor.Create(new FunctionObject("splice", new[] { "start", "deleteCount" }, Splice)), false);
-            //DefineOwnProperty("unshift", SPropertyDescriptor.Create(new FunctionObject("unshift", new[] { "item1" }, Unshift)), false);
-            //DefineOwnProperty("indexOf", SPropertyDescriptor.Create(new FunctionObject("indexOf", new[] { "searchElement" }, IndexOf)), false);
-            //DefineOwnProperty("lastIndexOf", SPropertyDescriptor.Create(new FunctionObject("lastIndexOf", new[] { "searchElement" }, LastIndexOf)), false);
-            //DefineOwnProperty("every", SPropertyDescriptor.Create(new FunctionObject("every", new[] { "callbackfn" }, Every)), false);
-            //DefineOwnProperty("some", SPropertyDescriptor.Create(new FunctionObject("some", new[] { "callbackfn" }, Some)), false);
-            //DefineOwnProperty("forEach", SPropertyDescriptor.Create(new FunctionObject("forEach", new[] { "callbackfn" }, ForEach)), false);
-            //DefineOwnProperty("map", SPropertyDescriptor.Create(new FunctionObject("map", new[] { "callbackfn" }, Map)), false);
-            //DefineOwnProperty("filter", SPropertyDescriptor.Create(new FunctionObject("filter", new[] { "callbackfn" }, Filter)), false);
-            //DefineOwnProperty("reduce", SPropertyDescriptor.Create(new FunctionObject("reduce", new[] { "callbackfn" }, Reduce)), false);
-            //DefineOwnProperty("reduceRight", SPropertyDescriptor.Create(new FunctionObject("filter", new[] { "reduceRight" }, ReduceRight)), false);
-            //DefineOwnProperty("toString", SPropertyDescriptor.Create(new NFunction(null, () => ToString)), false);
-            //DefineOwnProperty("valueOf", SPropertyDescriptor.Create(new NFunction(null, () => ValueOf)), false);
+
         }
+        //internal PArray()
+        //{
+        //    Class = "Array";
+        //    Extensible = true;
+        //    //DefineOwnProperty("length", SPropertyDescriptor.Create(LNumber.Zero), false);
+        //    //DefineOwnProperty("toString", SPropertyDescriptor.Create(new NFunction(null, ToString)), false);
+        //    //DefineOwnProperty("toLocaleString", SPropertyDescriptor.Create(new NFunction(null, ToLocaleString)), false);
+        //    //DefineOwnProperty("concat", SPropertyDescriptor.Create(new NFunction(new[] { "item1" }, Concat)), false);
+        //    //DefineOwnProperty("join", SPropertyDescriptor.Create(new NFunction(new[] { "separator" }, Join)), false);
+        //    //DefineOwnProperty("pop", SPropertyDescriptor.Create(new NFunction(null, Pop)), false);
+        //    //DefineOwnProperty("push", SPropertyDescriptor.Create(new NFunction(new[] { "item1" }, Push)), false);
+        //    //DefineOwnProperty("reverse", SPropertyDescriptor.Create(new NFunction(null, Reverse)), false);
+        //    //DefineOwnProperty("shift", SPropertyDescriptor.Create(new NFunction(null, Shift)), false);
+        //    //DefineOwnProperty("slice", SPropertyDescriptor.Create(new FunctionObject("slice", new[] { "start", "end" }, Slice)), false);
+        //    //DefineOwnProperty("sort", SPropertyDescriptor.Create(new FunctionObject("sort", new[] { "comparefn" }, Sort)), false);
+        //    //DefineOwnProperty("splice", SPropertyDescriptor.Create(new FunctionObject("splice", new[] { "start", "deleteCount" }, Splice)), false);
+        //    //DefineOwnProperty("unshift", SPropertyDescriptor.Create(new FunctionObject("unshift", new[] { "item1" }, Unshift)), false);
+        //    //DefineOwnProperty("indexOf", SPropertyDescriptor.Create(new FunctionObject("indexOf", new[] { "searchElement" }, IndexOf)), false);
+        //    //DefineOwnProperty("lastIndexOf", SPropertyDescriptor.Create(new FunctionObject("lastIndexOf", new[] { "searchElement" }, LastIndexOf)), false);
+        //    //DefineOwnProperty("every", SPropertyDescriptor.Create(new FunctionObject("every", new[] { "callbackfn" }, Every)), false);
+        //    //DefineOwnProperty("some", SPropertyDescriptor.Create(new FunctionObject("some", new[] { "callbackfn" }, Some)), false);
+        //    //DefineOwnProperty("forEach", SPropertyDescriptor.Create(new FunctionObject("forEach", new[] { "callbackfn" }, ForEach)), false);
+        //    //DefineOwnProperty("map", SPropertyDescriptor.Create(new FunctionObject("map", new[] { "callbackfn" }, Map)), false);
+        //    //DefineOwnProperty("filter", SPropertyDescriptor.Create(new FunctionObject("filter", new[] { "callbackfn" }, Filter)), false);
+        //    //DefineOwnProperty("reduce", SPropertyDescriptor.Create(new FunctionObject("reduce", new[] { "callbackfn" }, Reduce)), false);
+        //    //DefineOwnProperty("reduceRight", SPropertyDescriptor.Create(new FunctionObject("filter", new[] { "reduceRight" }, ReduceRight)), false);
+        //    //DefineOwnProperty("toString", SPropertyDescriptor.Create(new NFunction(null, () => ToString)), false);
+        //    //DefineOwnProperty("valueOf", SPropertyDescriptor.Create(new NFunction(null, () => ValueOf)), false);
+        //}
 
         //private IDynamic ToString(ExecutionContext context, SList args)
         //{
