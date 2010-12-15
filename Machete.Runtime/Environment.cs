@@ -19,6 +19,7 @@ namespace Machete.Runtime
         private readonly IArgs _empty;
         private readonly IBoolean _true;
         private readonly IBoolean _false;
+        private readonly IUndefined _undefined;
         private readonly Stack<IExecutionContext> _contextStack;
         private IExecutionContext _currentContext;
     
@@ -29,11 +30,13 @@ namespace Machete.Runtime
             _empty = new SArgs(this);
             _true = new LBoolean(this, true);
             _false = new LBoolean(this, false);
+            _undefined = new LUndefined(this);
 
             GlobalObject = new BGlobal(this);
             MathObject = new BMath(this);
             JsonObject = new BJson(this);
             GlobalEnvironment = new SLexicalEnvironment(this, new SObjectEnvironmentRecord(this, GlobalObject, false), null);
+            _currentContext = new ExecutionContext(GlobalEnvironment, GlobalObject);
 
             ObjectConstructor = new CObject(this);
             FunctionConstructor = new CFunction(this);
@@ -148,6 +151,8 @@ namespace Machete.Runtime
             GlobalObject.DefineOwnProperty("URIError", new SPropertyDescriptor(UriErrorConstructor), false);
             GlobalObject.DefineOwnProperty("Math", new SPropertyDescriptor(MathObject), false);
             GlobalObject.DefineOwnProperty("JSON", new SPropertyDescriptor(JsonObject), false);
+
+            GlobalObject.DefineOwnProperty("x", new SPropertyDescriptor(CreateNumber(1), true, true, true), false);
         }
 
 
@@ -193,7 +198,7 @@ namespace Machete.Runtime
 
         public IUndefined Undefined
         {
-            get { throw new NotImplementedException(); }
+            get { return _undefined; }
         }
 
         public IBoolean BooleanTrue
@@ -255,6 +260,12 @@ namespace Machete.Runtime
         public IObject CreateSyntaxError()
         {
             throw new NotImplementedException();
+        }
+
+
+        public IReference CreateReference(string name, IReferenceBase @base, bool strict)
+        {
+            return new SReference(this, @base, name, strict);
         }
     }
 }

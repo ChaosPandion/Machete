@@ -60,7 +60,11 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         public IDynamic Value
         {
             get { return _base.Get(_referencedName, _strictReference); }
-            set { _base.Set(_referencedName, value, _strictReference); }
+            set
+            {
+                StrictReferenceCondition();
+                _base.Set(_referencedName, value, _strictReference); 
+            }
         }
 
         public LanguageTypeCode TypeCode

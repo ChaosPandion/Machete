@@ -14,7 +14,9 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         public BGlobal(IEnvironment environment)
             : base(environment)
         {
-
+            Class = "Global";
+            Prototype = null;
+            Extensible = true;
         }
 
         //internal BGlobal()

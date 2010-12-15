@@ -326,6 +326,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             current.Set = desc.Set ?? current.Set;
             current.Enumerable = desc.Enumerable ?? current.Enumerable;
             current.Configurable = desc.Configurable ?? current.Configurable;
+            _map[p] = (SPropertyDescriptor)current;
             return true;
         }
         

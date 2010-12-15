@@ -93,17 +93,23 @@
     | BitwiseANDExpressionNoIn of SourceElement * SourceElement
     | EqualityExpression of SourceElement * EqualityOperator * SourceElement
     | EqualityExpressionNoIn of SourceElement * EqualityOperator * SourceElement
-    | RelationalExpression of SourceElement * SourceElement * SourceElement
-    | RelationalExpressionNoIn of SourceElement * SourceElement * SourceElement
+    | RelationalExpression of SourceElement * RelationalOperator * SourceElement
+    | RelationalExpressionNoIn of SourceElement * RelationalOperator * SourceElement
     | ShiftExpression of SourceElement * BitwiseShiftOperator * SourceElement
     | AdditiveExpression of SourceElement * AdditiveOperator * SourceElement
     | MultiplicativeExpression of SourceElement * MultiplicativeOperator * SourceElement
-    | UnaryExpression of SourceElement * SourceElement
-    | PostfixExpression of SourceElement * SourceElement
+    | UnaryExpression of UnaryOperator * SourceElement
+    | PostfixExpression of SourceElement * PostfixOperator
+
     | MemberExpression of SourceElement * SourceElement
+    | MemberExpressionRest of SourceElement * SourceElement
+
     | Arguments of SourceElement
     | ArgumentList of SourceElement * SourceElement
-    | CallExpression of SourceElement * SourceElement
+
+    | CallExpression of SourceElement * SourceElement * SourceElement
+    | CallExpressionRest of SourceElement * SourceElement
+
     | NewExpression of SourceElement
     | LeftHandSideExpression of SourceElement
     | PrimaryExpression of SourceElement

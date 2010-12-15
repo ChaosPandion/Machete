@@ -3,6 +3,7 @@
 module Tools =
 
     open System
+    open System.Collections.Generic
     open System.Diagnostics
     open LazyList 
 
@@ -15,6 +16,10 @@ module Tools =
     | Success of 'c * State<'a, 'b>
     | Failure of list<string> * State<'a, 'b>
         
+    let isSuccess r =
+        match r with
+        | Success (v, s) -> true
+        | _ -> false
     
     type Parser<'a, 'b, 'c> = 
         State<'a, 'b> -> seq<Result<'a, 'b, 'c>>
@@ -36,26 +41,49 @@ module Tools =
     let run p i d =
         p (State(i, d)) 
 
-    let (>>=) (m:Parser<'a, 'b, 'c>) (f:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
-        let rec run errors = seq {
-            for r in m state do
-                match r with
-                | Success (v, s) ->
-                    yield! f v s
-                | Failure (ms, s) ->
-                    yield! run (errors @ ms)
-        }
-        run []
+//    let (>>=) (m:Parser<'a, 'b, 'c>) (f:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
+//        let rec run errors = seq {
+//            for r in m state do
+//                match r with
+//                | Success (v, s) ->
+//                    yield! f v s
+//                | Failure (ms, s) ->
+//                    yield! run (errors @ ms)
+//        }
+//        run []
 
-    let (<|>) (l:Parser<'a, 'b, 'c>) (r:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) =  
-        let rec run p = seq {
-            for result in p state do
-                match result with
-                | Success (_, _) ->
-                    yield result
-                | Failure (_, _) -> ()
-        }
-        Seq.append (run l) (run r)
+    let (>>=) (m:Parser<'a, 'b, 'c>) (f:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
+        if not (LazyList.isEmpty state.Input) then
+            let mr = m state |> Seq.tryFind isSuccess 
+            match mr with
+            | Some (Success(mv, mState)) ->
+                f mv mState   
+            | _ -> Seq.empty
+        else
+            Seq.empty
+//    let (<|>) (l:Parser<'a, 'b, 'c>) (r:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) =  
+//        let rec run p = seq {
+//            if not (LazyList.isEmpty state.Input) then
+//                for result in p state do
+//                    match result with
+//                    | Success (_, _) ->
+//                        yield result
+//                    | Failure (_, _) -> ()
+//        }
+//        Seq.append (run l) (run r)
+
+    let (<|>) (l:Parser<'a, 'b, 'c>) (r:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) =
+        if state.Input |> LazyList.isEmpty then Seq.empty else
+        let rStart = l state |> Seq.tryFind isSuccess
+        match rStart with
+        | Some (Success(vStart, sStart)) ->
+            [|rStart.Value|]:>seq<Result<'a, 'b, 'c>>   
+        | _ ->
+            let right = r state |> Seq.tryFind isSuccess
+            match right with
+            | Some (Success(rval, sStart)) ->
+                [|right.Value|]:>seq<Result<'a, 'b, 'c>> 
+            | _ -> Seq.empty
 
     type ParseMonad() =        
         member this.Bind (f:Parser<'a, 'b, 'c>, g:'c -> Parser<'a, 'b, 'd>) : Parser<'a, 'b, 'd> = f >>= g     
@@ -66,6 +94,9 @@ module Tools =
         member this.Zero () state = Seq.empty<Result<'a, 'b, 'c>>
     
     let parse = ParseMonad()
+
+    
+
     
     let (|>>) (parser:Parser<'a, 'b, 'c>) (f:'c -> 'd) = parse {
         let! v = parser
@@ -82,11 +113,11 @@ module Tools =
         return! parser |>> Some <|> result None 
     }
 
-    let choice (ps:seq<Parser<'a, 'b, 'c>>) (state:State<'a, 'b>) = seq {
-            if not (LazyList.isEmpty state.Input) then
-                for p in ps do
-                        yield! p state    
-    }
+    let choice (ps:seq<Parser<'a, 'b, 'c>>) (state:State<'a, 'b>) =
+        seq {
+            for p in ps do
+                yield! p state    
+        }
 
     let between left right parser =
         parse {
@@ -101,14 +132,21 @@ module Tools =
         return ()
     }
 
-    let many parser = 
-        let rec many result = parse {
-            let! v = parser
-            let result = v::result
-            return! many result
-            return result    
-        }
-        many []
+    let many (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
+        let rec many result (state:State<'a, 'b>) =
+            let v = parser state |> Seq.tryFind isSuccess
+            match v with
+            | Some (Success (v, s)) -> many (v::result) s
+            | None -> [Success(result, state)] :> seq<Result<'a, 'b, 'c list>>       
+        many [] state
+//    let many parser = 
+//        let rec many result = parse {
+//            let! v = parser
+//            let result = v::result
+//            return! many result
+//            return result    
+//        }
+//        many []
 
 //    let many (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) : seq<Result<'a, 'b, list<'c>>> = 
 //        let rec many (result:list<'c>) (state:State<'a, 'b>) : seq<Result<'a, 'b, list<'c>>> = seq {
@@ -143,73 +181,73 @@ module Tools =
         return r |> List.fold f start
     } 
 
-    let manySepFold (parser:Parser<'a, 'b, 'c>) (separator:Parser<'a, 'b, 'd>) (start:'e) (f:'e -> 'c -> 'e) (state:State<'a, 'b>) = seq {
-        let rec run state = seq {
-            for r in parser state do
+    
+    let manyWithSepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'd * 'c -> 'c) (d:'c) (sepStart:'d) (state:State<'a, 'b>) =
+        let run = ref true
+        let result = List<'d * 'c>()
+        let rStart = par state |> Seq.tryFind isSuccess
+        match rStart with
+        | Some (Success(vStart, sStart)) ->
+            let currentState = ref sStart
+            while !run do
+                let r = sep !currentState |> Seq.tryFind isSuccess
                 match r with
-                | Success (v, s) ->
-                    yield r
-                    for r in separator s do
-                        match r with
-                        | Success (v, s) ->
-                            yield! run s
-                        | Failure (_, _) -> ()
-                | Failure (ms, s) -> ()
-        }
-        if not (LazyList.isEmpty state.Input) then
-            yield run state
-                |> Seq.fold (
-                    fun (result, state) (y:Result<'a, 'b, 'c>) ->
-                        match y with
-                        | Success (v, s) ->
-                            f result v, s
-                ) (start, state)
-                |> Success
-    }
-
-    let manyWithSepFold1 p s f d m =
-        parse {
-            let! r1 = p
-            let! r = many (parse {
-                let! m = s
-                let! n = p
-                return m, n
-            })
-            return r |> List.fold (fun x (y, z) -> f (x, y, z)) (f (d, m, r1))     
-        }
-
-    let isSuccess r =
-        match r with
-        | Success (v, s) -> true
-        | _ -> false
-
-    let manyWithSepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'd * 'c -> 'c) (d:'c) (sepStart:'d) (state:State<'a, 'b>) = 
-        let rs = par state
-        let r = rs |> Seq.tryFind isSuccess
-        match r with 
-        | Some (Success (v, s)) ->
-            let rec many (result:list<'d * 'c>) (state:State<'a, 'b>) = seq { 
-                let seps = sep state
-                let sepr = seps |> Seq.tryFind isSuccess
-                match sepr with 
-                | Some (Success (sv, state)) ->
-                    let pars = par state
-                    let parr = pars |> Seq.tryFind isSuccess
-                    match parr with 
-                    | Some (Success (pv, state)) ->
-                        yield! many ((sv,pv)::result) state
-                    | _ -> yield Success (result, state) 
-                | _ -> yield Success (result, state)
-                
-            }
-            let ms = many [] s
-            let m = ms |> Seq.tryFind isSuccess
-            match m with 
-            | Some (Success (mv, state)) ->
-                [Success (mv |> List.fold (fun x (y, z) -> f (x, y, z)) (f (d, sepStart, v)), state)] |> List.toSeq  
-            | _ -> [Success (f (d, sepStart, v), state)] |> List.toSeq             
+                | Some (Success(sepVal, stepState)) ->
+                    let r = par stepState |> Seq.tryFind isSuccess
+                    match r with
+                    | Some (Success(parVal, parState)) ->
+                        result.Add(sepVal, parVal) 
+                        currentState := parState
+                    | None -> run := false                    
+                | None -> run := false
+            let first = f (d, sepStart, vStart)
+            let r = [Success (result |> Seq.fold (fun x (y, z) -> f (x, y, z)) first, !currentState)] 
+            r |> List.toSeq
         | _ -> Seq.empty
 
+    let manySepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'c -> 'c) (d:'c) (state:State<'a, 'b>) =
+        let run = ref true
+        let result = List<'c>()
+        let rStart = par state |> Seq.tryFind isSuccess
+        match rStart with
+        | Some (Success(vStart, sStart)) ->
+            let currentState = ref sStart
+            while !run do
+                let r = sep !currentState |> Seq.tryFind isSuccess
+                match r with
+                | Some (Success(sepVal, stepState)) ->
+                    let r = par stepState |> Seq.tryFind isSuccess
+                    match r with
+                    | Some (Success(parVal, parState)) ->
+                        result.Add(parVal) 
+                        currentState := parState
+                    | None -> run := false                    
+                | None -> run := false
+            let first = f (d, vStart)
+            let r = [Success (result |> Seq.fold (fun x y -> f (x, y)) first, !currentState)] 
+            r |> List.toSeq
+        | _ -> Seq.empty
+
+    let manySep (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
+        let run = ref true
+        let result = List<'c>()
+        let rStart = par state |> Seq.tryFind isSuccess
+        match rStart with
+        | Some (Success(vStart, sStart)) ->
+            let currentState = ref sStart
+            while !run do
+                let r = sep !currentState |> Seq.tryFind isSuccess
+                match r with
+                | Some (Success(sepVal, stepState)) ->
+                    let r = par stepState |> Seq.tryFind isSuccess
+                    match r with
+                    | Some (Success(parVal, parState)) ->
+                        result.Add(parVal) 
+                        currentState := parState
+                    | None -> run := false                    
+                | None -> run := false
+            [Success (result |> Seq.toList, !currentState)] :> seq<Result<'a, 'b, 'c list>>
+        | _ -> Seq.empty
         
     let isNotFollowedBy p =
         parse {

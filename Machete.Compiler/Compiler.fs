@@ -48,6 +48,14 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
         left.Value <- value
         value
 
+    let evalIdentifier identifier =
+        match identifier with
+        | Lexer.Identifier e ->
+            let identifier = Lexer.IdentifierNameParser.evalIdentifierName e
+            let context = call environmentParam Reflection.IEnvironment.get_Context [||]
+            let lex = call context Reflection.IExecutionContext.get_LexicalEnviroment [||]
+            call lex Reflection.ILexicalEnvironment.getIdentifierReference [| constant identifier; constant false|]
+
     let rec evalExpression (state:State) =
         match state.Element with
         | Expression (Nil, right) | ExpressionNoIn (Nil, right) ->
@@ -73,7 +81,16 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
         | AssignmentExpressionNoIn (left, AssignmentOperator (Lexer.Punctuator (Lexer.Str "=")), right) ->
             let left = evalLeftHandSideExpression (state.WithElement left)
             let right = evalAssignmentExpression (state.WithElement right)
-            invoke (constant simpleAssignment) [|left;right|]
+            let valueVar = exp.Variable(Reflection.IDynamic.t, "value") 
+            exp.Block( 
+                [|valueVar|], [|
+                    exp.Assign(valueVar, call right Reflection.IDynamic.get_Value [| |]) :>exp
+                    call left Reflection.IDynamic.set_Value [| valueVar |]
+                    valueVar :>exp
+                |]
+            ) :> exp
+            
+            //invoke (constant simpleAssignment) [|left;right|]
         | AssignmentExpression (left, AssignmentOperator (Lexer.Punctuator (Lexer.Str v)), right) 
         | AssignmentExpressionNoIn (left, AssignmentOperator (Lexer.Punctuator (Lexer.Str v)), right)
         | AssignmentExpression (left, AssignmentOperator (Lexer.DivPunctuator (Lexer.Str v)), right) 
@@ -167,22 +184,20 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
 
     and evalRelationalExpression (state:State) =    
         match state.Element with
-        | RelationalExpression (Nil, Nil, e) | RelationalExpressionNoIn (Nil, Nil, e) ->
+        | RelationalExpression (Nil, RelationalOperator.Nil, e) | RelationalExpressionNoIn (Nil, RelationalOperator.Nil, e) ->
             evalShiftExpression (state.WithElement e)
-        | RelationalExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) 
-        | RelationalExpressionNoIn (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
-            let left = evalRelationalExpression (state.WithElement left)
-            let right = evalShiftExpression (state.WithElement right) 
-            let mi = 
-                match v with
-                | "<" -> Reflection.IDynamic.op_Lessthan
-                | ">" -> Reflection.IDynamic.op_Greaterthan
-                | "<=" -> Reflection.IDynamic.op_LessthanOrEqual
-                | ">=" -> Reflection.IDynamic.op_GreaterthanOrEqual
-                | "instanceof" -> Reflection.IDynamic.op_Instanceof
-                | "in" -> Reflection.IDynamic.op_In
-                | _ -> failwith ""
-            call left mi [| right |]
+        | RelationalExpression (e1, RelationalOperator.LessThan, e2) | RelationalExpressionNoIn (e1, RelationalOperator.LessThan, e2) ->
+            call (evalRelationalExpression (state.WithElement e1)) Reflection.IDynamic.op_Lessthan [| (evalShiftExpression (state.WithElement e2)) |]
+        | RelationalExpression (e1, RelationalOperator.GreaterThan, e2) | RelationalExpressionNoIn (e1, RelationalOperator.GreaterThan, e2) ->
+            call (evalRelationalExpression (state.WithElement e1)) Reflection.IDynamic.op_Greaterthan [| (evalShiftExpression (state.WithElement e2)) |]
+        | RelationalExpression (e1, RelationalOperator.LessThanOrEqual, e2) | RelationalExpressionNoIn (e1, RelationalOperator.LessThanOrEqual, e2) ->
+            call (evalRelationalExpression (state.WithElement e1)) Reflection.IDynamic.op_LessthanOrEqual [| (evalShiftExpression (state.WithElement e2)) |]
+        | RelationalExpression (e1, RelationalOperator.GreaterThanOrEqual, e2) | RelationalExpressionNoIn (e1, RelationalOperator.GreaterThanOrEqual, e2) ->
+            call (evalRelationalExpression (state.WithElement e1)) Reflection.IDynamic.op_GreaterthanOrEqual [| (evalShiftExpression (state.WithElement e2)) |]
+        | RelationalExpression (e1, RelationalOperator.Instanceof, e2) | RelationalExpressionNoIn (e1, RelationalOperator.Instanceof, e2) ->
+            call (evalRelationalExpression (state.WithElement e1)) Reflection.IDynamic.op_Instanceof [| (evalShiftExpression (state.WithElement e2)) |]
+        | RelationalExpression (e1, RelationalOperator.In, e2) ->
+            call (evalRelationalExpression (state.WithElement e1)) Reflection.IDynamic.op_In [| (evalShiftExpression (state.WithElement e2)) |]
 
     and evalShiftExpression (state:State) =    
         match state.Element with
@@ -217,31 +232,35 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
 
     and evalUnaryExpression (state:State) =    
         match state.Element with
-        | UnaryExpression (Nil, e) ->
+        | UnaryExpression (UnaryOperator.Nil, e) ->
             evalPostfixExpression (state.WithElement e)
-        | UnaryExpression (InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
-            let right = evalPostfixExpression (state.WithElement right) 
-            let mi = 
-                match v with
-                | "++" -> Reflection.IDynamic.op_PrefixIncrement
-                | "--" -> Reflection.IDynamic.op_PrefixDecrement
-                | "+" -> Reflection.IDynamic.op_Plus
-                | "-" -> Reflection.IDynamic.op_Minus
-                | "~" -> Reflection.IDynamic.op_BitwiseNot
-                | "!" -> Reflection.IDynamic.op_LogicalNot
-            call right mi [| |]
+        | UnaryExpression (UnaryOperator.Increment, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_PrefixIncrement [||]
+        | UnaryExpression (UnaryOperator.Decrement, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_PrefixDecrement [||]
+        | UnaryExpression (UnaryOperator.Plus, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_Plus [||]
+        | UnaryExpression (UnaryOperator.Minus, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_Minus [||]
+        | UnaryExpression (UnaryOperator.BitwiseNot, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_BitwiseNot [||]
+        | UnaryExpression (UnaryOperator.LogicalNot, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_LogicalNot [||]
+        | UnaryExpression (UnaryOperator.Delete, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_Delete [||]
+        | UnaryExpression (UnaryOperator.Void, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_Void [||]
+        | UnaryExpression (UnaryOperator.Typeof, e) ->
+            call (evalPostfixExpression (state.WithElement e)) Reflection.IDynamic.op_Typeof [||]
 
     and evalPostfixExpression (state:State) =    
         match state.Element with
-        | PostfixExpression (e, Nil) ->
+        | PostfixExpression (e, PostfixOperator.Nil) ->
             evalLeftHandSideExpression (state.WithElement e)
-        | PostfixExpression (e, InputElement (Lexer.Punctuator (Lexer.Str v))) ->
-            let right = evalLeftHandSideExpression (state.WithElement e) 
-            let mi = 
-                match v with
-                | "++" -> Reflection.IDynamic.op_PostfixIncrement
-                | "--" -> Reflection.IDynamic.op_PostfixDecrement
-            call right mi [| |]
+        | PostfixExpression (e, PostfixOperator.Increment) ->
+            call (evalLeftHandSideExpression (state.WithElement e)) Reflection.IDynamic.op_PostfixIncrement [||]
+        | PostfixExpression (e, PostfixOperator.Decrement) ->
+            call (evalLeftHandSideExpression (state.WithElement e)) Reflection.IDynamic.op_PostfixDecrement [||]
 
     and evalMemberExpression (state:State) =    
         match state.Element with
@@ -281,7 +300,7 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
             match e with
             | NewExpression _ -> 
                 evalNewExpression (state.WithElement e)
-            | CallExpression (_, _) -> 
+            | CallExpression (_, _, _) -> 
                 evalCallExpression (state.WithElement e)
 
     and evalPrimaryExpression (state:State) =
@@ -293,11 +312,8 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
                 | Lexer.IdentifierName (_, _) ->
                     let context = call environmentParam Reflection.IEnvironment.get_Context [||]
                     call context Reflection.IExecutionContext.get_ThisBinding [||]
-                | Lexer.Identifier e ->
-                    let identifier = Lexer.IdentifierNameParser.evalIdentifierName e
-                    let context = call environmentParam Reflection.IEnvironment.get_Context [||]
-                    let lex = call context Reflection.IExecutionContext.get_LexicalEnviroment [||]
-                    call lex Reflection.ILexicalEnvironment.getIdentifierReference [| constant identifier; constant false|]
+                | Lexer.Identifier _ ->
+                    evalIdentifier e
                 | Lexer.Literal e ->
                     match e with
                     | Lexer.NullLiteral "null" ->
@@ -365,7 +381,10 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
             match e with
             | ExpressionStatement _ ->
                 evalExpressionStatement (state.WithElement e) 
-            | EmptyStatement -> evalEmptyStatement (state.WithElement e)  
+            | EmptyStatement -> 
+                evalEmptyStatement (state.WithElement e)  
+            | VariableStatement _ ->
+                evalVariableStatement (state.WithElement e) 
 
     and evalBlock (state:State) =
         match state.Element with
@@ -376,17 +395,39 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
 
     and evalStatementList (state:State) = constant 1
 
-    and evalVariableStatement (state:State) = constant 1
+    and evalVariableStatement (state:State) =
+        match state.Element with
+        | VariableStatement e ->
+            evalVariableDeclarationList (state.WithElement e) 
 
-    and evalVariableDeclarationList (state:State) = constant 1
+    and evalVariableDeclarationList (state:State) =
+        match state.Element with
+        | VariableDeclarationList (Nil, e) ->
+            evalVariableDeclaration (state.WithElement e) 
+        | VariableDeclarationList (e1, e2) ->
+            block [|
+                evalVariableDeclarationList (state.WithElement e1)
+                evalVariableDeclaration (state.WithElement e2)
+            |]
 
     and evalVariableDeclarationListNoIn (state:State) = constant 1
 
-    and evalVariableDeclaration (state:State) = constant 1
+    and evalVariableDeclaration (state:State) =
+        match state.Element with
+        | VariableDeclaration (Lexer.Identifier e, Nil) ->
+            exp.Empty():>exp
+        | VariableDeclaration (e1, e2) ->
+            //let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
+            let left = evalIdentifier e1
+            let right = evalInitialiser (state.WithElement e2)
+            call left Reflection.IDynamic.set_Value [| right |]
 
     and evalVariableDeclarationNoIn (state:State) = constant 1
 
-    and evalInitialiser (state:State) = constant 1
+    and evalInitialiser (state:State) =
+        match state.Element with
+        | Initialiser e ->
+            evalAssignmentExpression (state.WithElement e)
 
     and evalInitialiserNoIn (state:State) = constant 1
 
@@ -470,7 +511,10 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
         let input = Parser.parse (input + ";")
         let state = State (input, Map.empty, [], [])
         let body = evalProgram state
-        exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
+        if body.Type = typeof<System.Void> then
+            exp.Lambda<Code>(block [| body; call environmentParam Reflection.IEnvironment.get_Undefined [||] |], [| environmentParam; argsParam |]).Compile()    
+        else    
+            exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
 
     member this.Compile (input:SourceElement) =
         let state = State (input, Map.empty, [], [])

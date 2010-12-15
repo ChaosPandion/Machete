@@ -12,8 +12,8 @@ module Parser =
 
     let jsonValue, jsonValueRef : Parser<Token, unit, Node> * Parser<Token, unit, Node> ref = createParserRef()
     
-    let jsonElementList =
-        manySepFold jsonValue (satisfy (fun v -> v = ValueSeparator)) JsonNil (fun a b -> JsonElementList (a, b))
+    let jsonElementList = zero
+        //manySepFold jsonValue (satisfy (fun v -> v = ValueSeparator)) JsonNil (fun a b -> JsonElementList (a, b))
     
     let jsonArray =
         between (satisfy (fun v -> v = BeginArray)) (satisfy (fun v -> v = EndArray)) (jsonElementList <|> result JsonNil) |>> JsonArray

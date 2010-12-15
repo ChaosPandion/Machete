@@ -11,6 +11,7 @@ namespace Machete.Interfaces
         IBoolean BooleanFalse { get; }
         IObject GlobalObject { get; }
 
+        IReference CreateReference(string name, IReferenceBase @base, bool strict);
         IBoolean CreateBoolean(bool value);
         IString CreateString(string value);
         INumber CreateNumber(double value);

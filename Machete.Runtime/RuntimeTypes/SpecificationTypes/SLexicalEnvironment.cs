@@ -22,6 +22,21 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             Parent = parent;
         }
 
+        public IReference GetIdentifierReference(string name, bool strict)
+        {
+            if (Record.HasBinding(name))
+            {
+                return _environment.CreateReference(name, Record, strict);
+            }
+            else if (Parent == null)
+            {
+                return _environment.CreateReference(name, _environment.Undefined, strict);
+            }
+            else
+            {
+                return Parent.GetIdentifierReference(name, strict);
+            }
+        }
 
         public SLexicalEnvironment NewDeclarativeEnvironment()
         {

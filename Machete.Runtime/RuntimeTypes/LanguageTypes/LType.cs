@@ -347,6 +347,10 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                     {
                         return environment.BooleanTrue;
                     }
+                    else
+                    {
+                        return environment.CreateBoolean(nx < ny);
+                    }
                 }
                 return environment.BooleanFalse;
             }

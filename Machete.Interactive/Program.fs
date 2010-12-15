@@ -114,28 +114,28 @@ module Program =
         while true do
             let text = read [] ""
             if text.Length > 0 then
-                if not (commandStart.IsMatch text) then
-                        writeNewLineStart ()
-                        writeColored (engine.Value.ExecuteScript text |> string) ConsoleColor.DarkCyan
-                        writeNewLineStart ()
-                else
                     try
-                        let r = run CommandParser.parse text
-                        match r with
-                        | Success (v, s, p) ->
-                            match v with
-                            | GetTimeout ->
-                                writeNewLineStart ()
-                                writeColored ("The current timeout is " + (2000).ToString() + ".") ConsoleColor.DarkCyan
-                                writeNewLineStart ()  
-                            | SetTimeout timeout ->
-                                writeNewLineStart ()
-                                writeColored ("The timeout value has been changed to " + timeout.ToString() + ".") ConsoleColor.DarkCyan 
-                                writeNewLineStart ()                       
-                        | Failure (m, e, s) ->
+                        if not (commandStart.IsMatch text) then
                             writeNewLineStart ()
-                            writeColored ("Error:") ConsoleColor.Red 
-                            writeStrings m 
+                            writeColored (engine.Value.ExecuteScript (text, 60000) |> string) ConsoleColor.DarkCyan
+                            writeNewLineStart ()
+                        else
+                            let r = run CommandParser.parse text
+                            match r with
+                            | Success (v, s, p) ->
+                                match v with
+                                | GetTimeout ->
+                                    writeNewLineStart ()
+                                    writeColored ("The current timeout is " + (2000).ToString() + ".") ConsoleColor.DarkCyan
+                                    writeNewLineStart ()  
+                                | SetTimeout timeout ->
+                                    writeNewLineStart ()
+                                    writeColored ("The timeout value has been changed to " + timeout.ToString() + ".") ConsoleColor.DarkCyan 
+                                    writeNewLineStart ()                       
+                            | Failure (m, e, s) ->
+                                writeNewLineStart ()
+                                writeColored ("Error:") ConsoleColor.Red 
+                                writeStrings m 
                     with | e ->
                         writeNewLineStart ()
                         writeColored ("Error:") ConsoleColor.Red  

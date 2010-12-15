@@ -12,12 +12,14 @@ type Engine () =
         let environment = new Environment()
         let compiler = new Machete.Compiler.Compiler(environment :> Machete.Interfaces.IEnvironment)
         while true do
-            let! msg = inbox.Receive ()
-            match msg with
-            | ExecuteScript (script, channel) ->
-                let r = compiler.Compile(script)
-                let r = r.Invoke(environment, environment.CreateArgs(Seq.empty))
-                channel.Reply (r.ToString():>obj)
+            try
+                let! msg = inbox.Receive ()
+                match msg with
+                | ExecuteScript (script, channel) ->
+                    let r = compiler.Compile(script)
+                    let r = r.Invoke(environment, environment.CreateArgs(Seq.empty))
+                    channel.Reply (r.Value.ToString():>obj)
+            with | e -> ()
     }
     
     let agent = lazy(MailboxProcessor.Start proccessMessages)
