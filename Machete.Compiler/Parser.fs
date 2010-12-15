@@ -75,12 +75,12 @@ module Parser =
          
     let expectPunctuators (value:Set<string>) : SimpleParser =
         parse {
-            let! v = passLineTerminator ()
+            let! v = maybe (passLineTerminator ())
             match v with
-            | Punctuator (Str str) 
-            | DivPunctuator (Str str)
+            | Some (Punctuator (Str str)) 
+            | Some (DivPunctuator (Str str))
                 when value.Contains str -> 
-                    return v
+                    return v.Value
             | _ -> ()
         }  
         
@@ -90,8 +90,16 @@ module Parser =
     
     let statementTerminator =
         parse {
-            let! v = expectPunctuator ";"
-            return ()
+            let! v = maybe item
+            match v with
+            | Some v ->
+                match v with
+                | Punctuator (Str ";") 
+                | Punctuator (Str "}")
+                | LineTerminator -> return ()
+                | _ -> ()
+            | None -> 
+                return ()
         }
 
 
@@ -275,49 +283,16 @@ module Parser =
         }
 
     and multiplicativeExpression =
-        manyWithSepFold unaryExpression expectMultiplicativeOperator MultiplicativeExpression SourceElement.Nil MultiplicativeOperator.Nil
-//        parse {
-//            let! f = unaryExpression
-//            let! r = many (parse {
-//                let! m = expectMultiplicativeOperator
-//                let! n = unaryExpression
-//                return m, n
-//            })
-//            return r |> List.fold (fun x (y, z) -> MultiplicativeExpression (x, y, z)) (MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, f))     
-//        }
-//        parse {
-//            let! e1 = unaryExpression
-//            return! parse {
-//                let! e2 = expectMultiplicativeOperator
-//                let! e3 = multiplicativeExpression
-//                return MultiplicativeExpression (e3, e2, e1)
-//            } 
-//            return MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, e1)
-//        } 
+        manyWithSepFold unaryExpression expectMultiplicativeOperator MultiplicativeExpression SourceElement.Nil MultiplicativeOperator.Nil 
     
     and additiveExpression =
-        manyWithSepFold multiplicativeExpression expectAdditiveOperator AdditiveExpression SourceElement.Nil AdditiveOperator.Nil
-//        parse {
-//            let! e1 = multiplicativeExpression
-//            return! parse {
-//                let! e2 = expectAdditiveOperator
-//                let! e3 = additiveExpression
-//                return AdditiveExpression (e3, e2, e1)
-//            } 
-//            return AdditiveExpression (SourceElement.Nil, AdditiveOperator.Nil, e1)
-//        } 
+        parse {
+            let! r = manyWithSepFold multiplicativeExpression expectAdditiveOperator AdditiveExpression SourceElement.Nil AdditiveOperator.Nil
+            return r
+        }
     
     and shiftExpression =
         manyWithSepFold additiveExpression expectShiftOperator ShiftExpression SourceElement.Nil BitwiseShiftOperator.Nil
-//        parse {
-//            let! e1 = additiveExpression
-//            return! parse {
-//                let! e2 = expectShiftOperator
-//                let! e3 = shiftExpression
-//                return ShiftExpression (e1, e2, e3)
-//            } 
-//            return ShiftExpression (SourceElement.Nil, SourceElement.Nil, e1)
-//        }
     
     and relationalExpression =
         parse {
@@ -343,27 +318,9 @@ module Parser =
     
     and equalityExpression =
         manyWithSepFold relationalExpression expectEqualityOperator EqualityExpression SourceElement.Nil EqualityOperator.Nil 
-//        parse {
-//            let! e1 = relationalExpression
-//            return! parse {
-//                let! e2 = expectEqualityOperator
-//                let! e3 = equalityExpression
-//                return EqualityExpression (e1, e2, e3)
-//            } 
-//            return EqualityExpression (SourceElement.Nil, SourceElement.Nil, e1)
-//        }
 
     and equalityExpressionNoIn =
         manyWithSepFold relationalExpressionNoIn expectEqualityOperator EqualityExpression SourceElement.Nil EqualityOperator.Nil
-//        parse {
-//            let! e1 = relationalExpressionNoIn
-//            return! parse {
-//                let! e2 = expectEqualityOperator
-//                let! e3 = equalityExpressionNoIn
-//                return EqualityExpressionNoIn (e1, e2, e3)
-//            } 
-//            return EqualityExpressionNoIn (SourceElement.Nil, SourceElement.Nil, e1)
-//        } 
     
     and bitwiseANDExpression =
         parse {
@@ -751,31 +708,32 @@ module Parser =
                 return ExpressionNoIn (SourceElement.Nil, e1)
             } 
 
-        memberExpressionRef :=
-            choice [       
-                parse {
-                    let! e = choice [primaryExpression; functionExpression]
-                    return MemberExpression (SourceElement.Nil, e)
-                }
-                parse {
-                    let! e1 = memberExpression
-                    do! skip expectFullStop
-                    let! e2 = between expectOpenBracket expectCloseBracket expression
-                    return MemberExpression (e1, e2)
-                }
-                parse {
-                    let! e1 = memberExpression
-                    do! skip expectFullStop
-                    let! e2 = expectIdentifierName |>> InputElement
-                    return MemberExpression (e1, e2)
-                }
-                parse {
-                    do! skip expectNew
-                    let! e1 = memberExpression
-                    let! e2 = arguments
-                    return MemberExpression (e1, e2)
-                }
-            ]
+        memberExpressionRef := parse {
+                return! choice [       
+                    parse {
+                        let! e = choice [primaryExpression; functionExpression]
+                        return MemberExpression (SourceElement.Nil, e)
+                    }
+                    parse {
+                        let! e1 = memberExpression
+                        do! skip expectFullStop
+                        let! e2 = between expectOpenBracket expectCloseBracket expression
+                        return MemberExpression (e1, e2)
+                    }
+                    parse {
+                        let! e1 = memberExpression
+                        do! skip expectFullStop
+                        let! e2 = expectIdentifierName |>> InputElement
+                        return MemberExpression (e1, e2)
+                    }
+                    parse {
+                        do! skip expectNew
+                        let! e1 = memberExpression
+                        let! e2 = arguments
+                        return MemberExpression (e1, e2)
+                    }
+                ]
+        }
 
         callExpressionRef :=
             choice [  

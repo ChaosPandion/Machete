@@ -13,7 +13,8 @@ module Tools =
 
     type Result<'a, 'b, 'c> =
     | Success of 'c * State<'a, 'b>
-    | Failure of list<string> * State<'a, 'b>    
+    | Failure of list<string> * State<'a, 'b>
+        
     
     type Parser<'a, 'b, 'c> = 
         State<'a, 'b> -> seq<Result<'a, 'b, 'c>>
@@ -35,7 +36,7 @@ module Tools =
     let run p i d =
         p (State(i, d)) 
 
-    let (>>=) (m:Parser<'a, 'b, 'c>) (f:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) = 
+    let (>>=) (m:Parser<'a, 'b, 'c>) (f:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
         let rec run errors = seq {
             for r in m state do
                 match r with
@@ -60,9 +61,9 @@ module Tools =
         member this.Bind (f:Parser<'a, 'b, 'c>, g:'c -> Parser<'a, 'b, 'd>) : Parser<'a, 'b, 'd> = f >>= g     
         member this.Combine (f, g) = f <|> g      
         member this.Delay (f:unit -> Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = f () state
-        member this.Return x = result x
-        member this.ReturnFrom p = p
-        member this.Zero () = zero
+        member this.Return value state = [Success (value, state)] :> seq<Result<'a, 'b, 'c>>
+        member this.ReturnFrom p = p 
+        member this.Zero () state = Seq.empty<Result<'a, 'b, 'c>>
     
     let parse = ParseMonad()
     
@@ -82,9 +83,9 @@ module Tools =
     }
 
     let choice (ps:seq<Parser<'a, 'b, 'c>>) (state:State<'a, 'b>) = seq {
-        if not (LazyList.isEmpty state.Input) then
-            for p in ps do
-                yield! p state    
+            if not (LazyList.isEmpty state.Input) then
+                for p in ps do
+                        yield! p state    
     }
 
     let between left right parser =
@@ -180,7 +181,7 @@ module Tools =
     let isSuccess r =
         match r with
         | Success (v, s) -> true
-        | Failure (ms, s) -> false
+        | _ -> false
 
     let manyWithSepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'd * 'c -> 'c) (d:'c) (sepStart:'d) (state:State<'a, 'b>) = 
         let rs = par state
@@ -209,12 +210,7 @@ module Tools =
             | _ -> [Success (f (d, sepStart, v), state)] |> List.toSeq             
         | _ -> Seq.empty
 
-
-
-
         
-
-
     let isNotFollowedBy p =
         parse {
             let! v = maybe p

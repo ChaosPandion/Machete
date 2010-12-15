@@ -365,6 +365,7 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
             match e with
             | ExpressionStatement _ ->
                 evalExpressionStatement (state.WithElement e) 
+            | EmptyStatement -> evalEmptyStatement (state.WithElement e)  
 
     and evalBlock (state:State) =
         match state.Element with
@@ -466,7 +467,7 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
                 evalSourceElements (state.WithElement e)    
 
     member this.Compile (input:string) =
-        let input = Parser.parse input
+        let input = Parser.parse (input + ";")
         let state = State (input, Map.empty, [], [])
         let body = evalProgram state
         exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
