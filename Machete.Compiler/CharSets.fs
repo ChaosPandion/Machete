@@ -26,61 +26,94 @@ module CharSets =
             '\u2028';'\u2029'; 
         ]
 
-    let unicodeLetterCharSet = 
-        set [
-            for c in [Char.MinValue..Char.MaxValue] do 
-                match Char.GetUnicodeCategory(c) with
-                | UnicodeCategory.UppercaseLetter
-                | UnicodeCategory.LowercaseLetter 
-                | UnicodeCategory.TitlecaseLetter 
-                | UnicodeCategory.ModifierLetter
-                | UnicodeCategory.OtherLetter
-                | UnicodeCategory.LetterNumber -> yield c
-                | _ -> ()
-        ]
+    let isUnicodeLetter c =
+        match Char.GetUnicodeCategory(c) with
+        | UnicodeCategory.UppercaseLetter
+        | UnicodeCategory.LowercaseLetter 
+        | UnicodeCategory.TitlecaseLetter 
+        | UnicodeCategory.ModifierLetter
+        | UnicodeCategory.OtherLetter
+        | UnicodeCategory.LetterNumber -> true
+        | _ -> false
+          
 
-    let unicodeCombiningMarkCharSet = 
-        set [
-            for c in [Char.MinValue..Char.MaxValue] do 
-                match Char.GetUnicodeCategory(c) with
-                | UnicodeCategory.NonSpacingMark
-                | UnicodeCategory.SpacingCombiningMark -> yield c
-                | _ -> ()
-        ]
+//    let unicodeLetterCharSet = 
+//        set [
+//            for c in [Char.MinValue..Char.MaxValue] do 
+//                match Char.GetUnicodeCategory(c) with
+//                | UnicodeCategory.UppercaseLetter
+//                | UnicodeCategory.LowercaseLetter 
+//                | UnicodeCategory.TitlecaseLetter 
+//                | UnicodeCategory.ModifierLetter
+//                | UnicodeCategory.OtherLetter
+//                | UnicodeCategory.LetterNumber -> yield c
+//                | _ -> ()
+//        ]
 
-    let unicodeDigitCharSet = 
-        set [
-            for c in [Char.MinValue..Char.MaxValue] do 
-                match Char.GetUnicodeCategory(c) with
-                | UnicodeCategory.DecimalDigitNumber -> yield c
-                | _ -> ()
-        ]
+    let isUnicodeCombiningMark c =
+        match Char.GetUnicodeCategory c with
+        | UnicodeCategory.NonSpacingMark
+        | UnicodeCategory.SpacingCombiningMark -> true
+        | _ -> false  
 
-    let unicodeConnectorPunctuationCharSet = 
-        set [
-            for c in [Char.MinValue..Char.MaxValue] do 
-                match Char.GetUnicodeCategory(c) with
-                | UnicodeCategory.ConnectorPunctuation -> yield c
-                | _ -> ()
-        ]
+//    let unicodeCombiningMarkCharSet = 
+//        set [
+//            for c in [Char.MinValue..Char.MaxValue] do 
+//                match Char.GetUnicodeCategory(c) with
+//                | UnicodeCategory.NonSpacingMark
+//                | UnicodeCategory.SpacingCombiningMark -> yield c
+//                | _ -> ()
+//        ]
+
+    let isUnicodeDigit c =
+        match Char.GetUnicodeCategory c with
+        | UnicodeCategory.DecimalDigitNumber -> true
+        | _ -> false 
+
+//    let unicodeDigitCharSet = 
+//        set [
+//            for c in [Char.MinValue..Char.MaxValue] do 
+//                match Char.GetUnicodeCategory(c) with
+//                | UnicodeCategory.DecimalDigitNumber -> yield c
+//                | _ -> ()
+//        ]
+
+    let isUnicodeConnectorPunctuation c =
+        match Char.GetUnicodeCategory c with
+        | UnicodeCategory.ConnectorPunctuation -> true
+        | _ -> false 
+
+//    let unicodeConnectorPunctuationCharSet = 
+//        set [
+//            for c in [Char.MinValue..Char.MaxValue] do 
+//                match Char.GetUnicodeCategory(c) with
+//                | UnicodeCategory.ConnectorPunctuation -> yield c
+//                | _ -> ()
+//        ]
 
     
-    let nonLineTerminatorCharSet = 
-        set [
-            for c in [Char.MinValue..Char.MaxValue] do 
-                if not (lineTerminatorCharSet.Contains c) then 
-                    yield c
-        ]
+//    let nonLineTerminatorCharSet = 
+//        set [
+//            for c in [Char.MinValue..Char.MaxValue] do 
+//                if not (lineTerminatorCharSet.Contains c) then 
+//                    yield c
+//        ]
+
+    let isNonLineTerminator c = 
+        not (lineTerminatorCharSet.Contains c)
 
     let decimalDigitCharSet = 
         set ['0'..'9']
 
-    let nonDecimalDigitCharSet = 
-        set [
-            for c in [Char.MinValue..Char.MaxValue] do 
-                if not (decimalDigitCharSet.Contains c) then 
-                    yield c
-        ]
+    let isNonDecimalDigit c = 
+        not (decimalDigitCharSet.Contains c)
+
+//    let nonDecimalDigitCharSet = 
+//        set [
+//            for c in [Char.MinValue..Char.MaxValue] do 
+//                if not (decimalDigitCharSet.Contains c) then 
+//                    yield c
+//        ]
 
     let nonZeroDigitCharSet = 
         set ['1'..'9']

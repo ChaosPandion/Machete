@@ -118,10 +118,30 @@ module Parser =
     let expectNew = expectSpecificIdentifierName "new"
 
     let expectAssignmentOperator = expectPunctuators (set ["=";"*=";"/=";"%=";"+=";"-=";"<<=";">>=";">>>=";"&=";"^=";"|="])
-    let expectEqualityOperator = expectPunctuators (set ["=="; "!="; "==="; "!=="]) |>> InputElement
+
+    let expectEqualityOperator = 
+        expectPunctuators (set ["=="; "!="; "==="; "!=="])           
+            >>= 
+                fun p -> 
+                    match p with
+                    | Punctuator (Str "==") -> result EqualityOperator.Equal
+                    | Punctuator (Str "!=") -> result EqualityOperator.DoesNotEqual
+                    | Punctuator (Str "===") -> result EqualityOperator.StrictEqual
+                    | Punctuator (Str "!==") -> result EqualityOperator.StrictDoesNotEqual
+
+
     let expectRelationalOperator = expectPunctuators (set ["<"; ">"; "<="; ">="; "instanceof"; "in"]) |>> InputElement
     let expectRelationalOperatorNoIn = expectPunctuators (set ["<"; ">"; "<="; ">="; "instanceof"]) |>> InputElement
-    let expectShiftOperator = expectPunctuators (set ["<<"; ">>"; ">>>"]) |>> InputElement
+
+    let expectShiftOperator = 
+        expectPunctuators (set ["<<"; ">>"; ">>>"])          
+            >>= 
+                fun p -> 
+                    match p with
+                    | Punctuator (Str "<<") -> result BitwiseShiftOperator.LeftShift
+                    | Punctuator (Str ">>") -> result BitwiseShiftOperator.SignedRightShift
+                    | Punctuator (Str ">>>") -> result BitwiseShiftOperator.UnsignedRightShift
+
     let expectAdditiveOperator = 
         expectPunctuators (set ["+"; "-"]) 
             >>= fun p -> match p with
@@ -130,10 +150,12 @@ module Parser =
 
     let expectMultiplicativeOperator = 
         expectPunctuators (set ["*"; "%"; "/"])          
-            >>= fun p -> match p with
-                         | Punctuator (Str "*") -> result MultiplicativeOperator.Multiply
-                         | Punctuator (Str "%") -> result MultiplicativeOperator.Modulus
-                         | Punctuator (Str "/") -> result MultiplicativeOperator.Divide
+            >>= 
+                fun p -> 
+                    match p with
+                    | Punctuator (Str "*") -> result MultiplicativeOperator.Multiply
+                    | Punctuator (Str "%") -> result MultiplicativeOperator.Modulus
+                    | DivPunctuator (Str "/") -> result MultiplicativeOperator.Divide
 
     let expectPostfixOperator = expectPunctuators (set ["++"; "--"]) |>> InputElement
     let expectUnaryOperator = expectPunctuators (set ["++"; "--"; "+"; "-"; "~"; "!"; "delete"; "void"; "typeof"])
@@ -253,37 +275,49 @@ module Parser =
         }
 
     and multiplicativeExpression =
-        parse {
-            let! e1 = unaryExpression
-            return! parse {
-                let! e2 = expectMultiplicativeOperator
-                let! e3 = multiplicativeExpression
-                return MultiplicativeExpression (e3, e2, e1)
-            } 
-            return MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, e1)
-        } 
+        manyWithSepFold unaryExpression expectMultiplicativeOperator MultiplicativeExpression SourceElement.Nil MultiplicativeOperator.Nil
+//        parse {
+//            let! f = unaryExpression
+//            let! r = many (parse {
+//                let! m = expectMultiplicativeOperator
+//                let! n = unaryExpression
+//                return m, n
+//            })
+//            return r |> List.fold (fun x (y, z) -> MultiplicativeExpression (x, y, z)) (MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, f))     
+//        }
+//        parse {
+//            let! e1 = unaryExpression
+//            return! parse {
+//                let! e2 = expectMultiplicativeOperator
+//                let! e3 = multiplicativeExpression
+//                return MultiplicativeExpression (e3, e2, e1)
+//            } 
+//            return MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, e1)
+//        } 
     
     and additiveExpression =
-        parse {
-            let! e1 = multiplicativeExpression
-            return! parse {
-                let! e2 = expectAdditiveOperator
-                let! e3 = additiveExpression
-                return AdditiveExpression (e3, e2, e1)
-            } 
-            return AdditiveExpression (SourceElement.Nil, AdditiveOperator.Nil, e1)
-        } 
+        manyWithSepFold multiplicativeExpression expectAdditiveOperator AdditiveExpression SourceElement.Nil AdditiveOperator.Nil
+//        parse {
+//            let! e1 = multiplicativeExpression
+//            return! parse {
+//                let! e2 = expectAdditiveOperator
+//                let! e3 = additiveExpression
+//                return AdditiveExpression (e3, e2, e1)
+//            } 
+//            return AdditiveExpression (SourceElement.Nil, AdditiveOperator.Nil, e1)
+//        } 
     
     and shiftExpression =
-        parse {
-            let! e1 = additiveExpression
-            return! parse {
-                let! e2 = expectShiftOperator
-                let! e3 = shiftExpression
-                return ShiftExpression (e1, e2, e3)
-            } 
-            return ShiftExpression (SourceElement.Nil, SourceElement.Nil, e1)
-        }
+        manyWithSepFold additiveExpression expectShiftOperator ShiftExpression SourceElement.Nil BitwiseShiftOperator.Nil
+//        parse {
+//            let! e1 = additiveExpression
+//            return! parse {
+//                let! e2 = expectShiftOperator
+//                let! e3 = shiftExpression
+//                return ShiftExpression (e1, e2, e3)
+//            } 
+//            return ShiftExpression (SourceElement.Nil, SourceElement.Nil, e1)
+//        }
     
     and relationalExpression =
         parse {
@@ -307,27 +341,29 @@ module Parser =
             return RelationalExpressionNoIn (SourceElement.Nil, SourceElement.Nil, e1)
         } 
     
-    and equalityExpression = 
-        parse {
-            let! e1 = relationalExpression
-            return! parse {
-                let! e2 = expectEqualityOperator
-                let! e3 = equalityExpression
-                return EqualityExpression (e1, e2, e3)
-            } 
-            return EqualityExpression (SourceElement.Nil, SourceElement.Nil, e1)
-        }
+    and equalityExpression =
+        manyWithSepFold relationalExpression expectEqualityOperator EqualityExpression SourceElement.Nil EqualityOperator.Nil 
+//        parse {
+//            let! e1 = relationalExpression
+//            return! parse {
+//                let! e2 = expectEqualityOperator
+//                let! e3 = equalityExpression
+//                return EqualityExpression (e1, e2, e3)
+//            } 
+//            return EqualityExpression (SourceElement.Nil, SourceElement.Nil, e1)
+//        }
 
     and equalityExpressionNoIn =
-        parse {
-            let! e1 = relationalExpressionNoIn
-            return! parse {
-                let! e2 = expectEqualityOperator
-                let! e3 = equalityExpressionNoIn
-                return EqualityExpressionNoIn (e1, e2, e3)
-            } 
-            return EqualityExpressionNoIn (SourceElement.Nil, SourceElement.Nil, e1)
-        } 
+        manyWithSepFold relationalExpressionNoIn expectEqualityOperator EqualityExpression SourceElement.Nil EqualityOperator.Nil
+//        parse {
+//            let! e1 = relationalExpressionNoIn
+//            return! parse {
+//                let! e2 = expectEqualityOperator
+//                let! e3 = equalityExpressionNoIn
+//                return EqualityExpressionNoIn (e1, e2, e3)
+//            } 
+//            return EqualityExpressionNoIn (SourceElement.Nil, SourceElement.Nil, e1)
+//        } 
     
     and bitwiseANDExpression =
         parse {

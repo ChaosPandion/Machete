@@ -559,27 +559,29 @@ module Lexer =
                     evalDoubleStringCharacters v
                 | SingleStringCharacters (_, _) ->
                     evalSingleStringCharacters v
-                | _ -> invalidOp ""                 
+                | _ -> ""                
             | _ -> invalidArg "v" "Expected StringLiteral."
 
     module IdentifierNameParser =
 
+        open System
+        open System.Globalization
         open FParsec.CharParsers
         open FParsec.Primitives
         open NumericLiteralParser
         open StringLiteralParser
 
         let unicodeLetter<'a> : Parser<InputElement, 'a> = 
-            satisfy CharSets.unicodeLetterCharSet.Contains |>> UnicodeLetter
+            satisfy CharSets.isUnicodeLetter |>> UnicodeLetter
 
         let unicodeCombiningMark<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.unicodeCombiningMarkCharSet.Contains |>> UnicodeCombiningMark 
+            satisfy CharSets.isUnicodeCombiningMark |>> UnicodeCombiningMark 
 
         let unicodeDigit<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.unicodeDigitCharSet.Contains |>> UnicodeDigit
+            satisfy CharSets.isUnicodeDigit |>> UnicodeDigit
 
         let unicodeConnectorPunctuation<'a> : Parser<InputElement, 'a> = 
-            satisfy CharSets.unicodeConnectorPunctuationCharSet.Contains |>> UnicodeConnectorPunctuation
+            satisfy CharSets.isUnicodeConnectorPunctuation |>> UnicodeConnectorPunctuation
 
         let identifierStart<'a> : Parser<InputElement, 'a> =
             let a = unicodeLetter |>> IdentifierStart
@@ -724,17 +726,14 @@ module Lexer =
                 match s.previousElement with
                 | Some element ->
                     match element with
-                    | Token element ->
-                        match element with
-                        | IdentifierName (_, _) ->
-                            match IdentifierNameParser.evalIdentifierName element with
-                            | "true" | "false" | "null" | "this" -> DivPunctuator.parseDivPunctuator
-                            | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral   
-                        | Punctuator (Str "]")
-                        | Punctuator (Str ")")
-                        | NumericLiteral _ 
-                        | StringLiteral _ -> DivPunctuator.parseDivPunctuator
-                        | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral  
+                    | IdentifierName (_, _) ->
+                        match IdentifierNameParser.evalIdentifierName element with
+                        | "true" | "false" | "null" | "this" -> DivPunctuator.parseDivPunctuator
+                        | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral   
+                    | Punctuator (Str "]")
+                    | Punctuator (Str ")")
+                    | NumericLiteral _ 
+                    | StringLiteral _ -> DivPunctuator.parseDivPunctuator
                     | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral
                 | None -> RegularExpressionLiteral.parseRegularExpressionLiteral 
 

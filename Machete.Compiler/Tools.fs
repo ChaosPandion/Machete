@@ -109,6 +109,23 @@ module Tools =
         }
         many []
 
+//    let many (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) : seq<Result<'a, 'b, list<'c>>> = 
+//        let rec many (result:list<'c>) (state:State<'a, 'b>) : seq<Result<'a, 'b, list<'c>>> = seq {
+//            for x in parser state do
+//                match x with
+//                | Success (v, s) ->
+//                    yield! many (v::result) s
+//                | Failure (ms, s) ->
+//                    yield Success (result, s)
+//        }
+//        seq {       
+//            for r in many [] state do
+//                match r with
+//                | Success (v, s) ->
+//                    yield r
+//                | Failure (ms, s) -> ()                
+//        } |> Seq.toList |> fun s -> if s.IsEmpty then [Success([], state)]|>List.toSeq else [s.Head]|>List.toSeq
+
     let many1 parser = parse {
         let! r = many parser
         if not r.IsEmpty then
@@ -127,7 +144,7 @@ module Tools =
 
     let manySepFold (parser:Parser<'a, 'b, 'c>) (separator:Parser<'a, 'b, 'd>) (start:'e) (f:'e -> 'c -> 'e) (state:State<'a, 'b>) = seq {
         let rec run state = seq {
-            for r in parser state do 
+            for r in parser state do
                 match r with
                 | Success (v, s) ->
                     yield r
@@ -139,15 +156,64 @@ module Tools =
                 | Failure (ms, s) -> ()
         }
         if not (LazyList.isEmpty state.Input) then
-            yield run state 
+            yield run state
                 |> Seq.fold (
                     fun (result, state) (y:Result<'a, 'b, 'c>) ->
                         match y with
                         | Success (v, s) ->
                             f result v, s
                 ) (start, state)
-                |> Success        
+                |> Success
     }
+
+    let manyWithSepFold1 p s f d m =
+        parse {
+            let! r1 = p
+            let! r = many (parse {
+                let! m = s
+                let! n = p
+                return m, n
+            })
+            return r |> List.fold (fun x (y, z) -> f (x, y, z)) (f (d, m, r1))     
+        }
+
+    let isSuccess r =
+        match r with
+        | Success (v, s) -> true
+        | Failure (ms, s) -> false
+
+    let manyWithSepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'd * 'c -> 'c) (d:'c) (sepStart:'d) (state:State<'a, 'b>) = 
+        let rs = par state
+        let r = rs |> Seq.tryFind isSuccess
+        match r with 
+        | Some (Success (v, s)) ->
+            let rec many (result:list<'d * 'c>) (state:State<'a, 'b>) = seq { 
+                let seps = sep state
+                let sepr = seps |> Seq.tryFind isSuccess
+                match sepr with 
+                | Some (Success (sv, state)) ->
+                    let pars = par state
+                    let parr = pars |> Seq.tryFind isSuccess
+                    match parr with 
+                    | Some (Success (pv, state)) ->
+                        yield! many ((sv,pv)::result) state
+                    | _ -> yield Success (result, state) 
+                | _ -> yield Success (result, state)
+                
+            }
+            let ms = many [] s
+            let m = ms |> Seq.tryFind isSuccess
+            match m with 
+            | Some (Success (mv, state)) ->
+                [Success (mv |> List.fold (fun x (y, z) -> f (x, y, z)) (f (d, sepStart, v)), state)] |> List.toSeq  
+            | _ -> [Success (f (d, sepStart, v), state)] |> List.toSeq             
+        | _ -> Seq.empty
+
+
+
+
+        
+
 
     let isNotFollowedBy p =
         parse {

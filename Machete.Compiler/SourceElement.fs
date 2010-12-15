@@ -91,11 +91,11 @@
     | BitwiseXORExpressionNoIn of SourceElement * SourceElement
     | BitwiseANDExpression of SourceElement * SourceElement
     | BitwiseANDExpressionNoIn of SourceElement * SourceElement
-    | EqualityExpression of SourceElement * SourceElement * SourceElement
-    | EqualityExpressionNoIn of SourceElement * SourceElement * SourceElement
+    | EqualityExpression of SourceElement * EqualityOperator * SourceElement
+    | EqualityExpressionNoIn of SourceElement * EqualityOperator * SourceElement
     | RelationalExpression of SourceElement * SourceElement * SourceElement
     | RelationalExpressionNoIn of SourceElement * SourceElement * SourceElement
-    | ShiftExpression of SourceElement * SourceElement * SourceElement
+    | ShiftExpression of SourceElement * BitwiseShiftOperator * SourceElement
     | AdditiveExpression of SourceElement * AdditiveOperator * SourceElement
     | MultiplicativeExpression of SourceElement * MultiplicativeOperator * SourceElement
     | UnaryExpression of SourceElement * SourceElement

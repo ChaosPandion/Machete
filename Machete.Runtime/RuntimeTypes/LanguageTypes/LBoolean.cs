@@ -14,7 +14,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         private readonly bool _value;
           
 
-        private LBoolean(IEnvironment environment, bool value)
+        public LBoolean(IEnvironment environment, bool value)
         {
             _environment = environment;
             _value = value;

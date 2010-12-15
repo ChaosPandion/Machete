@@ -17,6 +17,8 @@ namespace Machete.Runtime
     public sealed class Environment : IEnvironment
     {
         private readonly IArgs _empty;
+        private readonly IBoolean _true;
+        private readonly IBoolean _false;
         private readonly Stack<IExecutionContext> _contextStack;
         private IExecutionContext _currentContext;
     
@@ -25,6 +27,8 @@ namespace Machete.Runtime
         {
             _contextStack = new Stack<IExecutionContext>();
             _empty = new SArgs(this);
+            _true = new LBoolean(this, true);
+            _false = new LBoolean(this, false);
 
             GlobalObject = new BGlobal(this);
             MathObject = new BMath(this);
@@ -194,12 +198,12 @@ namespace Machete.Runtime
 
         public IBoolean BooleanTrue
         {
-            get { throw new NotImplementedException(); }
+            get { return _true; }
         }
 
         public IBoolean BooleanFalse
         {
-            get { throw new NotImplementedException(); }
+            get { return _false; }
         }
 
         public INull Null
@@ -210,12 +214,12 @@ namespace Machete.Runtime
         
         public IBoolean CreateBoolean(bool value)
         {
-            throw new NotImplementedException();
+            return value ? _true : _false;
         }
 
         public IString CreateString(string value)
         {
-            throw new NotImplementedException();
+            return new LString(this, value);
         }
 
         public INumber CreateNumber(double value)

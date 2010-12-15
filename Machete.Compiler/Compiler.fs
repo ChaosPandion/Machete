@@ -152,22 +152,18 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
             let args = [| evalEqualityExpression (state.WithElement right) |]
             call inst Reflection.IDynamic.op_BitwiseAnd args
 
-    and evalEqualityExpression (state:State) =    
+    and evalEqualityExpression (state:State) = 
         match state.Element with
-        | EqualityExpression (Nil, Nil, e) | EqualityExpressionNoIn (Nil, Nil, e) ->
+        | EqualityExpression (Nil, EqualityOperator.Nil, e) | EqualityExpressionNoIn (Nil, EqualityOperator.Nil, e) ->
             evalRelationalExpression (state.WithElement e)
-        | EqualityExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) 
-        | EqualityExpressionNoIn (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
-            let left = evalEqualityExpression (state.WithElement left)
-            let right = evalRelationalExpression (state.WithElement right) 
-            let mi = 
-                match v with
-                | "==" -> Reflection.IDynamic.op_Equals
-                | "!=" -> Reflection.IDynamic.op_DoesNotEquals
-                | "===" -> Reflection.IDynamic.op_StrictEquals
-                | "!==" -> Reflection.IDynamic.op_StrictDoesNotEquals
-                | _ -> failwith ""
-            call left mi [| right |]
+        | EqualityExpression (e1, EqualityOperator.Equal, e2) | EqualityExpressionNoIn (e1, EqualityOperator.Equal, e2) ->
+            call (evalEqualityExpression (state.WithElement e1)) Reflection.IDynamic.op_Equals [| (evalRelationalExpression (state.WithElement e2)) |]
+        | EqualityExpression (e1, EqualityOperator.DoesNotEqual, e2) | EqualityExpressionNoIn (e1, EqualityOperator.DoesNotEqual, e2) ->
+            call (evalEqualityExpression (state.WithElement e1)) Reflection.IDynamic.op_DoesNotEquals [| (evalRelationalExpression (state.WithElement e2)) |]
+        | EqualityExpression (e1, EqualityOperator.StrictEqual, e2) | EqualityExpressionNoIn (e1, EqualityOperator.StrictEqual, e2) ->
+            call (evalEqualityExpression (state.WithElement e1)) Reflection.IDynamic.op_StrictEquals [| (evalRelationalExpression (state.WithElement e2)) |] 
+        | EqualityExpression (e1, EqualityOperator.StrictDoesNotEqual, e2) | EqualityExpressionNoIn (e1, EqualityOperator.StrictDoesNotEqual, e2) ->
+            call (evalEqualityExpression (state.WithElement e1)) Reflection.IDynamic.op_StrictDoesNotEquals [| (evalRelationalExpression (state.WithElement e2)) |] 
 
     and evalRelationalExpression (state:State) =    
         match state.Element with
@@ -190,17 +186,14 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
 
     and evalShiftExpression (state:State) =    
         match state.Element with
-        | ShiftExpression (Nil, Nil, e) ->
+        | ShiftExpression (Nil, BitwiseShiftOperator.Nil, e) ->
             evalAdditiveExpression (state.WithElement e)
-        | ShiftExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right) ->
-            let left = evalShiftExpression (state.WithElement left)
-            let right = evalAdditiveExpression (state.WithElement right) 
-            let mi = 
-                match v with
-                | "<<" -> Reflection.IDynamic.op_LeftShift
-                | ">>" -> Reflection.IDynamic.op_SignedRightShift
-                | ">>>" -> Reflection.IDynamic.op_UnsignedRightShift
-            call left mi [| right |]
+        | ShiftExpression (e1, BitwiseShiftOperator.LeftShift, e2) ->
+            call (evalShiftExpression (state.WithElement e1)) Reflection.IDynamic.op_LeftShift [| (evalAdditiveExpression (state.WithElement e2)) |]
+        | ShiftExpression (e1, BitwiseShiftOperator.SignedRightShift, e2) ->
+            call (evalShiftExpression (state.WithElement e1)) Reflection.IDynamic.op_SignedRightShift [| (evalAdditiveExpression (state.WithElement e2)) |]
+        | ShiftExpression (e1, BitwiseShiftOperator.UnsignedRightShift, e2) ->
+            call (evalShiftExpression (state.WithElement e1)) Reflection.IDynamic.op_UnsignedRightShift [| (evalAdditiveExpression (state.WithElement e2)) |]
 
     and evalAdditiveExpression (state:State) =    
         match state.Element with
@@ -221,16 +214,6 @@ type Compiler (environment:Machete.Interfaces.IEnvironment) =
             call (evalMultiplicativeExpression (state.WithElement e1)) Reflection.IDynamic.op_Modulus [| (evalUnaryExpression (state.WithElement e2)) |]
         | MultiplicativeExpression (e1, MultiplicativeOperator.Divide, e2) ->
             call (evalMultiplicativeExpression (state.WithElement e1)) Reflection.IDynamic.op_Division [| (evalUnaryExpression (state.WithElement e2)) |]
-//        | MultiplicativeExpression (left, InputElement (Lexer.Punctuator (Lexer.Str v)), right)
-//        | MultiplicativeExpression (left, InputElement (Lexer.DivPunctuator (Lexer.Str v)), right) ->
-//            let left = evalMultiplicativeExpression (state.WithElement left)
-//            let right = evalUnaryExpression (state.WithElement right) 
-//            let mi = 
-//                match v with
-//                | "*" -> Reflection.IDynamic.op_Multiplication
-//                | "/" -> Reflection.IDynamic.op_Division
-//                | "%" -> Reflection.IDynamic.op_Modulus
-//            call left mi [| right |]
 
     and evalUnaryExpression (state:State) =    
         match state.Element with
