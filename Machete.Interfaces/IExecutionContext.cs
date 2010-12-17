@@ -1,6 +1,8 @@
-﻿namespace Machete.Interfaces
+﻿using System;
+
+namespace Machete.Interfaces
 {
-    public interface IExecutionContext
+    public interface IExecutionContext : IDisposable
     {
         ILexicalEnvironment LexicalEnviroment { get; set; }
         ILexicalEnvironment VariableEnviroment { get; set; }

@@ -254,10 +254,10 @@ module Parser =
     
 
     let rec primaryExpression : ComplexParser =
-        //((between expectOpenParenthesis expectCloseParenthesis expression) |>> PrimaryExpression) <|>
-        //(objectLiteral |>> PrimaryExpression) <|>
-       // (arrayLiteral |>> PrimaryExpression) <|>
-       expectIdentifier |>> InputElement |>> PrimaryExpression <|>
+       ((between expectOpenParenthesis expectCloseParenthesis expression) |>> PrimaryExpression) <|>
+       (objectLiteral |>> PrimaryExpression) <|>
+       (arrayLiteral |>> PrimaryExpression) <|>
+       (expectIdentifier |>> InputElement |>> PrimaryExpression) <|>
         parse {
             let! v = passLineTerminator ()
             match v with
@@ -461,8 +461,8 @@ module Parser =
             return FunctionBody x
         }
         
-    and formalParameterList = zero
-        //manySepFold expectIdentifier expectComma SourceElement.Nil (fun x y -> FormalParameterList (x, y))
+    and formalParameterList = 
+        manySepFold (expectIdentifier |>> InputElement) expectComma FormalParameterList SourceElement.Nil //(fun x y -> FormalParameterList (x, y))
 
     and functionDeclaration = 
         parse {
@@ -681,7 +681,7 @@ module Parser =
             return CallExpressionRest (e1, e2)
         }
 
-    let memberExpressionRest =
+    let rec memberExpressionRest =
         parse {
             let! e1 = 
                 between expectOpenBracket expectCloseBracket expression <|>
@@ -690,7 +690,7 @@ module Parser =
                     let! e3 = expectIdentifierName |>> InputElement
                     return e3
                 }
-            let! e2 = memberExpression <|> nil
+            let! e2 = memberExpressionRest <|> nil
             return MemberExpressionRest (e1, e2)
         }
 

@@ -36,7 +36,9 @@ namespace Machete.Runtime
             MathObject = new BMath(this);
             JsonObject = new BJson(this);
             GlobalEnvironment = new SLexicalEnvironment(this, new SObjectEnvironmentRecord(this, GlobalObject, false), null);
-            _currentContext = new ExecutionContext(GlobalEnvironment, GlobalObject);
+            _currentContext = new ExecutionContext(() => { });
+            _currentContext.LexicalEnviroment = _currentContext.VariableEnviroment = GlobalEnvironment;
+            _currentContext.ThisBinding = GlobalObject;
 
             ObjectConstructor = new CObject(this);
             FunctionConstructor = new CFunction(this);
@@ -266,6 +268,14 @@ namespace Machete.Runtime
         public IReference CreateReference(string name, IReferenceBase @base, bool strict)
         {
             return new SReference(this, @base, name, strict);
+        }
+
+
+        public IExecutionContext EnterContext()
+        {
+            _contextStack.Push(_currentContext);
+            _currentContext = new ExecutionContext(() => _currentContext = _contextStack.Pop());
+            return _currentContext;
         }
     }
 }

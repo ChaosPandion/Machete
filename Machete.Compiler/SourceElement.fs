@@ -152,7 +152,7 @@
     | DebuggerStatement    
     | FunctionDeclaration of InputElement * SourceElement * SourceElement
     | FunctionExpression of InputElement * SourceElement * SourceElement
-    | FormalParameterList of SourceElement * InputElement
+    | FormalParameterList of SourceElement * SourceElement
     | FunctionBody of SourceElement    
     | SourceElement of SourceElement
     | SourceElements of SourceElement * SourceElement

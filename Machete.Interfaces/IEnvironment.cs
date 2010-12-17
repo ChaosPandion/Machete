@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Machete.Interfaces
 {
@@ -21,5 +22,7 @@ namespace Machete.Interfaces
         IObject CreateReferenceError();
         IObject CreateTypeError();
         IObject CreateSyntaxError();
+
+        IExecutionContext EnterContext();
     }
 }

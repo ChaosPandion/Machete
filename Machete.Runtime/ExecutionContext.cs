@@ -11,16 +11,20 @@ namespace Machete.Runtime
 {
     public sealed class ExecutionContext : IExecutionContext
     {
+        private readonly Action _dispose;
+
         public ILexicalEnvironment LexicalEnviroment { get; set; }
         public ILexicalEnvironment VariableEnviroment { get; set; }
         public IDynamic ThisBinding { get; set; }
 
-
-        public ExecutionContext(ILexicalEnvironment enviroment, IDynamic thisBinding)
+        public ExecutionContext(Action dispose)
         {
-            LexicalEnviroment = enviroment;
-            VariableEnviroment = enviroment;
-            ThisBinding = thisBinding;
+            _dispose = dispose;
+        }
+
+        public void Dispose()
+        {
+            _dispose();
         }
     }
 }

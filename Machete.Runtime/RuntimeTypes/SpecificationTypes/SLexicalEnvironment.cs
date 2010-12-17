@@ -48,5 +48,11 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             Debug.Assert(o != null);
             return new SLexicalEnvironment(_environment, new SDeclarativeEnvironmentRecord(_environment), this);
         }
+
+
+        ILexicalEnvironment ILexicalEnvironment.NewDeclarativeEnvironment()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

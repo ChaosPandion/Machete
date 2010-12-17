@@ -10,7 +10,7 @@ type Engine () =
     let proccessMessages (inbox:MailboxProcessor<Message>) = async {
         do! Async.SwitchToNewThread ()
         let environment = new Environment()
-        let compiler = new Machete.Compiler.Compiler(environment :> Machete.Interfaces.IEnvironment)
+        let compiler = new Machete.Compiler.Compiler()
         while true do
             try
                 let! msg = inbox.Receive ()

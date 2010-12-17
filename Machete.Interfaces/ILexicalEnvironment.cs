@@ -6,5 +6,6 @@
         ILexicalEnvironment Parent { get; set; }
 
         IReference GetIdentifierReference(string name, bool strict);
+        ILexicalEnvironment NewDeclarativeEnvironment();
     }
 }
