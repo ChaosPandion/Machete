@@ -220,6 +220,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public static IDynamic Op_Call(IEnvironment environment, IDynamic value, IArgs args)
         {
+            var callable = value as ICallable;
+            if (callable == null)
+            {
+                environment.CreateTypeError().Op_Throw();
+                return null;
+            }
             throw new NotImplementedException();
         }
 

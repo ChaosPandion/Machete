@@ -173,7 +173,7 @@ module Tools =
 
     let manyFold parser start (f:_ -> _ -> _) = parse {
         let! r = many parser
-        return r |> List.fold f start
+        return r |> List.rev |> List.fold f start
     }
 
     let many1Fold parser start (f:_ -> _ -> _) = parse {

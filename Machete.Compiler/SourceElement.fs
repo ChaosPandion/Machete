@@ -102,13 +102,13 @@
     | PostfixExpression of SourceElement * PostfixOperator
 
     | MemberExpression of SourceElement * SourceElement
-    | MemberExpressionRest of SourceElement * SourceElement
+    //| MemberExpressionRest of SourceElement * SourceElement
 
     | Arguments of SourceElement
     | ArgumentList of SourceElement * SourceElement
 
-    | CallExpression of SourceElement * SourceElement * SourceElement
-    | CallExpressionRest of SourceElement * SourceElement
+    | CallExpression of SourceElement * SourceElement// * SourceElement
+    //| CallExpressionRest of SourceElement * SourceElement
 
     | NewExpression of SourceElement
     | LeftHandSideExpression of SourceElement

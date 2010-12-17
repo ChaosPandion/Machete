@@ -1,6 +1,7 @@
 ﻿namespace Machete
 
 open Machete.Runtime
+open Machete.Compiler
 
 type internal Message =
 | ExecuteScript of string * AsyncReplyChannel<obj>
@@ -10,14 +11,13 @@ type Engine () =
     let proccessMessages (inbox:MailboxProcessor<Message>) = async {
         do! Async.SwitchToNewThread ()
         let environment = new Environment()
-        let compiler = new Machete.Compiler.Compiler()
         while true do
             try
                 let! msg = inbox.Receive ()
                 match msg with
                 | ExecuteScript (script, channel) ->
-                    let r = compiler.Compile(script)
-                    let r = r.Invoke(environment, environment.CreateArgs(Seq.empty))
+                    let r = Compiler.CompileGlobalCode(script)
+                    let r = r.Invoke(environment, environment.EmptyArgs)
                     channel.Reply (r.Value.ToString():>obj)
             with | e -> ()
     }

@@ -198,6 +198,12 @@ namespace Machete.Runtime
             get { return _currentContext; }
         }
 
+
+        public IArgs EmptyArgs
+        {
+            get { return _empty; }
+        }
+
         public IUndefined Undefined
         {
             get { return _undefined; }
@@ -234,10 +240,24 @@ namespace Machete.Runtime
             return new LNumber(this, value);
         }
 
+
+
+
+        public IArgs CreateArgs(IDynamic value)
+        {
+            return new SArgs(this, value);
+        }
+
         public IArgs CreateArgs(IEnumerable<IDynamic> values)
         {
-            return _empty;
+            return new SArgs(this, values);
         }
+
+        public IArgs ConcatArgs(IArgs first, IArgs second)
+        {
+            return new SArgs(this, first, second);
+        }
+
 
         public IObject CreateArray()
         {
@@ -276,6 +296,12 @@ namespace Machete.Runtime
             _contextStack.Push(_currentContext);
             _currentContext = new ExecutionContext(() => _currentContext = _contextStack.Pop());
             return _currentContext;
+        }
+
+
+        public IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code)
+        {
+            return new NFunction(this, formalParameterList, strict, code, Context.VariableEnviroment);
         }
     }
 }

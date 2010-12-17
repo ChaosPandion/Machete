@@ -1,36 +1,24 @@
 ﻿namespace Machete.Compiler
 
 open Machete
+open Machete.Interfaces
 
 type internal exp = System.Linq.Expressions.Expression
 type internal label = System.Linq.Expressions.LabelExpression
 type internal methodinfo = System.Reflection.MethodInfo
 type internal dyn = Machete.Interfaces.IDynamic
 
-//type internal State (element:SourceElement, labelMap:Map<string, label>, breakList:list<label>, continueList:list<label>) = struct
-//        member this.Element = element
-//        member this.LabelMap = labelMap
-//        member this.BreakList = breakList
-//        member this.ContinueList = continueList
-//        member this.WithElement element = State (element, labelMap, breakList, continueList)
-//    end
-//type internal State (element:SourceElement, labels:list<Map<string, label>>, functions:list<string>, variables:list<string>) = struct
-//        member this.Element = element
-//        member this.Labels = labels
-//        member this.Functions = functions
-//        member this.Variables = variables
-//        member this.WithElement element = State (element, labels, functions, variables)
-//    end
-//type Code = delegate of Machete.Interfaces.IEnvironment * Machete.Interfaces.IArgs -> Machete.Interfaces.IDynamic
 
-type internal State = {
-    element:SourceElement
-    labels:list<Map<string, label>>
-    functions:list<string>
-    variables:list<string>
-} 
 
-type Compiler () =
+module Compiler =
+
+    type State = {
+        strict : bool
+        element : SourceElement
+        labels : list<Map<string, label>>
+        functions : list<string * string[] * SourceElement>
+        variables : list<string>
+    } 
 
     let call (e:exp) (m:methodinfo) (a:exp[]) = exp.Call (e, m, a) :> exp
     let invoke (e:exp) (a:exp[]) = exp.Invoke (e, a) :> exp
@@ -278,7 +266,7 @@ type Compiler () =
 
     and evalMemberExpression (state:State) =    
         match state.element with
-        | MemberExpression (e, Nil) ->
+        | MemberExpression (Nil, e) ->
             match e with
             | PrimaryExpression (_) ->
                 evalPrimaryExpression { state with element = e } 
@@ -286,18 +274,57 @@ type Compiler () =
                 evalFunctionExpression { state with element = e } 
         | MemberExpression (e1, e2) ->
             match e1, e2 with
-            | MemberExpression (_, _), Expression (_, _) -> constant 1 
-            | MemberExpression (_, _), InputElement (e3) -> constant 1  
+            | MemberExpression (_, _), Expression (_, _) ->
+                let left = evalMemberExpression { state with element = e1 }
+                let right = [| evalExpression { state with element = e2 } |]
+                call left Reflection.IDynamic.op_GetProperty right 
+            | MemberExpression (_, _), InputElement (e3) ->
+                let left = evalMemberExpression { state with element = e1 }
+                let right = constant (Lexer.IdentifierNameParser.evalIdentifierName e3)
+                let right = [| call environmentParam Reflection.IEnvironment.createString [| right |] |]
+                call left Reflection.IDynamic.op_GetProperty right 
             | MemberExpression (_, _), Arguments (_) ->
                 let left = evalMemberExpression { state with element = e1 }
                 let right = [| evalArguments { state with element = e2 } |]
                 call left Reflection.IDynamic.op_Construct right 
 
-    and evalArguments (state:State) = constant 1
+    and evalArguments (state:State) =
+        match state.element with
+        | Arguments Nil -> 
+            call environmentParam Reflection.IEnvironment.get_EmptyArgs Array.empty
+        | Arguments e ->
+            evalArgumentList { state with element = e }
 
-    and evalArgumentList (state:State) = constant 1
+    and evalArgumentList (state:State) =
+        match state.element with
+        | ArgumentList (Nil, e) -> 
+            call environmentParam Reflection.IEnvironment.createArgsSingle [| evalAssignmentExpression { state with element = e } |]
+        | ArgumentList (e1, e2) ->
+            let first = evalArgumentList { state with element = e1 }
+            let last = call environmentParam Reflection.IEnvironment.createArgsSingle [| evalAssignmentExpression { state with element = e2 } |]
+            call environmentParam Reflection.IEnvironment.concatArgs [| first; last |]
 
-    and evalCallExpression (state:State) = constant 1
+    and evalCallExpression (state:State) =    
+        match state.element with
+        | CallExpression (e1, e2) ->
+            match e1, e2 with
+            | MemberExpression (_, _), Arguments (_) ->
+                let left = evalMemberExpression { state with element = e1 }
+                let right = [| evalArguments { state with element = e2 } |]
+                call left Reflection.IDynamic.op_Call right 
+            | CallExpression (_, _), Arguments (_) ->
+                let left = evalCallExpression { state with element = e1 }
+                let right = [| evalArguments { state with element = e2 } |]
+                call left Reflection.IDynamic.op_Call right  
+            | CallExpression (_, _), Expression (_, _) ->
+                let left = evalCallExpression { state with element = e1 }
+                let right = [| evalExpression { state with element = e2 } |]
+                call left Reflection.IDynamic.op_Call right   
+            | CallExpression (_, _), InputElement (e3) ->
+                let left = evalCallExpression { state with element = e1 }
+                let right = constant (Lexer.IdentifierNameParser.evalIdentifierName e3)
+                let right = [| call environmentParam Reflection.IEnvironment.createString [| right |] |]
+                call left Reflection.IDynamic.op_Call right 
 
     and evalNewExpression (state:State) =
         match state.element with
@@ -306,7 +333,9 @@ type Compiler () =
             | MemberExpression (_, _) ->
                 evalMemberExpression { state with element = e }                
             | NewExpression _ -> 
-                evalNewExpression { state with element = e }
+                let left = evalNewExpression { state with element = e }
+                let right = [| call environmentParam Reflection.IEnvironment.get_EmptyArgs Array.empty |]
+                call left Reflection.IDynamic.op_Construct right 
 
     and evalLeftHandSideExpression (state:State) =
         match state.element with
@@ -314,7 +343,7 @@ type Compiler () =
             match e with
             | NewExpression _ -> 
                 evalNewExpression { state with element = e }
-            | CallExpression (_, _, _) -> 
+            | CallExpression (_, _) -> 
                 evalCallExpression { state with element = e }
 
     and evalPrimaryExpression (state:State) =
@@ -394,47 +423,51 @@ type Compiler () =
         | Statement e ->
             match e with
             | ExpressionStatement _ ->
-                evalExpressionStatement { state with element = e } 
+                evalExpressionStatement { state with element = e }, state
             | EmptyStatement -> 
-                evalEmptyStatement { state with element = e }  
+                evalEmptyStatement { state with element = e }, state  
             | VariableStatement _ ->
                 evalVariableStatement { state with element = e } 
 
     and evalBlock (state:State) =
         match state.element with
         | Block Nil ->
-            exp.Empty() :> exp
+            exp.Empty() :> exp, state
         | Block e ->
-            evalStatementList { state with element = e }    
+            evalStatementList { state with element = e }  
 
-    and evalStatementList (state:State) = constant 1
+    and evalStatementList (state:State) = constant 1, state
 
     and evalVariableStatement (state:State) =
         match state.element with
         | VariableStatement e ->
-            evalVariableDeclarationList { state with element = e } 
+            let r, state = evalVariableDeclarationList { state with element = e } 
+            block [|r; call environmentParam Reflection.IEnvironment.get_Undefined Array.empty|], state
 
     and evalVariableDeclarationList (state:State) =
         match state.element with
         | VariableDeclarationList (Nil, e) ->
             evalVariableDeclaration { state with element = e } 
         | VariableDeclarationList (e1, e2) ->
-            block [|
-                evalVariableDeclarationList { state with element = e1 }
-                evalVariableDeclaration { state with element = e2 }
-            |]
+            let first, state = evalVariableDeclarationList { state with element = e1 }
+            let second, state = evalVariableDeclaration { state with element = e2 }
+            block [| first; second |], state
 
     and evalVariableDeclarationListNoIn (state:State) = constant 1
 
     and evalVariableDeclaration (state:State) =
         match state.element with
         | VariableDeclaration (Lexer.Identifier e, Nil) ->
-            exp.Empty():>exp
+            let identifier = Lexer.IdentifierNameParser.evalIdentifierName e
+            exp.Empty() :> exp, { state with variables = identifier::state.variables }
         | VariableDeclaration (e1, e2) ->
-            //let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
+            let identifier = 
+                match e1 with
+                | Lexer.Identifier e ->
+                    Lexer.IdentifierNameParser.evalIdentifierName e
             let left = evalIdentifier e1
             let right = evalInitialiser { state with element = e2 }
-            call left Reflection.IDynamic.set_Value [| right |]
+            call left Reflection.IDynamic.set_Value [| right |], { state with variables = identifier::state.variables }
 
     and evalVariableDeclarationNoIn (state:State) = constant 1
 
@@ -445,7 +478,8 @@ type Compiler () =
 
     and evalInitialiserNoIn (state:State) = constant 1
 
-    and evalEmptyStatement (state:State) = constant 1
+    and evalEmptyStatement (state:State) =
+        exp.Empty() :> exp
 
     and evalExpressionStatement (state:State) =
         match state.element with
@@ -486,11 +520,16 @@ type Compiler () =
 
     and evalDebuggerStatement (state:State) = constant 1
 
-    and evalFunctionDeclaration (state:State) = constant 1
+    and evalFunctionDeclaration (state:State) =
+        match state.element with
+        | FunctionDeclaration (Lexer.Identifier e1, e2, e3) ->
+            let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
+            let formalParameterList = evalFormalParameterList { state with element = e2 }
+            exp.Empty():>exp, { state with functions = (identifier, formalParameterList, e3)::state.functions }
 
     and evalFunctionExpression (state:State) = constant 1
 
-    and evalFormalParameterList (state:State) = constant 1
+    and evalFormalParameterList (state:State) = Array.empty
 
     and evalFunctionBody (state:State) = constant 1
 
@@ -501,43 +540,71 @@ type Compiler () =
             | Statement _ ->
                 evalStatement { state with element = e } 
             | FunctionDeclaration (_, _, _) ->
-                evalFunctionDeclaration { state with element = e } 
+                evalFunctionDeclaration { state with element = e }
 
     and evalSourceElements (state:State) =
         match state.element with
         | SourceElements (Nil, e) ->
             evalSourceElement { state with element = e } 
         | SourceElements (e1, e2) ->
-            let e1 = evalSourceElements { state with element = e1 } 
-            let e2 = evalSourceElement { state with element = e2 } 
-            block [|e1;e2|]          
+            let e1, state = evalSourceElements { state with element = e1 } 
+            let e2, state = evalSourceElement { state with element = e2 } 
+            block [|e1;e2|] , state         
 
     and evalProgram (state:State) =
         match state.element with
         | Program e ->
             match e with
             | Nil ->
-                exp.Empty() :> exp
+                exp.Empty() :> exp , state 
             | SourceElements (_, _) ->
-                evalSourceElements { state with element = e }    
+                let body, state = evalSourceElements { state with element = e } 
+                if body.Type = typeof<System.Void> then
+                    block [| body; call environmentParam Reflection.IEnvironment.get_Undefined [||] |], state 
+                else
+                    body, state
+                        
+    and performDeclarationBinding (configurableBindings:bool) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
+        let env = environment.Context.VariableEnviroment.Record
+        for name in state.variables |> List.rev do
+            if not (env.HasBinding name) then
+                env.CreateMutableBinding (name, configurableBindings)
+                env.SetMutableBinding (name, environment.Undefined, state.strict)
+        for name, formalParameterList, functionBody in state.functions do
+            let code = lazy(CompileFunctionCode(formalParameterList, functionBody))
+            let fo = environment.CreateFunction(formalParameterList, state.strict, code)
+            if not (env.HasBinding name) then
+                env.CreateMutableBinding (name, configurableBindings)
+            env.SetMutableBinding (name, fo, state.strict)            
+        continuation.Invoke (environment, args)
+  
+    and performFunctionArgumentBinding (formalParameterList:string[]) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
+        let i = ref -1
+        let env = environment.Context.VariableEnviroment.Record
+        for name in formalParameterList do
+            incr i
+            if not (env.HasBinding name) then
+                env.CreateMutableBinding (name, false)
+            env.SetMutableBinding (name, args.[!i], state.strict)                   
+        continuation.Invoke (environment, args)           
 
-    member this.Compile (input:string) =
+    and CompileGlobalCode (input:string) =
         let input = Parser.parse (input + ";")
-        let state = { element = input; labels = []; functions = []; variables = [] }
-        let body = evalProgram state
-        if body.Type = typeof<System.Void> then
-            exp.Lambda<Machete.Interfaces.Code>(block [| body; call environmentParam Reflection.IEnvironment.get_Undefined [||] |], [| environmentParam; argsParam |]).Compile()    
-        else    
-            exp.Lambda<Machete.Interfaces.Code>(body, [| environmentParam; argsParam |]).Compile()
+        let body, state = evalProgram { strict = false; element = input; labels = []; functions = []; variables = [] }
+        let continuation = exp.Lambda<Machete.Interfaces.Code>(body, [| environmentParam; argsParam |]).Compile()
+        Code(performDeclarationBinding true state continuation)
+        
+    and CompileEvalCode (input:string) =
+        let input = Parser.parse (input + ";")
+        let body, state = evalProgram { strict = false; element = input; labels = []; functions = []; variables = [] }
+        let continuation = exp.Lambda<Machete.Interfaces.Code>(body, [| environmentParam; argsParam |]).Compile()
+        Code(performDeclarationBinding false state continuation)
 
-    member this.Compile (input:SourceElement) =
-        let state = { element = input; labels = []; functions = []; variables = [] }
-        let body = 
-            match input with
-            | FunctionDeclaration (_, _, _) ->
-                evalFunctionDeclaration state
-            | FunctionExpression (_, _, _) ->
-                evalFunctionExpression state
-        exp.Lambda<Machete.Interfaces.Code>(body, [| environmentParam; argsParam |]).Compile()
+    and CompileFunctionCode (formalParameterList:string[], functionBody:SourceElement) =
+        let state = { strict = false; element = functionBody; labels = []; functions = []; variables = [] }
+        let body = evalFunctionBody state
+        let continuation = exp.Lambda<Machete.Interfaces.Code>(body, [| environmentParam; argsParam |]).Compile()
+        let continuation = Code(performFunctionArgumentBinding formalParameterList state continuation)
+        Code(performDeclarationBinding true state continuation)
 
 

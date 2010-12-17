@@ -127,6 +127,7 @@ module Parser =
         }
 
 
+
     let expectOpenParenthesis = expectPunctuator "("
     let expectCloseParenthesis = expectPunctuator ")"        
     let expectOpenBrace = expectPunctuator "{"
@@ -238,6 +239,16 @@ module Parser =
     let assignmentExpression, assignmentExpressionRef = createParserRef<InputElement, State, SourceElement>()
     let assignmentExpressionNoIn, assignmentExpressionNoInRef = createParserRef<InputElement, State, SourceElement>()
     
+    let bracketedExpression =
+        between expectOpenBracket expectCloseBracket expression
+
+    let expectDotNotation =
+        parse {
+            do! skip expectFullStop
+            let! e = expectIdentifierName |>> InputElement
+            return e
+        }
+
     let expectLiteral = 
         parse {
             let! v = passLineTerminator ()
@@ -661,39 +672,7 @@ module Parser =
 
     let program = 
         sourceElements <|> nil |>> Program
-
-    let rec callExpressionRest =
-        parse {
-            let! e1 = 
-                arguments <|>
-                between expectOpenBracket expectCloseBracket expression <|>
-                parse {
-                    do! skip expectFullStop
-                    let! e3 = expectIdentifierName |>> InputElement
-                    return e3
-                }
-            let! e2 = 
-                callExpression  <|> (parse {
-                    let! e1 = arguments
-                    let! e2 = callExpressionRest <|> nil
-                    return CallExpression (SourceElement.Nil, e1, e2)
-                }) <|> nil
-            return CallExpressionRest (e1, e2)
-        }
-
-    let rec memberExpressionRest =
-        parse {
-            let! e1 = 
-                between expectOpenBracket expectCloseBracket expression <|>
-                parse {
-                    do! skip expectFullStop
-                    let! e3 = expectIdentifierName |>> InputElement
-                    return e3
-                }
-            let! e2 = memberExpressionRest <|> nil
-            return MemberExpressionRest (e1, e2)
-        }
-
+        
     do 
         expressionRef :=
             parse {
@@ -725,23 +704,26 @@ module Parser =
                 return MemberExpression (e, a)
             } <|>  parse {
                 let! e1 = primaryExpression <|> functionExpression
-                let! e2 = memberExpressionRest <|> nil
-                return MemberExpression (e1, e2)
+                let e1 = MemberExpression (SourceElement.Nil, e1)
+                let! e2 = manyFold (bracketedExpression <|> expectDotNotation) e1 (fun x y -> MemberExpression (x, y))
+                return e2
             }
 
         callExpressionRef :=
             parse {
                 let! e1 = memberExpression
                 let! e2 = arguments
-                let! e3 = callExpressionRest <|> nil
-                return CallExpression (e1, e2, e3)
+                let e1 = CallExpression (e1, e2)
+                let! e2 = manyFold (arguments <|> bracketedExpression <|> expectDotNotation) e1 (fun x y -> CallExpression (x, y))
+                return e2
             }
 
         newExpressionRef :=
+            (memberExpression |>> NewExpression) <|> 
             parse {
                 do! skip expectNew
                 return! newExpression
-            }  <|> memberExpression |>> NewExpression 
+            }
 
         assignmentExpressionRef :=
             parse {
