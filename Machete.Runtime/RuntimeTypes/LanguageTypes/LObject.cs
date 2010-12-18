@@ -6,13 +6,14 @@ using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using Machete.Runtime.NativeObjects;
 using Machete.Interfaces;
 using System.Reflection;
+using System.Collections;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
     public class LObject : IObject
     {
         private readonly IEnvironment _environment;
-        private readonly Dictionary<string, SPropertyDescriptor> _map = new Dictionary<string, SPropertyDescriptor>();
+        private readonly Dictionary<string, IPropertyDescriptor> _map = new Dictionary<string, IPropertyDescriptor>();
 
 
         public LObject(IEnvironment environment)
@@ -51,7 +52,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public virtual IPropertyDescriptor GetOwnProperty(string p)
         {
-            SPropertyDescriptor value;
+            IPropertyDescriptor value;
             if (_map.TryGetValue(p, out value))
             {
                 return value;
@@ -608,6 +609,29 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             Put(name, value, strict);
         }
 
+
+        IEnumerator<string> IEnumerable<string>.GetEnumerator()
+        {
+            var props = _map.Keys.ToArray();
+            foreach (var prop in props)
+            {
+                IPropertyDescriptor desc;
+                if (_map.TryGetValue(prop, out desc))
+                {
+                    if (desc.Enumerable ?? false)
+                    {
+                        yield return prop;
+                    }
+                }
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable<string>)this).GetEnumerator();
+        }
+
+
         protected void InitializeNativeFunctions()
         {
             foreach (var mi in this.GetType().GetMethods(BindingFlags.Static | BindingFlags.NonPublic))
@@ -628,5 +652,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             return (string)ConvertToString().BaseValue;
         }
+
+        
     }
 }

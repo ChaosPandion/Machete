@@ -1,7 +1,10 @@
 ﻿namespace Machete.Compiler
  
 module Reflection =
+
     open System
+    open System.Collections
+    open System.Collections.Generic
     open Machete.Interfaces
 
     module IEnvironment = 
@@ -20,6 +23,8 @@ module Reflection =
         let createObjectEnvironmentRecord = t.GetMethod "CreateObjectEnvironmentRecord"
         let createArray = t.GetMethod "CreateArray"
         let createObject = t.GetMethod "CreateObject"
+        let createArguments = t.GetMethod "CreateArguments"
+
         let createReference = t.GetMethod "CreateReference"
 
         let createFunction1 = t.GetMethod ("CreateFunction", [| typeof<string[]>; typeof<bool>; typeof<Lazy<Code>> |])
@@ -55,6 +60,7 @@ module Reflection =
         let get_Parent = t.GetMethod "get_Parent"
         let getIdentifierReference = t.GetMethod "GetIdentifierReference"    
         let newDeclarativeEnvironment = t.GetMethod "NewDeclarativeEnvironment"  
+        let newObjectEnvironment = t.GetMethod "NewObjectEnvironment" 
 
     module IDynamic = 
         let t = typeof<Machete.Interfaces.IDynamic>
@@ -172,6 +178,23 @@ module Reflection =
         let get_IsDataDescriptor = t.GetMethod "get_IsDataDescriptor"
         let get_IsGenericDescriptor = t.GetMethod "get_IsGenericDescriptor"
         let get_IsEmpty = t.GetMethod "get_IsEmpty"
+
+    module IEnumerableString =
+        let t = typeof<IEnumerable<string>>
+        let getEnumerator = t.GetMethod "GetEnumerator" 
+        
+    module IEnumeratorString =
+        let t = typeof<IEnumerator<string>>
+        let get_Current = t.GetMethod "get_Current" 
+
+    module IEnumerator =
+        let t = typeof<IEnumerator>
+        let moveNext = t.GetMethod "MoveNext"
+        let reset = t.GetMethod "Reset"
+        
+    module IDisposable =
+        let t = typeof<IDisposable>
+        let dispose = t.GetMethod "Dispose"
 
     module IReferenceBase = 
         let t = typeof<Machete.Interfaces.IReferenceBase>

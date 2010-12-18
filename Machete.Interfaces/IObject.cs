@@ -1,6 +1,8 @@
-﻿namespace Machete.Interfaces
+﻿using System.Collections.Generic;
+
+namespace Machete.Interfaces
 {
-    public interface IObject : IDynamic, IReferenceBase
+    public interface IObject : IDynamic, IReferenceBase, IEnumerable<string>
     {
         IObject Prototype { get; set; }
         string Class { get; set; }

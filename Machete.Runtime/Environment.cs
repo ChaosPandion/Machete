@@ -328,5 +328,17 @@ namespace Machete.Runtime
         {
             throw new MacheteRuntimeException(thrown);
         }
+
+
+        public IObject CreateArguments(string[] formalParameterList, IArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public IObject CreateArguments(string[] formalParameterList, IArgs args, bool strict)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

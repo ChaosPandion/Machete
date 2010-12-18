@@ -7,5 +7,6 @@
 
         IReference GetIdentifierReference(string name, bool strict);
         ILexicalEnvironment NewDeclarativeEnvironment();
+        ILexicalEnvironment NewObjectEnvironment(IObject bindingObject, bool provideThis);
     }
 }

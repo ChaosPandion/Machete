@@ -148,8 +148,18 @@ module CharSets =
             "yield";
         ]
 
+    let booleanLiteralSet = 
+        set [
+            "true"; "false"
+        ]
+
+    let nullLiteralSet = 
+        set [
+            "null"
+        ]
+
     let reservedWordSet =
-        Set.union keyWordSet futureReservedWordSet 
+        Set.union (Set.union keyWordSet futureReservedWordSet) (Set.union booleanLiteralSet nullLiteralSet)
 //        Set.ofList [
 //            "break"
 //            "case"

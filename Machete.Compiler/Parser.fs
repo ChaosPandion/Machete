@@ -615,9 +615,8 @@ module Parser =
         } <|> parse {
             do! skip expectWhile
             let! e = between expectOpenParenthesis expectCloseParenthesis expression 
-            let! s = statement 
-            do! skip expectCloseParenthesis
-            return IterationStatement (s, e, SourceElement.Nil, SourceElement.Nil)
+            let! s = statement
+            return IterationStatement (e, s, SourceElement.Nil, SourceElement.Nil)
         } <|> parse {
             do! skip expectFor
             do! skip expectOpenParenthesis

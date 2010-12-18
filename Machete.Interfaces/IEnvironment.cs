@@ -60,6 +60,8 @@ namespace Machete.Interfaces
         IObject CreateTypeError();
         IObject CreateSyntaxError();
 
+        IObject CreateArguments(string[] formalParameterList, IArgs args, bool strict);
+
         IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code);
         IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
 

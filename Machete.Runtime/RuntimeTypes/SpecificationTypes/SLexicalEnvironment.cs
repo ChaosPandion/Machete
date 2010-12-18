@@ -54,5 +54,11 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             return new SLexicalEnvironment(_environment, new SDeclarativeEnvironmentRecord(_environment), this);
         }
+
+
+        public ILexicalEnvironment NewObjectEnvironment(IObject bindingObject, bool provideThis)
+        {
+            return new SLexicalEnvironment(_environment, new SObjectEnvironmentRecord(_environment, bindingObject, provideThis), this);
+        }
     }
 }
