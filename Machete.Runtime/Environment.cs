@@ -16,29 +16,27 @@ namespace Machete.Runtime
 {
     public sealed class Environment : IEnvironment
     {
-        private readonly IArgs _empty;
-        private readonly IBoolean _true;
-        private readonly IBoolean _false;
-        private readonly IUndefined _undefined;
         private readonly Stack<IExecutionContext> _contextStack;
-        private IExecutionContext _currentContext;
     
 
         public Environment()
         {
             _contextStack = new Stack<IExecutionContext>();
-            _empty = new SArgs(this);
-            _true = new LBoolean(this, true);
-            _false = new LBoolean(this, false);
-            _undefined = new LUndefined(this);
+
+            EmptyArgs = new SArgs(this);
+            True = new LBoolean(this, true);
+            False = new LBoolean(this, false);
+            Undefined = new LUndefined(this);
 
             GlobalObject = new BGlobal(this);
             MathObject = new BMath(this);
             JsonObject = new BJson(this);
-            GlobalEnvironment = new SLexicalEnvironment(this, new SObjectEnvironmentRecord(this, GlobalObject, false), null);
-            _currentContext = new ExecutionContext(() => { });
-            _currentContext.LexicalEnviroment = _currentContext.VariableEnviroment = GlobalEnvironment;
-            _currentContext.ThisBinding = GlobalObject;
+
+            var record = new SObjectEnvironmentRecord(this, GlobalObject, false);
+            var environment = new SLexicalEnvironment(this, record, null);
+            Context = new ExecutionContext(() => { });
+            Context.LexicalEnviroment = Context.VariableEnviroment = environment;
+            Context.ThisBinding = GlobalObject;
 
             ObjectConstructor = new CObject(this);
             FunctionConstructor = new CFunction(this);
@@ -153,81 +151,53 @@ namespace Machete.Runtime
             GlobalObject.DefineOwnProperty("URIError", new SPropertyDescriptor(UriErrorConstructor), false);
             GlobalObject.DefineOwnProperty("Math", new SPropertyDescriptor(MathObject), false);
             GlobalObject.DefineOwnProperty("JSON", new SPropertyDescriptor(JsonObject), false);
-
-            GlobalObject.DefineOwnProperty("x", new SPropertyDescriptor(CreateNumber(1), true, true, true), false);
         }
 
 
+        public IExecutionContext Context { get; private set; }
+        public IArgs EmptyArgs { get; private set; }
+        public IUndefined Undefined { get; private set; }
+        public IBoolean True { get; private set; }
+        public IBoolean False { get; private set; }
+        public INull Null { get; private set; }
         public IObject GlobalObject { get; private set; }
-        internal CObject ObjectConstructor { get; private set; }
-        internal PObject ObjectPrototype { get; private set; }
-        internal CFunction FunctionConstructor { get; private set; }
-        internal PFunction FunctionPrototype { get; private set; }
-        internal CArray ArrayConstructor { get; private set; }
-        internal PArray ArrayPrototype { get; private set; }
-        internal CString StringConstructor { get; private set; }
-        internal PString StringPrototype { get; private set; }
-        internal CBoolean BooleanConstructor { get; private set; }
-        internal PBoolean BooleanPrototype { get; private set; }
-        internal CNumber NumberConstructor { get; private set; }
-        internal PNumber NumberPrototype { get; private set; }
-        internal BMath MathObject { get; private set; }
-        internal CDate DateConstructor { get; private set; }
-        internal PDate DatePrototype { get; private set; }
-        internal CRegExp RegExpConstructor { get; private set; }
-        internal PRegExp RegExpPrototype { get; private set; }
-        internal CError ErrorConstructor { get; private set; }
-        internal PError ErrorPrototype { get; private set; }
-        internal CEvalError EvalErrorConstructor { get; private set; }
-        internal PEvalError EvalErrorPrototype { get; private set; }
-        internal CRangeError RangeErrorConstructor { get; private set; }
-        internal PRangeError RangeErrorPrototype { get; private set; }
-        internal CReferenceError ReferenceErrorConstructor { get; private set; }
-        internal PReferenceError ReferenceErrorPrototype { get; private set; }
-        internal CSyntaxError SyntaxErrorConstructor { get; private set; }
-        internal PSyntaxError SyntaxErrorPrototype { get; private set; }
-        internal CTypeError TypeErrorConstructor { get; private set; }
-        internal PTypeError TypeErrorPrototype { get; private set; }
-        internal CUriError UriErrorConstructor { get; private set; }
-        internal PUriError UriErrorPrototype { get; private set; }
-        internal BJson JsonObject { get; private set; }
-        internal SLexicalEnvironment GlobalEnvironment { get; private set; }
-
-        public IExecutionContext Context
-        {
-            get { return _currentContext; }
-        }
-
-
-        public IArgs EmptyArgs
-        {
-            get { return _empty; }
-        }
-
-        public IUndefined Undefined
-        {
-            get { return _undefined; }
-        }
-
-        public IBoolean BooleanTrue
-        {
-            get { return _true; }
-        }
-
-        public IBoolean BooleanFalse
-        {
-            get { return _false; }
-        }
-
-        public INull Null
-        {
-            get { throw new NotImplementedException(); }
-        }
+        public IObject ObjectConstructor { get; private set; }
+        public IObject ObjectPrototype { get; private set; }
+        public IObject FunctionConstructor { get; private set; }
+        public IObject FunctionPrototype { get; private set; }
+        public IObject ArrayConstructor { get; private set; }
+        public IObject ArrayPrototype { get; private set; }
+        public IObject StringConstructor { get; private set; }
+        public IObject StringPrototype { get; private set; }
+        public IObject BooleanConstructor { get; private set; }
+        public IObject BooleanPrototype { get; private set; }
+        public IObject NumberConstructor { get; private set; }
+        public IObject NumberPrototype { get; private set; }
+        public IObject MathObject { get; private set; }
+        public IObject DateConstructor { get; private set; }
+        public IObject DatePrototype { get; private set; }
+        public IObject RegExpConstructor { get; private set; }
+        public IObject RegExpPrototype { get; private set; }
+        public IObject ErrorConstructor { get; private set; }
+        public IObject ErrorPrototype { get; private set; }
+        public IObject EvalErrorConstructor { get; private set; }
+        public IObject EvalErrorPrototype { get; private set; }
+        public IObject RangeErrorConstructor { get; private set; }
+        public IObject RangeErrorPrototype { get; private set; }
+        public IObject ReferenceErrorConstructor { get; private set; }
+        public IObject ReferenceErrorPrototype { get; private set; }
+        public IObject SyntaxErrorConstructor { get; private set; }
+        public IObject SyntaxErrorPrototype { get; private set; }
+        public IObject TypeErrorConstructor { get; private set; }
+        public IObject TypeErrorPrototype { get; private set; }
+        public IObject UriErrorConstructor { get; private set; }
+        public IObject UriErrorPrototype { get; private set; }
+        public IObject JsonObject { get; private set; }
 
         
         public IBoolean CreateBoolean(bool value)
         {
-            return value ? _true : _false;
+            return value ? True : False;
         }
 
         public IString CreateString(string value)
@@ -239,10 +209,7 @@ namespace Machete.Runtime
         {
             return new LNumber(this, value);
         }
-
-
-
-
+        
         public IArgs CreateArgs(IDynamic value)
         {
             return new SArgs(this, value);
@@ -257,16 +224,15 @@ namespace Machete.Runtime
         {
             return new SArgs(this, first, second);
         }
-
-
+        
         public IObject CreateArray()
         {
-            throw new NotImplementedException();
+            return ArrayConstructor.Op_Construct(EmptyArgs);
         }
 
         public IObject CreateObject()
         {
-            throw new NotImplementedException();
+            return ObjectConstructor.Op_Construct(EmptyArgs);
         }
 
         public IObject CreateReferenceError()
@@ -283,25 +249,69 @@ namespace Machete.Runtime
         {
             throw new NotImplementedException();
         }
-
-
+        
         public IReference CreateReference(string name, IReferenceBase @base, bool strict)
         {
             return new SReference(this, @base, name, strict);
         }
-
-
+        
         public IExecutionContext EnterContext()
         {
-            _contextStack.Push(_currentContext);
-            _currentContext = new ExecutionContext(() => _currentContext = _contextStack.Pop());
-            return _currentContext;
+            _contextStack.Push(Context);
+            Context = new ExecutionContext(() => Context = _contextStack.Pop());
+            return Context;
         }
-
-
+        
         public IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code)
         {
             return new NFunction(this, formalParameterList, strict, code, Context.VariableEnviroment);
+        }
+        
+        public IPropertyDescriptor CreateDataDescriptor(IDynamic value)
+        {
+            return CreateDataDescriptor(value, false, false, false);
+        }
+
+        public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable)
+        {
+            return CreateDataDescriptor(value, writable, false, false);
+        }
+
+        public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable)
+        {
+            return CreateDataDescriptor(value, writable, enumerable, false);
+        }
+
+        public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable, bool? configurable)
+        {
+            return new SPropertyDescriptor()
+            {
+                Value = value,
+                Writable = writable,
+                Enumerable = enumerable,
+                Configurable = configurable
+            };
+        }
+
+        public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set)
+        {
+            return CreateAccessorDescriptor(get, set, false, false);
+        }
+
+        public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable)
+        {
+            return CreateAccessorDescriptor(get, set, enumerable, false);
+        }
+
+        public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable, bool? configurable)
+        {
+            return new SPropertyDescriptor()
+            {
+                Get = get,
+                Set = set,
+                Enumerable = enumerable,
+                Configurable = configurable
+            };
         }
     }
 }

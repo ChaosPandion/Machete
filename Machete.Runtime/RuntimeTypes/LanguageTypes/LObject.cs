@@ -5,6 +5,7 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using Machete.Runtime.NativeObjects;
 using Machete.Interfaces;
+using System.Reflection;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
@@ -53,7 +54,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             SPropertyDescriptor value;
             if (_map.TryGetValue(p, out value))
             {
-                return value.Copy();
+                return value;
             }
             else
             {
@@ -148,13 +149,13 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 return;
             }
             var ownDesc = GetOwnProperty(p);
-            if (ownDesc.IsDataDescriptor)
+            if (ownDesc != null && ownDesc.IsDataDescriptor)
             {
                 var valueDesc = new SPropertyDescriptor() { Value = value };
                 DefineOwnProperty(p, valueDesc, @throw);
             }
             var desc = GetProperty(p);
-            if (desc.IsAccessorDescriptor)
+            if (desc != null && desc.IsAccessorDescriptor)
             {
                 ((ICallable)desc.Set).Call(null, this, new SArgs(_environment, value));
             }
@@ -197,7 +198,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 var func = Get("toString") as ICallable ?? Get("valueOf") as ICallable;
                 if (func != null)
                 {
-                    var result = func.Call(null, this, new SArgs(Environment));
+                    var result = func.Call(Environment, this, new SArgs(Environment));
                     if (result.IsPrimitive)
                     {
                         return result;
@@ -209,7 +210,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 var func = Get("valueOf") as ICallable ?? Get("toString") as ICallable;
                 if (func != null)
                 {
-                    var result = func.Call(null, this, new SArgs(Environment));
+                    var result = func.Call(Environment, this, new SArgs(Environment));
                     if (result.IsPrimitive)
                     {
                         return result;
@@ -375,7 +376,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 case LanguageTypeCode.Object:
                     return Environment.CreateBoolean(this == other);
                 default:
-                    return Environment.BooleanFalse;
+                    return Environment.False;
             }
         }
 
@@ -537,7 +538,13 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IObject Op_Construct(IArgs args)
         {
-            return LType.Op_Construct(_environment, this, args);
+            var c = this as IConstructable;
+            if (c == null)
+            {
+                throw new Exception();
+            }
+            return c.Construct(Environment, args);
+            //return LType.Op_Construct(_environment, this, args);
         }
 
         public void Op_Throw()
@@ -601,6 +608,21 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             Put(name, value, strict);
         }
 
+        protected void InitializeNativeFunctions()
+        {
+            foreach (var mi in this.GetType().GetMethods(BindingFlags.Static | BindingFlags.NonPublic))
+            {
+                var method = mi;
+                foreach (var ai in mi.GetCustomAttributes(false))
+                {
+                    var nf = ai as NativeFunctionAttribute;
+                    if (nf != null)
+                    {
+                        DefineOwnProperty(nf.Identifier, Environment.CreateDataDescriptor(Environment.CreateFunction(nf.FormalParameterList, true, new Lazy<Code>(() => (Code)Delegate.CreateDelegate(typeof(Code), method)))), false);
+                    }
+                }
+            }
+        }
 
         public override string ToString()
         {

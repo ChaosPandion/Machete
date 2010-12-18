@@ -212,7 +212,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                     _environment.CreateSyntaxError().Op_Throw();
                     return null;
                 }
-                return _environment.BooleanTrue;
+                return _environment.True;
             }
             else if (_base is IEnvironmentRecord)
             {

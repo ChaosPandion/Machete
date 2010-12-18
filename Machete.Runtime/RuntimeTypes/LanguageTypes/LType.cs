@@ -56,7 +56,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var r = RelationalComparison(environment, true, left, right);
             if (r.TypeCode == LanguageTypeCode.Undefined)
             {
-                return environment.BooleanFalse;
+                return environment.False;
             }
             return r;
         }
@@ -66,7 +66,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var r = RelationalComparison(environment, false, left, right);
             if (r.TypeCode == LanguageTypeCode.Undefined)
             {
-                return environment.BooleanFalse;
+                return environment.False;
             }
             return r;
         }
@@ -76,9 +76,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var r = RelationalComparison(environment, false, left, right);
             if (r.TypeCode == LanguageTypeCode.Undefined || (bool)(LBoolean)r)
             {
-                return environment.BooleanTrue;
+                return environment.True;
             }
-            return environment.BooleanFalse;
+            return environment.False;
         }
 
         public static IDynamic Op_GreaterthanOrEqual(IEnvironment environment, IDynamic left, IDynamic right)
@@ -86,9 +86,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var r = RelationalComparison(environment, true, left, right);
             if (r.TypeCode == LanguageTypeCode.Undefined || (bool)(LBoolean)r)
             {
-                return environment.BooleanFalse;
+                return environment.False;
             }
-            return environment.BooleanTrue;
+            return environment.True;
         }
 
         public static IDynamic Op_Instanceof(IEnvironment environment, IDynamic left, IDynamic right)
@@ -317,11 +317,11 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 string sx = (string)px.ConvertToString().BaseValue, sy = (string)py.ConvertToString().BaseValue;
                 if (sx.StartsWith(sy))
                 {
-                    return environment.BooleanFalse;
+                    return environment.False;
                 }
                 else if (sy.StartsWith(sx))
                 {
-                    return environment.BooleanTrue;
+                    return environment.True;
                 }
                 else
                 {
@@ -339,26 +339,26 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 {
                     if (double.IsPositiveInfinity(nx))
                     {
-                        return environment.BooleanFalse;
+                        return environment.False;
                     }
                     else if (double.IsPositiveInfinity(ny))
                     {
-                        return environment.BooleanTrue;
+                        return environment.True;
                     }
                     else if (double.IsNegativeInfinity(ny))
                     {
-                        return environment.BooleanFalse;
+                        return environment.False;
                     }
                     else if (double.IsNegativeInfinity(nx))
                     {
-                        return environment.BooleanTrue;
+                        return environment.True;
                     }
                     else
                     {
                         return environment.CreateBoolean(nx < ny);
                     }
                 }
-                return environment.BooleanFalse;
+                return environment.False;
             }
         }
 

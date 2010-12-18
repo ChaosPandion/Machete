@@ -249,7 +249,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IBoolean ConvertToBoolean()
         {
-            return _environment.BooleanFalse;
+            return _environment.False;
         }
 
         public INumber ConvertToNumber()

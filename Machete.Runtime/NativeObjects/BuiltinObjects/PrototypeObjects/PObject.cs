@@ -8,48 +8,60 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         public PObject(IEnvironment environment)
             : base(environment)
         {
-
+            Class = "Object";
+            Extensible = true;
+            InitializeNativeFunctions();
         }
-        //private IDynamic ToString(ExecutionContext context, SList args)
-        //{
-        //    return new LString(string.Format("[object, {0}]", context.ThisBinding.ConvertToObject().Class));
-        //}
 
-        //private IDynamic ToLocaleString(ExecutionContext context, SList args)
-        //{
-        //    var obj = context.ThisBinding.ConvertToObject();
-        //    var func = obj.Get("toString") as ICallable;
-        //    if (func == null) Environment.ThrowTypeError();
-        //    return func.Call(obj, SList.Empty);
-        //}
 
-        //private IDynamic ValueOf(ExecutionContext context, SList args)
-        //{
-        //    var obj = context.ThisBinding.ConvertToObject();
-        //    return obj;
-        //}
+        [NativeFunction("toString")]
+        internal static IDynamic ToString(IEnvironment environment, IArgs args)
+        {
+            return environment.CreateString(string.Format("[object, {0}]", environment.Context.ThisBinding.ConvertToObject().Class));
+        }
 
-        //private IDynamic HasOwnProperty(ExecutionContext context, SList args)
-        //{
-        //    if (args.IsEmpty) return LBoolean.False;            
-        //    var obj = context.ThisBinding.ConvertToObject();
-        //    var desc = obj.GetOwnProperty((string)args[0].ConvertToString());
-        //    return (LBoolean)(desc == null);
-        //}
+        [NativeFunction("toLocaleString")]
+        internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
+        {
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var func = obj.Get("toString") as ICallable;
+            if (func == null)
+            {
+                environment.TypeErrorConstructor.Op_Construct(environment.EmptyArgs).Op_Throw();
+            }
+            return func.Call(environment, obj, environment.EmptyArgs);
+        }
 
-        //private IDynamic IsPrototypeOf(ExecutionContext context, SList args)
-        //{
-        //    var value = args[0] as LObject;
-        //    var thisObj = context.ThisBinding.ConvertToObject();
-        //    return (LBoolean)(value != null && value.Prototype != null && value.Prototype == thisObj); 
-        //}
+        [NativeFunction("valueOf")]
+        internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
+        {
+            return environment.Context.ThisBinding.ConvertToObject();
+        }
 
-        //private IDynamic PropertyIsEnumerable(ExecutionContext context, SList args)
-        //{
-        //    if (args.IsEmpty) return LBoolean.False;            
-        //    var obj = context.ThisBinding.ConvertToObject();
-        //    var desc = obj.GetOwnProperty(args[0].ConvertToString().ToString());
-        //    return (LBoolean)(desc != null && (desc.Enumerable ?? false));
-        //}
+        [NativeFunction("hasOwnProperty", "V")]
+        internal static IDynamic HasOwnProperty(IEnvironment environment, IArgs args)
+        {
+            if (args.IsEmpty) return environment.False;
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var desc = obj.GetOwnProperty(args[0].ConvertToString().BaseValue);
+            return environment.CreateBoolean(desc == null);
+        }
+
+        [NativeFunction("isPrototypeOf", "V")]
+        internal static IDynamic IsPrototypeOf(IEnvironment environment, IArgs args)
+        {
+            var value = args[0] as LObject;
+            var thisObj = environment.Context.ThisBinding.ConvertToObject();
+            return environment.CreateBoolean(value != null && value.Prototype != null && value.Prototype == thisObj);
+        }
+
+        [NativeFunction("propertyIsEnumerable", "V")]
+        internal static IDynamic PropertyIsEnumerable(IEnvironment environment, IArgs args)
+        {
+            if (args.IsEmpty) return environment.False;
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var desc = obj.GetOwnProperty(args[0].ConvertToString().ToString());
+            return environment.CreateBoolean(desc != null && (desc.Enumerable ?? false));
+        }
     }
 }

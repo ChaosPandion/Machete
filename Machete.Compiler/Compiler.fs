@@ -1,5 +1,7 @@
 ﻿namespace Machete.Compiler
 
+open System
+open System.Linq.Expressions
 open Machete
 open Machete.Interfaces
 
@@ -8,20 +10,26 @@ type internal label = System.Linq.Expressions.LabelExpression
 type internal methodinfo = System.Reflection.MethodInfo
 type internal dyn = Machete.Interfaces.IDynamic
 
+type internal State = {
+    strict : bool
+    element : SourceElement
+    labels : list<Map<string, label>>
+    functions : list<string * string[] * SourceElement>
+    variables : list<string>
+    returnExpression : exp
+} 
+
+type internal PropertyType =
+| DataProperty
+| GetProperty
+| SetProperty
+
+type Compiler(environment:IEnvironment) =
 
 
-module Compiler =
-
-    type State = {
-        strict : bool
-        element : SourceElement
-        labels : list<Map<string, label>>
-        functions : list<string * string[] * SourceElement>
-        variables : list<string>
-        returnExpression : exp
-    } 
 
     let call (e:exp) (m:methodinfo) (a:exp[]) = exp.Call (e, m, a) :> exp
+    let assign (left:exp) (right:exp) = exp.Assign (left, right) :> exp
     let invoke (e:exp) (a:exp[]) = exp.Invoke (e, a) :> exp
     let condition test ifTrue ifFalse = exp.Condition (test, ifTrue, ifFalse) :> exp
     let constant v = exp.Constant v :> exp 
@@ -54,45 +62,27 @@ module Compiler =
 
     let rec evalExpression (state:State) =
         match state.element with
-        | Expression (Nil, right) | ExpressionNoIn (Nil, right) ->
-            evalAssignmentExpression { state with element = right }
-//            let inst = evalAssignmentExpression { state with element = right }
-//            let test = exp.TypeIs (inst, Reflection.IReferenceBase.t)
-//            let ifTrue = call (exp.Convert(inst, Reflection.IReferenceBase.t)) Reflection.IReferenceBase.get [||] 
-//            let ifFalse = call environmentParam Reflection.IEnvironment.get_Undefined [||]
-//            condition test ifTrue ifFalse
+        | Expression (Nil, e) | ExpressionNoIn (Nil, e) ->
+            let r : exp = evalAssignmentExpression { state with element = e }
+            call r Reflection.IDynamic.get_Value Array.empty
         | Expression (left, right) | ExpressionNoIn (left, right) ->
             let left = evalExpression { state with element = left }
-            let inst = evalAssignmentExpression { state with element = right }
-            let test = exp.TypeIs (inst, Reflection.IReferenceBase.t)
-            let ifTrue = call (exp.Convert(inst, Reflection.IReferenceBase.t)) Reflection.IReferenceBase.get [||] 
-            let ifFalse = call environmentParam Reflection.IEnvironment.get_Undefined [||]
-            block [| left; condition test ifTrue ifFalse |]
+            let r = evalAssignmentExpression { state with element = right }
+            block [| left; call r Reflection.IDynamic.get_Value Array.empty |]
             
     and evalAssignmentExpression (state:State) =
-        let checkReference (environment:IEnvironment) (value:IDynamic) =
-            match value with
-            | :? Machete.Interfaces.IReference as ref ->
-                match ref.IsStrictReference, ref.Base, ref.Name with
-                | true, :? Machete.Interfaces.IEnvironmentRecord, "eval" 
-                | true, :? Machete.Interfaces.IEnvironmentRecord, "arguments" ->
-                    environment.CreateSyntaxError().Op_Throw();
-                | _ -> ()
-            | _ -> ()
         let simpleAssignment left right =
             let left = evalLeftHandSideExpression { state with element = left }
             let right = evalAssignmentExpression { state with element = right }
             let valueVar = exp.Variable(Reflection.IDynamic.t, "value") 
-            let check = invoke (constant (System.Action<IEnvironment, IDynamic>(checkReference))) [| environmentParam; left |]
             let assign = exp.Assign(valueVar, call right Reflection.IDynamic.get_Value [| |]) :>exp
             let setLeft = call left Reflection.IDynamic.set_Value [| valueVar |]
             let variables = [| valueVar |]
-            let body = [| check; setLeft; valueVar:>exp |]
+            let body = [| assign; setLeft; valueVar:>exp |]
             exp.Block (variables, body) :> exp
         let compoundAssignment left right op =
             let left = evalLeftHandSideExpression { state with element = left }
             let right = evalAssignmentExpression { state with element = right }
-            let check = invoke (constant (System.Action<IEnvironment, IDynamic>(checkReference))) [| environmentParam; left |]
             let getLeft = call left Reflection.IDynamic.get_Value Array.empty
             let getRight = call right Reflection.IDynamic.get_Value Array.empty
             let performOp = call left op [| right |]
@@ -100,7 +90,7 @@ module Compiler =
             let assign = exp.Assign(valueVar, performOp) :> exp
             let setLeft = call left Reflection.IDynamic.set_Value [| assign |]
             let variables = [| valueVar |]
-            let body = [| check; setLeft; valueVar:>exp |]
+            let body = [| setLeft; valueVar:>exp |]
             exp.Block (variables, body) :> exp
         match state.element with
         | AssignmentExpression (left, AssignmentOperator.Nil, Nil) 
@@ -421,45 +411,136 @@ module Compiler =
             | Expression (_, _) ->
                 evalExpression { state with element = e }  
 
-    and evalObjectLiteral (state:State) = constant 1
+    and evalObjectLiteral (state:State) =
+        let objectVar = exp.Variable(typeof<IObject>, "object")
+        let variables = [| objectVar |]
+        let assignObject = assign objectVar (call environmentParam Reflection.IEnvironment.createObject Array.empty)
+        match state.element with
+        | ObjectLiteral Nil ->
+            exp.Block(variables, [| assignObject; objectVar:>exp |]) :> exp
+        | ObjectLiteral e ->
+            let result = evalPropertyNameAndValueList objectVar [] { state with element = e }
+            let byName = result |> Seq.groupBy (fun (n, t, e) -> n) |> Seq.map (fun (key, values) -> key, values |> Seq.toList) |> Map.ofSeq
+            for kv in byName do
+                let dCount = kv.Value |> List.filter (fun (n, t, e) -> match t with | DataProperty -> true | _ -> false) |> List.length
+                let gCount = kv.Value |> List.filter (fun (n, t, e) -> match t with | GetProperty -> true | _ -> false) |> List.length
+                let sCount = kv.Value |> List.filter (fun (n, t, e) -> match t with | SetProperty -> true | _ -> false) |> List.length
+                match dCount, gCount, sCount with
+                | 1, 0, 0 | 0, 1, 0 | 0, 0, 1 | 0, 1, 1 -> ()
+                | _ -> environment.SyntaxErrorConstructor.Op_Construct(environment.EmptyArgs).Op_Throw()    
+            let result = (assignObject::((objectVar:>exp::(result |> List.map (fun (n, t, e) -> e))) |> List.rev)) |> List.toArray     
+            exp.Block(variables, result) :> exp
 
-    and evalPropertyNameAndValueList (state:State) = constant 1
 
-    and evalPropertyAssignment (state:State) = constant 1
+    and evalPropertyNameAndValueList (objectVar:ParameterExpression) (results:list<string * PropertyType * exp>) (state:State) =
+        match state.element with
+        | PropertyNameAndValueList (Nil, e1) ->
+            let name, propType, desc = evalPropertyAssignment { state with element = e1 } 
+            let define = call objectVar Reflection.IObject.defineOwnProperty [| constant name; desc; constant false |]
+            (name, propType, define)::results
+        | PropertyNameAndValueList (e1, e2) ->
+            let results = evalPropertyNameAndValueList objectVar results { state with element = e1 } 
+            let name, propType, desc = evalPropertyAssignment { state with element = e2 } 
+            let define = call objectVar Reflection.IObject.defineOwnProperty [| constant name; desc; constant false |]
+            (name, propType, define)::results
 
-    and evalPropertyName (state:State) = constant 1
+    and evalPropertyAssignment (state:State) =
+        let nullTrue = exp.Convert(constant true, typeof<Nullable<bool>>)
+        match state.element with
+        | PropertyAssignment (e1, SourceElement.Nil, e2) ->
+            let name = evalPropertyName { state with element = e1 } 
+            match e2 with
+            | AssignmentExpression (_, _, _) ->
+                let v = evalAssignmentExpression { state with element = e2 } 
+                let getValue = call v Reflection.IDynamic.get_Value Array.empty
+                let createDesc = call environmentParam Reflection.IEnvironment.createDataDescriptor4 [| getValue; nullTrue; nullTrue; nullTrue  |]
+                name, DataProperty, createDesc
+            | FunctionBody _ ->                
+                let code = lazy(compileFunctionCode(Array.empty, e2))
+                let args = [| constant Array.empty<string>; constant state.strict; constant code |]  
+                let createFunction = call environmentParam Reflection.IEnvironment.createFunction args
+                let createDesc = call environmentParam Reflection.IEnvironment.createAccessorDescriptor3 [| createFunction; constant null; nullTrue; nullTrue  |]
+                name, GetProperty, createDesc      
+        | PropertyAssignment (e1, e2, e3) ->
+            let name = evalPropertyName { state with element = e1 } 
+            let setParams =  evalPropertySetParameterList { state with element = e2 }                 
+            let code = lazy(compileFunctionCode(Array.empty, e2))
+            let args = [| constant setParams; constant state.strict; constant code |]  
+            let createFunction = call environmentParam Reflection.IEnvironment.createFunction args
+            let createDesc = call environmentParam Reflection.IEnvironment.createAccessorDescriptor3 [| constant null; createFunction; nullTrue; nullTrue  |]
+            name, SetProperty, createDesc 
+             
+    and evalPropertyName (state:State) =
+        match state.element with
+        | PropertyName e ->
+            match e with
+            | Lexer.IdentifierName (_, _) ->
+                Lexer.IdentifierNameParser.evalIdentifierName e
+            | Lexer.StringLiteral _ ->
+                Lexer.StringLiteralParser.evalStringLiteral e
+            | Lexer.NumericLiteral _ ->
+                Lexer.NumericLiteralParser.evalNumericLiteral e |> string
 
-    and evalPropertySetParameterList (state:State) = constant 1
+    and evalPropertySetParameterList (state:State) =
+        match state.element with
+        | PropertySetParameterList e ->
+            [| Lexer.IdentifierNameParser.evalIdentifierName e |]
 
     and evalArrayLiteral (state:State) =
+        let arrayVar = exp.Variable(typeof<IObject>, "array")
+        let lengthVar = exp.Variable(typeof<IPropertyDescriptor>, "length")
+        let variables = [| arrayVar; lengthVar |]
+        let assignArray = assign arrayVar (call environmentParam Reflection.IEnvironment.createArray Array.empty)
+        let assignLength = assign lengthVar (call arrayVar Reflection.IObject.getOwnProperty [| constant "length" |]) 
         match state.element with
         | ArrayLiteral (Nil, e) ->
-            let var = exp.Variable(Reflection.IObject.t, "array")
-            let construct = call environmentParam Reflection.IEnvironment.constructArray Array.empty
-            let assign = exp.Assign (var, construct) :> exp
             let pad = call environmentParam Reflection.IEnvironment.createNumber [| constant (evalElision { state with element = e }) |]
-            let args = [| constant "length"; pad; constant false  |]
-            let put = call var Reflection.IObject.put args
-            exp.Block ([|var|], [|assign; put|]) :> exp
+            let setValue = call lengthVar Reflection.IPropertyDescriptor.set_Value [| pad |]
+            exp.Block (variables, [|assignArray; assignLength; setValue; arrayVar:>exp|]) :> exp
         | ArrayLiteral (e, Nil) ->
-            evalElementList { state with element = e }
+            let result = assignArray::assignLength::(arrayVar:>exp::(evalElementList arrayVar lengthVar [] { state with element = e }) |> List.rev)
+            let result = result |> List.toArray
+            exp.Block(variables, result) :> exp
         | ArrayLiteral (e1, e2) ->
-            let var = exp.Variable(Reflection.IObject.t, "array")
-            let assign = exp.Assign (var, evalElementList { state with element = e1 }) :> exp
+            let result = arrayVar:>exp::evalElementList arrayVar lengthVar []  { state with element = e1 } 
             let pad = call environmentParam Reflection.IEnvironment.createNumber [| constant (evalElision { state with element = e2 }) |]
-            let get = call var Reflection.IObject.get [| constant "length" |] 
-            let value = call (call pad Reflection.IDynamic.op_Addition [| get |]) Reflection.IDynamic.convertToUInt32 Array.empty
-            let put = call var Reflection.IObject.put [| constant "length"; value; constant false  |]
-            exp.Block ([|var|], [|assign; put|]) :> exp
+            let len = call lengthVar Reflection.IPropertyDescriptor.get_Value Array.empty
+            let value = call (call len Reflection.IDynamic.op_Addition [| pad |]) Reflection.IDynamic.convertToUInt32 Array.empty
+            let setValue = call lengthVar Reflection.IPropertyDescriptor.set_Value [| value |]
+            let result = (setValue::result) |> List.rev
+            let result = assignArray::assignLength::result |> List.toArray
+            exp.Block(variables, result) :> exp
 
     and evalElision (state:State) =
         match state.element with
-        | Elision (Nil) -> 
-            1.0
-        | Elision (e) -> 
-            evalElision { state with element = e } + 1.0
+        | Elision (Nil) -> 1.0
+        | Elision (e) -> evalElision { state with element = e } + 1.0
 
-    and evalElementList (state:State) = constant 1
+    and evalElementList (arrayVar:ParameterExpression) (lengthVar:ParameterExpression) (results:list<exp>) (state:State) =
+        match state.element with
+        | ElementList (Nil, e1, e2) ->
+            let initResult = evalAssignmentExpression { state with element = e2 }
+            let initValue = call initResult Reflection.IDynamic.get_Value Array.empty
+            let firstIndex = match e1 with | Nil -> 0.0 | Elision (_) -> evalElision { state with element = e1 }
+            let nullTrue = exp.Convert(constant true, typeof<Nullable<bool>>)
+            let createDesc = call environmentParam Reflection.IEnvironment.createDataDescriptor4 [| initValue; nullTrue; nullTrue; nullTrue  |]
+            let createProp = call arrayVar Reflection.IObject.defineOwnProperty [| constant (firstIndex|>string); createDesc; constant false |]
+            createProp::results
+        | ElementList (e1, e2, e3) ->
+            let results = evalElementList arrayVar lengthVar results { state with element = e1 }
+            let initResult = evalAssignmentExpression { state with element = e3 }
+            let initValue = call initResult Reflection.IDynamic.get_Value Array.empty
+            let pad = match e2 with | Nil -> 0.0 | Elision (_) -> evalElision { state with element = e2 }
+            let createPad = call environmentParam Reflection.IEnvironment.createNumber [| constant pad |]
+            let len = call lengthVar Reflection.IPropertyDescriptor.get_Value Array.empty
+            let add = call len Reflection.IDynamic.op_Addition [| createPad |]
+            let toUInt32 = call add Reflection.IDynamic.convertToUInt32 Array.empty
+            let toString = call toUInt32 Reflection.IDynamic.convertToString Array.empty
+            let name = call (exp.Convert (toString, typeof<IString>)) Reflection.IString.get_BaseValue Array.empty
+            let nullTrue = exp.Convert(constant true, typeof<Nullable<bool>>)
+            let createDesc = call environmentParam Reflection.IEnvironment.createDataDescriptor4 [| initValue; nullTrue; nullTrue; nullTrue  |]
+            let createProp = call arrayVar Reflection.IObject.defineOwnProperty [| name; createDesc; constant false |]
+            createProp::results
 
     and evalStatement (state:State) =
         match state.element with
@@ -486,8 +567,7 @@ module Compiler =
     and evalVariableStatement (state:State) =
         match state.element with
         | VariableStatement e ->
-            let r, state = evalVariableDeclarationList { state with element = e } 
-            block [|r; call environmentParam Reflection.IEnvironment.get_Undefined Array.empty|], state
+            evalVariableDeclarationList { state with element = e } 
 
     and evalVariableDeclarationList (state:State) =
         match state.element with
@@ -627,12 +707,13 @@ module Compiler =
                 env.CreateMutableBinding (name, configurableBindings)
                 env.SetMutableBinding (name, environment.Undefined, state.strict)
         for name, formalParameterList, functionBody in state.functions do
-            let code = lazy(CompileFunctionCode(formalParameterList, functionBody))
+            let code = lazy(compileFunctionCode(formalParameterList, functionBody))
             let fo = environment.CreateFunction(formalParameterList, state.strict, code)
             if not (env.HasBinding name) then
                 env.CreateMutableBinding (name, configurableBindings)
             env.SetMutableBinding (name, fo, state.strict)            
-        continuation.Invoke (environment, args)
+        let r = continuation.Invoke (environment, args)
+        r
   
     and performFunctionArgumentsBinding (formalParameterList:string[]) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
         let i = ref -1
@@ -644,21 +725,21 @@ module Compiler =
             env.SetMutableBinding (name, args.[!i], state.strict)                   
         continuation.Invoke (environment, args)           
 
-    and CompileGlobalCode (input:string) =
+    and compileGlobalCode (input:string) =
         let input = Parser.parse (input + ";")
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
         let body, state = evalProgram { strict = false; element = input; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
         let continuation = exp.Lambda<Code>(block [| body; exp.Return(returnLabel.Target, state.returnExpression); returnLabel |], [| environmentParam; argsParam |]).Compile()
         Code(performDeclarationBinding true state continuation)
         
-    and CompileEvalCode (input:string) =
+    and compileEvalCode (input:string) =
         let input = Parser.parse (input + ";")
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
         let body, state = evalProgram { strict = false; element = input; labels =  [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
         let continuation = exp.Lambda<Code>(block [| body; returnLabel |], [| environmentParam; argsParam |]).Compile()
         Code(performDeclarationBinding false state continuation)
 
-    and CompileFunctionCode (formalParameterList:string[], functionBody:SourceElement) =
+    and compileFunctionCode (formalParameterList:string[], functionBody:SourceElement) =
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
         let state = { strict = false; element = functionBody; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
         let body, state = evalFunctionBody state
@@ -666,4 +747,11 @@ module Compiler =
         let continuation = Code(performFunctionArgumentsBinding formalParameterList state continuation)
         Code(performDeclarationBinding true state continuation)
 
+    member this.CompileGlobalCode (input:string) =
+        compileGlobalCode input
 
+    member this.CompileEvalCode (input:string) =
+        compileEvalCode input
+
+    member this.CompileFunctionCode (formalParameterList:string[], functionBody:SourceElement) =
+        compileFunctionCode (formalParameterList, functionBody)

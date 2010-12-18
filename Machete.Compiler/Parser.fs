@@ -319,8 +319,20 @@ module Parser =
             return ArrayLiteral (e1, e2)
         } 
 
-    and elementList = zero
-        //manySepFold (tuple2 (elision <|> nil) assignmentExpression (fun t -> t)) expectComma (fun (x, (y, z)) -> ElementList (x, y, z)) SourceElement.Nil //(fun x (y, z) -> ElementList (x, y, z))
+    and elementList =
+        parse {
+            let! e1 = elision <|> nil
+            let! e2 = assignmentExpression
+            let e1 = ElementList (SourceElement.Nil, e1, e2)
+            return! manyFold (parse {
+                do! skip expectComma
+                let! e1 = elision <|> nil
+                let! e2 = assignmentExpression
+                return e1, e2
+            }) e1 (fun x (y, z) -> ElementList (x, y, z))
+        }
+        //manySepFold (tuple2 (elision <|> nil) assignmentExpression (fun (x, y) -> (x, y))) expectComma ElementList SourceElement.Nil
+        //manySepFold (tuple2 (elision <|> nil) assignmentExpression (fun (x, y) -> x)) expectComma (fun (e, (y, z)) -> ElementList (x, y, z)) SourceElement.Nil //(fun x (y, z) -> ElementList (x, y, z))
 
     and elision = 
         many1Fold expectComma SourceElement.Nil (fun x y -> Elision (x))
@@ -342,9 +354,16 @@ module Parser =
             let! e1 = propertyName
             do! skip expectColon
             let! e2 = assignmentExpression
-            return PropertyAssignment (e1, e2, SourceElement.Nil)
+            return PropertyAssignment (e1, SourceElement.Nil, e2)
         } <|> parse {
-            do! skip (expectSpecificIdentifierNames (set ["get"; "set"]))
+            do! skip (expectSpecificIdentifierName "get")
+            let! e1 = propertyName
+            do! skip expectOpenParenthesis 
+            do! skip expectCloseParenthesis
+            let! e2 = between expectOpenBrace expectCloseBrace functionBody
+            return PropertyAssignment (e1, SourceElement.Nil, e2)
+        } <|> parse {
+            do! skip (expectSpecificIdentifierName "set")
             let! e1 = propertyName
             let! e2 = between expectOpenParenthesis expectCloseParenthesis propertySetParameterList
             let! e3 = between expectOpenBrace expectCloseBrace functionBody

@@ -1,6 +1,9 @@
 ﻿namespace Machete.Compiler
  
 module Reflection =
+    open System
+    open Machete.Interfaces
+
     module IEnvironment = 
         let t = typeof<Machete.Interfaces.IEnvironment>
         let get_Context = t.GetMethod "get_Context"
@@ -16,10 +19,18 @@ module Reflection =
         let createArgsMany = t.GetMethod ("CreateArgs", [| typeof<System.Collections.Generic.IEnumerable<Machete.Interfaces.IDynamic>> |])
         let createDeclarativeEnvironmentRecord = t.GetMethod "CreateDeclarativeEnvironmentRecord"
         let createObjectEnvironmentRecord = t.GetMethod "CreateObjectEnvironmentRecord"
-        let constructArray = t.GetMethod "ConstructArray"
-        let constructObject = t.GetMethod "ConstructObject"
-        let createReference = t.GetMethod "CreateReference" 
-
+        let createArray = t.GetMethod "CreateArray"
+        let createObject = t.GetMethod "CreateObject"
+        let createReference = t.GetMethod "CreateReference"
+        
+        let createDataDescriptor1 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic> |])
+        let createDataDescriptor2 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic>; typeof<Nullable<bool>> |])
+        let createDataDescriptor3 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic>; typeof<Nullable<bool>>; typeof<Nullable<bool>> |])
+        let createDataDescriptor4 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic>; typeof<Nullable<bool>>; typeof<Nullable<bool>>; typeof<Nullable<bool>> |])
+        
+        let createAccessorDescriptor1 = t.GetMethod ("CreateAccessorDescriptor", [| typeof<IDynamic>; typeof<IDynamic> |])
+        let createAccessorDescriptor2 = t.GetMethod ("CreateAccessorDescriptor", [| typeof<IDynamic>; typeof<IDynamic>; typeof<Nullable<bool>> |])
+        let createAccessorDescriptor3 = t.GetMethod ("CreateAccessorDescriptor", [| typeof<IDynamic>; typeof<IDynamic>; typeof<Nullable<bool>>; typeof<Nullable<bool>> |])
 
     module IExecutionContext =
         let t = typeof<Machete.Interfaces.IExecutionContext>

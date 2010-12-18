@@ -11,13 +11,14 @@ type Engine () =
     let proccessMessages (inbox:MailboxProcessor<Message>) = async {
         do! Async.SwitchToNewThread ()
         let environment = new Environment()
+        let compiler = new Compiler(environment)
         while true do
             try
                 let! msg = inbox.Receive ()
                 match msg with
                 | ExecuteScript (script, channel) ->
                     try
-                        let r = Compiler.CompileGlobalCode(script)
+                        let r = compiler.CompileGlobalCode(script)
                         let r = r.Invoke(environment, environment.EmptyArgs)
                         channel.Reply (r.Value.ToString():>obj)
                     with | e ->

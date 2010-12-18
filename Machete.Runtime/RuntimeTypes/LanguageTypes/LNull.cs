@@ -76,9 +76,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 case LanguageTypeCode.Null:
                 case LanguageTypeCode.Undefined:
-                    return _environment.BooleanTrue;
+                    return _environment.True;
                 default:
-                    return _environment.BooleanFalse;
+                    return _environment.False;
             }
         }
 
@@ -92,9 +92,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             switch (other.TypeCode)
             {
                 case LanguageTypeCode.Null:
-                    return _environment.BooleanTrue;
+                    return _environment.True;
                 default:
-                    return _environment.BooleanFalse;
+                    return _environment.False;
             }
         }
 
@@ -175,7 +175,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Delete()
         {
-            return _environment.BooleanTrue;
+            return _environment.True;
         }
 
         public IDynamic Op_Void()
@@ -254,7 +254,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IBoolean ConvertToBoolean()
         {
-            return _environment.BooleanFalse;
+            return _environment.False;
         }
 
         public INumber ConvertToNumber()

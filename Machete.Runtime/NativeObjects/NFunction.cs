@@ -61,7 +61,27 @@ namespace Machete.Runtime.NativeObjects
 
         IObject IConstructable.Construct(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
+            var obj = new LObject(environment);
+            obj.Class = "Object";
+            obj.Extensible = true;
+
+            var proto = Get("prototype");
+            if (proto.TypeCode == LanguageTypeCode.Object)
+            {
+                obj.Prototype = (IObject)proto;
+            }
+            else
+            {
+                obj.Prototype = ((Environment)environment).ObjectPrototype;
+            }
+
+            var result = ((ICallable)this).Call(environment, obj, args);
+            if (proto.TypeCode == LanguageTypeCode.Object)
+            {
+                return (IObject)result;
+            }
+
+            return obj;
         }
 
         public bool HasInstance(IDynamic obj)

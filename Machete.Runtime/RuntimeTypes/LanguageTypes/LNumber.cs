@@ -80,7 +80,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 case LanguageTypeCode.Object:
                     return this.Op_Equals(other.ConvertToPrimitive(null));
                 default:
-                    return _environment.BooleanFalse;
+                    return _environment.False;
             }
         }
 
@@ -97,7 +97,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                     var lnum = (LNumber)other;
                     return _environment.CreateBoolean(!(double.IsNaN(_value) || double.IsNaN(lnum._value)) && this._value == lnum._value);
                 default:
-                    return _environment.BooleanFalse;
+                    return _environment.False;
             }
         }
 
@@ -178,7 +178,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Delete()
         {
-            return _environment.BooleanTrue;
+            return _environment.True;
         }
 
         public IDynamic Op_Void()
