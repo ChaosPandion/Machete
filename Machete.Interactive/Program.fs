@@ -139,7 +139,7 @@ module Program =
                     with | e ->
                         writeNewLineStart ()
                         writeColored ("Error:") ConsoleColor.Red  
-                        writeStrings (e.Message + "\n" + e.StackTrace)
+                        writeStrings (e.Message)
                         writeNewLineStart () 
                     ()
             ()

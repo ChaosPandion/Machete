@@ -44,17 +44,17 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public bool HasPrimitiveBase
         {
-            get { return false; }
+            get { return _base is IBoolean || _base is IString || _base is INumber; }
         }
 
         public bool IsPropertyReference
         {
-            get { return false; }
+            get { return _base is IObject || HasPrimitiveBase; }
         }
 
         public bool IsUnresolvableReference
         {
-            get { return false; }
+            get { return _base is IUndefined; }
         }
 
         public IDynamic Value
@@ -290,7 +290,17 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public IDynamic Op_Call(IArgs args)
         {
-            return Value.Op_Call(args);
+            var callable = Value as ICallable;
+            if (callable == null)
+            {
+                _environment.CreateTypeError().Op_Throw();
+                return null;
+            }
+            if (IsPropertyReference)
+            {
+                return callable.Call(_environment, (IDynamic)_base, args);
+            }
+            return callable.Call(_environment, ((IEnvironmentRecord)_base).ImplicitThisValue(), args);
         }
 
         public IObject Op_Construct(IArgs args)

@@ -16,9 +16,12 @@ type Engine () =
                 let! msg = inbox.Receive ()
                 match msg with
                 | ExecuteScript (script, channel) ->
-                    let r = Compiler.CompileGlobalCode(script)
-                    let r = r.Invoke(environment, environment.EmptyArgs)
-                    channel.Reply (r.Value.ToString():>obj)
+                    try
+                        let r = Compiler.CompileGlobalCode(script)
+                        let r = r.Invoke(environment, environment.EmptyArgs)
+                        channel.Reply (r.Value.ToString():>obj)
+                    with | e ->
+                        channel.Reply e
             with | e -> ()
     }
     

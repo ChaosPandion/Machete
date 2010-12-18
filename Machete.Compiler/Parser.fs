@@ -150,7 +150,25 @@ module Parser =
     let expectFunction = expectSpecificIdentifierName "function"
     let expectNew = expectSpecificIdentifierName "new"
 
-    let expectAssignmentOperator = expectPunctuators (set ["=";"*=";"/=";"%=";"+=";"-=";"<<=";">>=";">>>=";"&=";"^=";"|="])
+    let assignmentOperatorMap =
+        Map.ofList [
+            ("=", AssignmentOperator.SimpleAssignment)
+            ("*=", AssignmentOperator.MultiplyAssignment)
+            ("/=", AssignmentOperator.DivideAssignment)
+            ("%=", AssignmentOperator.ModulusAssignment)
+            ("+=", AssignmentOperator.PlusAssignment)
+            ("-=", AssignmentOperator.MinusAssignment)
+            ("<<=", AssignmentOperator.LeftShiftAssignment)
+            (">>=", AssignmentOperator.SignedRightShiftAssignment)
+            (">>>=", AssignmentOperator.UnsignedRightShiftAssignment)
+            ("&=", AssignmentOperator.BitwiseAndAssignment)
+            ("^=", AssignmentOperator.BitwiseXorAssignment)
+            ("|=", AssignmentOperator.BitwiseOrAssignment)
+        ]
+
+    let expectAssignmentOperator = 
+        expectOperatorsWithTransform assignmentOperatorMap
+        //expectPunctuators (set ["=";"*=";"/=";"%=";"+=";"-=";"<<=";">>=";">>>=";"&=";"^=";"|="])
 
     let expectEqualityOperator = 
         expectPunctuators (set ["=="; "!="; "==="; "!=="])           
@@ -454,8 +472,8 @@ module Parser =
             return ConditionalExpressionNoIn (e1, SourceElement.Nil, SourceElement.Nil)
         }
 
-    and assignmentOperator = 
-        expectAssignmentOperator |>> AssignmentOperator
+//    and assignmentOperator = 
+//        expectAssignmentOperator |>> AssignmentOperator
 
     and functionExpression = 
         parse {
@@ -468,7 +486,7 @@ module Parser =
               
     and functionBody = 
         parse {
-            let! x = statementList <|> nil
+            let! x = sourceElements <|> nil
             return FunctionBody x
         }
         
@@ -664,10 +682,10 @@ module Parser =
     and debuggerStatement =
         pipe2 (expectSpecificIdentifierName "debugger") statementTerminator (fun x y -> DebuggerStatement)
 
-    let sourceElement = 
+    and sourceElement = 
         (statement <|> functionDeclaration) |>> SourceElement
 
-    let sourceElements =  
+    and sourceElements =  
         manyFold sourceElement SourceElement.Nil (fun x y -> SourceElements (x, y))
 
     let program = 
@@ -727,19 +745,19 @@ module Parser =
 
         assignmentExpressionRef :=
             parse {
-                let! e = conditionalExpression
-                return AssignmentExpression (e, SourceElement.Nil, SourceElement.Nil)
-            }  <|>  parse {
                 let! a = leftHandSideExpression
-                let! b = assignmentOperator
+                let! b = expectAssignmentOperator
                 let! c = assignmentExpression
                 return AssignmentExpression (a, b, c)                
-            }
+            }  <|> parse {
+                let! e = conditionalExpression
+                return AssignmentExpression (e, AssignmentOperator.Nil, SourceElement.Nil)
+            } 
 
         assignmentExpressionNoInRef :=
-            (conditionalExpressionNoIn |>> fun e -> AssignmentExpressionNoIn (e, SourceElement.Nil, SourceElement.Nil)) <|> parse {
+            (conditionalExpressionNoIn |>> fun e -> AssignmentExpressionNoIn (e, AssignmentOperator.Nil, SourceElement.Nil)) <|> parse {
                 let! a = leftHandSideExpression
-                let! b = assignmentOperator
+                let! b = expectAssignmentOperator
                 let! c = assignmentExpressionNoIn
                 return AssignmentExpressionNoIn (a, b, c)  
             }

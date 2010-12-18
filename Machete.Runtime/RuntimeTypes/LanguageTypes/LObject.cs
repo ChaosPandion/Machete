@@ -521,7 +521,8 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_GetProperty(IDynamic name)
         {
-            return LType.Op_GetProperty(_environment, this, name);
+            var propertyName = name.ConvertToString().BaseValue;
+            return Get(propertyName);
         }
 
         public void Op_SetProperty(IDynamic name, IDynamic value)

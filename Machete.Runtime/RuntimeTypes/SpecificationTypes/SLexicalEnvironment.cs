@@ -52,7 +52,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         ILexicalEnvironment ILexicalEnvironment.NewDeclarativeEnvironment()
         {
-            throw new NotImplementedException();
+            return new SLexicalEnvironment(_environment, new SDeclarativeEnvironmentRecord(_environment), this);
         }
     }
 }

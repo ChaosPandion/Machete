@@ -18,6 +18,7 @@ module Compiler =
         labels : list<Map<string, label>>
         functions : list<string * string[] * SourceElement>
         variables : list<string>
+        returnExpression : exp
     } 
 
     let call (e:exp) (m:methodinfo) (a:exp[]) = exp.Call (e, m, a) :> exp
@@ -29,15 +30,9 @@ module Compiler =
     let environmentParam = exp.Parameter (Reflection.IEnvironment.t, "environment")
     let argsParam = exp.Parameter (Reflection.IArgs.t, "args")
 
-//    let checkReference (value:Machete.Interfaces.IDynamic) =
-//        match value with
-//        | :? Machete.Interfaces.IReference as ref ->
-//            match ref.IsStrictReference, ref.Base, ref.Name with
-//            | true, :? Machete.Interfaces.IEnvironmentRecord, "eval" 
-//            | true, :? Machete.Interfaces.IEnvironmentRecord, "arguments" ->
-//                environment.CreateSyntaxError().Op_Throw();
-//            | _ -> ()
-//        | _ -> ()
+    let getUndefined = call environmentParam Reflection.IEnvironment.get_Undefined [||]
+
+
 //
 //    let simpleAssignment (left:Machete.Interfaces.IDynamic) (right:Machete.Interfaces.IDynamic) =
 //        checkReference left
@@ -75,46 +70,78 @@ module Compiler =
             block [| left; condition test ifTrue ifFalse |]
             
     and evalAssignmentExpression (state:State) =
-        match state.element with
-        | AssignmentExpression (left, Nil, Nil) | AssignmentExpressionNoIn (left, Nil, Nil) ->
-            evalConditionalExpression { state with element = left }
-        | AssignmentExpression (left, AssignmentOperator (Lexer.Punctuator (Lexer.Str "=")), right) 
-        | AssignmentExpressionNoIn (left, AssignmentOperator (Lexer.Punctuator (Lexer.Str "=")), right) ->
+        let checkReference (environment:IEnvironment) (value:IDynamic) =
+            match value with
+            | :? Machete.Interfaces.IReference as ref ->
+                match ref.IsStrictReference, ref.Base, ref.Name with
+                | true, :? Machete.Interfaces.IEnvironmentRecord, "eval" 
+                | true, :? Machete.Interfaces.IEnvironmentRecord, "arguments" ->
+                    environment.CreateSyntaxError().Op_Throw();
+                | _ -> ()
+            | _ -> ()
+        let simpleAssignment left right =
             let left = evalLeftHandSideExpression { state with element = left }
             let right = evalAssignmentExpression { state with element = right }
             let valueVar = exp.Variable(Reflection.IDynamic.t, "value") 
-            exp.Block( 
-                [|valueVar|], [|
-                    exp.Assign(valueVar, call right Reflection.IDynamic.get_Value [| |]) :>exp
-                    call left Reflection.IDynamic.set_Value [| valueVar |]
-                    valueVar :>exp
-                |]
-            ) :> exp
-            
-            //invoke (constant simpleAssignment) [|left;right|]
-        | AssignmentExpression (left, AssignmentOperator (Lexer.Punctuator (Lexer.Str v)), right) 
-        | AssignmentExpressionNoIn (left, AssignmentOperator (Lexer.Punctuator (Lexer.Str v)), right)
-        | AssignmentExpression (left, AssignmentOperator (Lexer.DivPunctuator (Lexer.Str v)), right) 
-        | AssignmentExpressionNoIn (left, AssignmentOperator (Lexer.DivPunctuator (Lexer.Str v)), right) ->
-            let args = [|
-                evalLeftHandSideExpression { state with element = left };
-                evalAssignmentExpression { state with element = right };
-                (match v with
-                | "*=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_Multiplication r)
-                | "/=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_Division r)
-                | "%=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_Modulus r)
-                | "+=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_Addition r)
-                | "-=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_Subtraction r)
-                | "<<=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_LeftShift r)
-                | ">>=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_SignedRightShift r)
-                | ">>>=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_UnsignedRightShift r)
-                | "&=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_BitwiseAnd r)
-                | "^=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_BitwiseXor r)
-                | "|=" -> constant (fun (l:dyn) (r:dyn) -> l.Op_BitwiseOr r)
-                | _ -> failwith "")
-            |]
-            constant 1
-            //invoke (constant compoundAssignment) args 
+            let check = invoke (constant (System.Action<IEnvironment, IDynamic>(checkReference))) [| environmentParam; left |]
+            let assign = exp.Assign(valueVar, call right Reflection.IDynamic.get_Value [| |]) :>exp
+            let setLeft = call left Reflection.IDynamic.set_Value [| valueVar |]
+            let variables = [| valueVar |]
+            let body = [| check; setLeft; valueVar:>exp |]
+            exp.Block (variables, body) :> exp
+        let compoundAssignment left right op =
+            let left = evalLeftHandSideExpression { state with element = left }
+            let right = evalAssignmentExpression { state with element = right }
+            let check = invoke (constant (System.Action<IEnvironment, IDynamic>(checkReference))) [| environmentParam; left |]
+            let getLeft = call left Reflection.IDynamic.get_Value Array.empty
+            let getRight = call right Reflection.IDynamic.get_Value Array.empty
+            let performOp = call left op [| right |]
+            let valueVar = exp.Variable(Reflection.IDynamic.t, "value") 
+            let assign = exp.Assign(valueVar, performOp) :> exp
+            let setLeft = call left Reflection.IDynamic.set_Value [| assign |]
+            let variables = [| valueVar |]
+            let body = [| check; setLeft; valueVar:>exp |]
+            exp.Block (variables, body) :> exp
+        match state.element with
+        | AssignmentExpression (left, AssignmentOperator.Nil, Nil) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.Nil, Nil) ->
+            evalConditionalExpression { state with element = left }
+        | AssignmentExpression (left, AssignmentOperator.SimpleAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.SimpleAssignment, right) ->
+            simpleAssignment left right
+        | AssignmentExpression (left, AssignmentOperator.MultiplyAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.MultiplyAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_Multiplication
+        | AssignmentExpression (left, AssignmentOperator.DivideAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.DivideAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_Division
+        | AssignmentExpression (left, AssignmentOperator.ModulusAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.ModulusAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_Modulus
+        | AssignmentExpression (left, AssignmentOperator.PlusAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.PlusAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_Addition
+        | AssignmentExpression (left, AssignmentOperator.MinusAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.MinusAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_Subtraction
+        | AssignmentExpression (left, AssignmentOperator.LeftShiftAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.LeftShiftAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_LeftShift
+        | AssignmentExpression (left, AssignmentOperator.SignedRightShiftAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.SignedRightShiftAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_SignedRightShift
+        | AssignmentExpression (left, AssignmentOperator.UnsignedRightShiftAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.UnsignedRightShiftAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_UnsignedRightShift
+        | AssignmentExpression (left, AssignmentOperator.BitwiseAndAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.BitwiseAndAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_BitwiseAnd
+        | AssignmentExpression (left, AssignmentOperator.BitwiseXorAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.BitwiseXorAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_BitwiseXor
+        | AssignmentExpression (left, AssignmentOperator.BitwiseOrAssignment, right) 
+        | AssignmentExpressionNoIn (left, AssignmentOperator.BitwiseOrAssignment, right) ->
+            compoundAssignment left right Reflection.IDynamic.op_BitwiseOr
 
     and evalConditionalExpression (state:State) =
         match state.element with
@@ -275,14 +302,22 @@ module Compiler =
         | MemberExpression (e1, e2) ->
             match e1, e2 with
             | MemberExpression (_, _), Expression (_, _) ->
-                let left = evalMemberExpression { state with element = e1 }
-                let right = [| evalExpression { state with element = e2 } |]
-                call left Reflection.IDynamic.op_GetProperty right 
+                let baseValue = evalMemberExpression { state with element = e1 }
+                let baseValue = call baseValue Reflection.IDynamic.get_Value Array.empty
+                let baseValue = exp.Convert(baseValue, Reflection.IReferenceBase.t) :> exp
+                let name = evalExpression { state with element = e2 }
+                let name = call name Reflection.IDynamic.convertToString Array.empty
+                let name = exp.Convert (name, Reflection.IString.t) :> exp
+                let name = call name Reflection.IString.get_BaseValue Array.empty
+                let args = [| name; baseValue; constant state.strict |]
+                call environmentParam Reflection.IEnvironment.createReference args 
             | MemberExpression (_, _), InputElement (e3) ->
-                let left = evalMemberExpression { state with element = e1 }
-                let right = constant (Lexer.IdentifierNameParser.evalIdentifierName e3)
-                let right = [| call environmentParam Reflection.IEnvironment.createString [| right |] |]
-                call left Reflection.IDynamic.op_GetProperty right 
+                let baseValue = evalMemberExpression { state with element = e1 }
+                let baseValue = call baseValue Reflection.IDynamic.get_Value Array.empty
+                let baseValue = exp.Convert(baseValue, Reflection.IReferenceBase.t) :> exp
+                let name = constant (Lexer.IdentifierNameParser.evalIdentifierName e3)
+                let args = [| name; baseValue; constant state.strict  |]
+                call environmentParam Reflection.IEnvironment.createReference args 
             | MemberExpression (_, _), Arguments (_) ->
                 let left = evalMemberExpression { state with element = e1 }
                 let right = [| evalArguments { state with element = e2 } |]
@@ -316,15 +351,23 @@ module Compiler =
                 let left = evalCallExpression { state with element = e1 }
                 let right = [| evalArguments { state with element = e2 } |]
                 call left Reflection.IDynamic.op_Call right  
-            | CallExpression (_, _), Expression (_, _) ->
-                let left = evalCallExpression { state with element = e1 }
-                let right = [| evalExpression { state with element = e2 } |]
-                call left Reflection.IDynamic.op_Call right   
-            | CallExpression (_, _), InputElement (e3) ->
-                let left = evalCallExpression { state with element = e1 }
-                let right = constant (Lexer.IdentifierNameParser.evalIdentifierName e3)
-                let right = [| call environmentParam Reflection.IEnvironment.createString [| right |] |]
-                call left Reflection.IDynamic.op_Call right 
+            | CallExpression (_, _), Expression (_, _) ->                
+                let baseValue = evalCallExpression { state with element = e1 }
+                let baseValue = call baseValue Reflection.IDynamic.get_Value Array.empty
+                let baseValue = exp.Convert(baseValue, Reflection.IReferenceBase.t) :> exp
+                let name = evalExpression { state with element = e2 }
+                let name = call name Reflection.IDynamic.convertToString Array.empty
+                let name = exp.Convert (name, Reflection.IString.t) :> exp
+                let name = call name Reflection.IString.get_BaseValue Array.empty
+                let args = [| name; baseValue; constant state.strict |]
+                call environmentParam Reflection.IEnvironment.createReference args 
+            | CallExpression (_, _), InputElement (e3) ->            
+                let baseValue = evalMemberExpression { state with element = e1 }
+                let baseValue = call baseValue Reflection.IDynamic.get_Value Array.empty
+                let baseValue = exp.Convert(baseValue, Reflection.IReferenceBase.t) :> exp
+                let name = constant (Lexer.IdentifierNameParser.evalIdentifierName e3)
+                let args = [| name; baseValue; constant state.strict  |]
+                call environmentParam Reflection.IEnvironment.createReference args 
 
     and evalNewExpression (state:State) =
         match state.element with
@@ -428,6 +471,8 @@ module Compiler =
                 evalEmptyStatement { state with element = e }, state  
             | VariableStatement _ ->
                 evalVariableStatement { state with element = e } 
+            | ReturnStatement _ ->
+                evalReturnStatement { state with element = e } 
 
     and evalBlock (state:State) =
         match state.element with
@@ -494,7 +539,14 @@ module Compiler =
 
     and evalBreakStatement (state:State) = constant 1
 
-    and evalReturnStatement (state:State) = constant 1
+    and evalReturnStatement (state:State) =
+        let target = state.labels.Head.["return"].Target
+        match state.element with
+        | ReturnStatement Nil -> 
+            exp.Return (target, getUndefined, typeof<dyn>) :> exp, state
+        | ReturnStatement e -> 
+            let r = evalExpression { state with element = e }
+            exp.Return (target, r, typeof<dyn>) :> exp, state
 
     and evalWithStatement (state:State) = constant 1
 
@@ -525,27 +577,35 @@ module Compiler =
         | FunctionDeclaration (Lexer.Identifier e1, e2, e3) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let formalParameterList = evalFormalParameterList { state with element = e2 }
-            exp.Empty():>exp, { state with functions = (identifier, formalParameterList, e3)::state.functions }
+            getUndefined, { state with functions = (identifier, formalParameterList, e3)::state.functions }
 
     and evalFunctionExpression (state:State) = constant 1
 
     and evalFormalParameterList (state:State) = Array.empty
 
-    and evalFunctionBody (state:State) = constant 1
+    and evalFunctionBody (state:State) =
+        let target = state.labels.Head.["return"].Target
+        match state.element with
+        | FunctionBody Nil -> 
+            exp.Return (target, getUndefined, typeof<dyn>) :> exp, state
+        | FunctionBody e -> 
+            evalSourceElements { state with element = e }
+
 
     and evalSourceElement (state:State) =
         match state.element with
         | SourceElement e ->
             match e with
             | Statement _ ->
-                evalStatement { state with element = e } 
+                let e, s = evalStatement { state with element = e } 
+                if e.Type <> typeof<System.Void> then e, { s with returnExpression = e } else e, s
             | FunctionDeclaration (_, _, _) ->
                 evalFunctionDeclaration { state with element = e }
 
-    and evalSourceElements (state:State) =
+    and evalSourceElements (state:State) : exp * State =
         match state.element with
         | SourceElements (Nil, e) ->
-            evalSourceElement { state with element = e } 
+            evalSourceElement { state with element = e }
         | SourceElements (e1, e2) ->
             let e1, state = evalSourceElements { state with element = e1 } 
             let e2, state = evalSourceElement { state with element = e2 } 
@@ -558,11 +618,7 @@ module Compiler =
             | Nil ->
                 exp.Empty() :> exp , state 
             | SourceElements (_, _) ->
-                let body, state = evalSourceElements { state with element = e } 
-                if body.Type = typeof<System.Void> then
-                    block [| body; call environmentParam Reflection.IEnvironment.get_Undefined [||] |], state 
-                else
-                    body, state
+                evalSourceElements { state with element = e }
                         
     and performDeclarationBinding (configurableBindings:bool) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
         let env = environment.Context.VariableEnviroment.Record
@@ -578,7 +634,7 @@ module Compiler =
             env.SetMutableBinding (name, fo, state.strict)            
         continuation.Invoke (environment, args)
   
-    and performFunctionArgumentBinding (formalParameterList:string[]) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
+    and performFunctionArgumentsBinding (formalParameterList:string[]) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
         let i = ref -1
         let env = environment.Context.VariableEnviroment.Record
         for name in formalParameterList do
@@ -590,21 +646,24 @@ module Compiler =
 
     and CompileGlobalCode (input:string) =
         let input = Parser.parse (input + ";")
-        let body, state = evalProgram { strict = false; element = input; labels = []; functions = []; variables = [] }
-        let continuation = exp.Lambda<Machete.Interfaces.Code>(body, [| environmentParam; argsParam |]).Compile()
+        let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
+        let body, state = evalProgram { strict = false; element = input; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
+        let continuation = exp.Lambda<Code>(block [| body; exp.Return(returnLabel.Target, state.returnExpression); returnLabel |], [| environmentParam; argsParam |]).Compile()
         Code(performDeclarationBinding true state continuation)
         
     and CompileEvalCode (input:string) =
         let input = Parser.parse (input + ";")
-        let body, state = evalProgram { strict = false; element = input; labels = []; functions = []; variables = [] }
-        let continuation = exp.Lambda<Machete.Interfaces.Code>(body, [| environmentParam; argsParam |]).Compile()
+        let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
+        let body, state = evalProgram { strict = false; element = input; labels =  [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
+        let continuation = exp.Lambda<Code>(block [| body; returnLabel |], [| environmentParam; argsParam |]).Compile()
         Code(performDeclarationBinding false state continuation)
 
     and CompileFunctionCode (formalParameterList:string[], functionBody:SourceElement) =
-        let state = { strict = false; element = functionBody; labels = []; functions = []; variables = [] }
-        let body = evalFunctionBody state
-        let continuation = exp.Lambda<Machete.Interfaces.Code>(body, [| environmentParam; argsParam |]).Compile()
-        let continuation = Code(performFunctionArgumentBinding formalParameterList state continuation)
+        let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
+        let state = { strict = false; element = functionBody; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
+        let body, state = evalFunctionBody state
+        let continuation = exp.Lambda<Code>(block [| body; returnLabel |], [| environmentParam; argsParam |]).Compile()
+        let continuation = Code(performFunctionArgumentsBinding formalParameterList state continuation)
         Code(performDeclarationBinding true state continuation)
 
 

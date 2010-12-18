@@ -54,18 +54,18 @@
 
     type AssignmentOperator =
     | Nil
-    | Equal
-    | MultiplyEqual
-    | DivideEqual
-    | ModulusEqual
-    | PlusEqual
-    | MinusEqual
-    | LeftShiftEqual
-    | RightShiftEqual
-    | UnsignedRightShiftEqual
-    | BitwiseAndEqual
-    | BitwiseXorEqual
-    | BitwiseOrEqual
+    | SimpleAssignment
+    | MultiplyAssignment
+    | DivideAssignment
+    | ModulusAssignment
+    | PlusAssignment
+    | MinusAssignment
+    | LeftShiftAssignment
+    | SignedRightShiftAssignment
+    | UnsignedRightShiftAssignment
+    | BitwiseAndAssignment
+    | BitwiseXorAssignment
+    | BitwiseOrAssignment
 
     type NewOperator = 
     | Nil
@@ -76,9 +76,9 @@
     | InputElement of InputElement
     | Expression of SourceElement * SourceElement
     | ExpressionNoIn of SourceElement * SourceElement
-    | AssignmentOperator of InputElement
-    | AssignmentExpression of SourceElement * SourceElement * SourceElement
-    | AssignmentExpressionNoIn of SourceElement * SourceElement * SourceElement
+    //| AssignmentOperator of InputElement
+    | AssignmentExpression of SourceElement * AssignmentOperator * SourceElement
+    | AssignmentExpressionNoIn of SourceElement * AssignmentOperator * SourceElement
     | ConditionalExpression of SourceElement * SourceElement * SourceElement
     | ConditionalExpressionNoIn of SourceElement * SourceElement * SourceElement
     | LogicalORExpression of SourceElement * SourceElement

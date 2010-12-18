@@ -18,6 +18,7 @@ module Reflection =
         let createObjectEnvironmentRecord = t.GetMethod "CreateObjectEnvironmentRecord"
         let constructArray = t.GetMethod "ConstructArray"
         let constructObject = t.GetMethod "ConstructObject"
+        let createReference = t.GetMethod "CreateReference" 
 
 
     module IExecutionContext =
@@ -100,15 +101,15 @@ module Reflection =
 
     module IBoolean = 
         let t = typeof<Machete.Interfaces.IBoolean>
-        let get_Base = t.GetMethod "get_Base"
+        let get_BaseValue = t.GetMethod "get_BaseValue"
 
     module IString = 
         let t = typeof<Machete.Interfaces.IString>
-        let get_Base = t.GetMethod "get_Base"
+        let get_BaseValue = t.GetMethod "get_BaseValue"
 
     module INumber = 
         let t = typeof<Machete.Interfaces.INumber>
-        let get_Base = t.GetMethod "get_Base"
+        let get_BaseValue = t.GetMethod "get_BaseValue"
 
     module IObject = 
         let t = typeof<Machete.Interfaces.IObject>

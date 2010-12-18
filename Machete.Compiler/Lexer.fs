@@ -737,7 +737,7 @@ module Lexer =
                     | NumericLiteral _ 
                     | StringLiteral _ -> DivPunctuator.parseDivPunctuator
                     | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral
-                | None -> RegularExpressionLiteral.parseRegularExpressionLiteral 
+                | None -> RegularExpressionLiteral.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
 
     let private exec =
         choice [

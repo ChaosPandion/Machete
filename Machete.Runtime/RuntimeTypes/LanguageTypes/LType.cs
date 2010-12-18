@@ -226,7 +226,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 environment.CreateTypeError().Op_Throw();
                 return null;
             }
-            throw new NotImplementedException();
+            return callable.Call(environment, environment.Undefined, args);
         }
 
         public static IObject Op_Construct(IEnvironment environment, IDynamic value, IArgs args)

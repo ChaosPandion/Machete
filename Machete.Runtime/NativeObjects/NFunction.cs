@@ -55,7 +55,7 @@ namespace Machete.Runtime.NativeObjects
                     }
                 }
 
-                return null;
+                return Code.Value(environment, args);
             }
         }
 
