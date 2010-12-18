@@ -236,7 +236,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public static void Op_Throw(IEnvironment environment, IDynamic value)
         {
-            throw new NotImplementedException();
+            environment.ThrowRuntimeException(value);
         }
 
         public static INumber ConvertToInteger(IEnvironment environment, IDynamic value)

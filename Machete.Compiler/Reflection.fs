@@ -13,7 +13,6 @@ module Reflection =
         let createBoolean = t.GetMethod "CreateBoolean"
         let createString = t.GetMethod "CreateString"
         let createNumber = t.GetMethod "CreateNumber"
-        let createFunction = t.GetMethod "CreateFunction"
         let concatArgs = t.GetMethod "ConcatArgs"
         let createArgsSingle = t.GetMethod ("CreateArgs", [| typeof<Machete.Interfaces.IDynamic> |])
         let createArgsMany = t.GetMethod ("CreateArgs", [| typeof<System.Collections.Generic.IEnumerable<Machete.Interfaces.IDynamic>> |])
@@ -22,6 +21,9 @@ module Reflection =
         let createArray = t.GetMethod "CreateArray"
         let createObject = t.GetMethod "CreateObject"
         let createReference = t.GetMethod "CreateReference"
+
+        let createFunction1 = t.GetMethod ("CreateFunction", [| typeof<string[]>; typeof<bool>; typeof<Lazy<Code>> |])
+        let createFunction2 = t.GetMethod ("CreateFunction", [| typeof<string[]>; typeof<bool>; typeof<Lazy<Code>>; typeof<ILexicalEnvironment> |])
         
         let createDataDescriptor1 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic> |])
         let createDataDescriptor2 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic>; typeof<Nullable<bool>> |])
@@ -31,6 +33,12 @@ module Reflection =
         let createAccessorDescriptor1 = t.GetMethod ("CreateAccessorDescriptor", [| typeof<IDynamic>; typeof<IDynamic> |])
         let createAccessorDescriptor2 = t.GetMethod ("CreateAccessorDescriptor", [| typeof<IDynamic>; typeof<IDynamic>; typeof<Nullable<bool>> |])
         let createAccessorDescriptor3 = t.GetMethod ("CreateAccessorDescriptor", [| typeof<IDynamic>; typeof<IDynamic>; typeof<Nullable<bool>>; typeof<Nullable<bool>> |])
+        
+        let throwRuntimeException = t.GetMethod "ThrowRuntimeException"
+
+    module MacheteRuntimeException =
+        let t = typeof<MacheteRuntimeException>
+        let get_Thrown = t.GetMethod "get_Thrown"
 
     module IExecutionContext =
         let t = typeof<Machete.Interfaces.IExecutionContext>
@@ -46,6 +54,7 @@ module Reflection =
         let get_Record = t.GetMethod "get_Record"
         let get_Parent = t.GetMethod "get_Parent"
         let getIdentifierReference = t.GetMethod "GetIdentifierReference"    
+        let newDeclarativeEnvironment = t.GetMethod "NewDeclarativeEnvironment"  
 
     module IDynamic = 
         let t = typeof<Machete.Interfaces.IDynamic>

@@ -59,7 +59,9 @@ namespace Machete.Interfaces
         IObject CreateReferenceError();
         IObject CreateTypeError();
         IObject CreateSyntaxError();
+
         IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code);
+        IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
 
         IPropertyDescriptor CreateDataDescriptor(IDynamic value);
         IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable);
@@ -71,5 +73,7 @@ namespace Machete.Interfaces
         IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable, bool? configurable);
 
         IExecutionContext EnterContext();
+
+        void ThrowRuntimeException(IDynamic thrown);
     }
 }

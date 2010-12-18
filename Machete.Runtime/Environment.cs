@@ -254,19 +254,19 @@ namespace Machete.Runtime
         {
             return new SReference(this, @base, name, strict);
         }
-        
-        public IExecutionContext EnterContext()
-        {
-            _contextStack.Push(Context);
-            Context = new ExecutionContext(() => Context = _contextStack.Pop());
-            return Context;
-        }
+
         
         public IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code)
         {
             return new NFunction(this, formalParameterList, strict, code, Context.VariableEnviroment);
         }
+
+        public IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope)
+        {
+            return new NFunction(this, formalParameterList, strict, code, scope);
+        }
         
+
         public IPropertyDescriptor CreateDataDescriptor(IDynamic value)
         {
             return CreateDataDescriptor(value, false, false, false);
@@ -293,6 +293,7 @@ namespace Machete.Runtime
             };
         }
 
+
         public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set)
         {
             return CreateAccessorDescriptor(get, set, false, false);
@@ -312,6 +313,20 @@ namespace Machete.Runtime
                 Enumerable = enumerable,
                 Configurable = configurable
             };
+        }
+
+
+        public IExecutionContext EnterContext()
+        {
+            _contextStack.Push(Context);
+            Context = new ExecutionContext(() => Context = _contextStack.Pop());
+            return Context;
+        }
+
+
+        public void ThrowRuntimeException(IDynamic thrown)
+        {
+            throw new MacheteRuntimeException(thrown);
         }
     }
 }

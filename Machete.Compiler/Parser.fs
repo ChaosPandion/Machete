@@ -693,7 +693,7 @@ module Parser =
         pipe4 (expectSpecificIdentifierName "try") blockParser (catchParser <|> nil) (finallyParser <|> nil) (fun a b c d -> TryStatement (b, c, d))
 
     and catchParser =
-        pipe5 (expectSpecificIdentifierName "catch") (expectPunctuator "(") expectIdentifier (expectPunctuator ")") blockParser (fun a b c d e -> Catch (d, e))
+        pipe5 (expectSpecificIdentifierName "catch") (expectPunctuator "(") expectIdentifier (expectPunctuator ")") blockParser (fun a b c d e -> Catch (c, e))
 
     and finallyParser =
         pipe2 (expectSpecificIdentifierName "finally") blockParser (fun x y -> Finally y)
