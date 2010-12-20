@@ -54,16 +54,29 @@ namespace Machete.Interfaces
         IArgs CreateArgs(IEnumerable<IDynamic> values);
         IArgs ConcatArgs(IArgs first, IArgs second);
 
+        IObject FromPropertyDescriptor(IPropertyDescriptor desc);
+        IPropertyDescriptor ToPropertyDescriptor(IObject obj);
+
         IObject CreateArray();
         IObject CreateObject();
-        IObject CreateReferenceError();
-        IObject CreateTypeError();
-        IObject CreateSyntaxError();
+
+        MacheteRuntimeException CreateError(string message);
+        MacheteRuntimeException CreateEvalError(string message);
+        MacheteRuntimeException CreateRangeError(string message);
+        MacheteRuntimeException CreateReferenceError(string message);
+        MacheteRuntimeException CreateSyntaxError(string message);
+        MacheteRuntimeException CreateTypeError(string message);
+        MacheteRuntimeException CreateUriError(string message);
 
         IObject CreateArguments(string[] formalParameterList, IArgs args, bool strict);
 
         IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code);
         IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
+
+
+        IPropertyDescriptor CreateGenericDescriptor();
+        IPropertyDescriptor CreateGenericDescriptor(bool? enumerable);
+        IPropertyDescriptor CreateGenericDescriptor(bool? enumerable, bool? configurable);
 
         IPropertyDescriptor CreateDataDescriptor(IDynamic value);
         IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable);

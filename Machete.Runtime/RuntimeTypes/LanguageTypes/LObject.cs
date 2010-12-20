@@ -145,7 +145,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (@throw)
                 {
-                    Environment.CreateTypeError().Op_Throw();
+                    throw _environment.CreateTypeError("");
                 }
                 return;
             }
@@ -183,8 +183,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
             else if (@throw)
             {
-                Environment.CreateTypeError().Op_Throw();
-                return false;
+                throw _environment.CreateTypeError("");
             }
             else
             {
@@ -218,16 +217,14 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                     }
                 }
             }
-            Environment.CreateTypeError().Op_Throw(); 
-            return null;
+            throw _environment.CreateTypeError("");
         }
 
         public virtual bool DefineOwnProperty(string p, IPropertyDescriptor desc, bool @throw)
         {
             var reject = new Func<bool>(() => {
                 if (!@throw) return false;
-                Environment.CreateTypeError().Op_Throw();
-                return false;
+                throw _environment.CreateTypeError("");
             });
             var current = GetOwnProperty(p);
             if (current == null)
@@ -489,14 +486,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PrefixIncrement()
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_PrefixDecrement()
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_Plus()
@@ -511,14 +506,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PostfixIncrement()
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_PostfixDecrement()
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_GetProperty(IDynamic name)

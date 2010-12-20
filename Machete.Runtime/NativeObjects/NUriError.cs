@@ -8,7 +8,8 @@ namespace Machete.Runtime.NativeObjects
         public NUriError(IEnvironment environment)
             : base(environment)
         {
-
+            Class = "Error";
+            Extensible = true;
         }
     }
 }

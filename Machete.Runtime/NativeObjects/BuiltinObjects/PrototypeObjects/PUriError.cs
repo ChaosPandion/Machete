@@ -8,7 +8,10 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         public PUriError(IEnvironment environment)
             : base(environment)
         {
-
+            Class = "Error";
+            Extensible = true;
+            DefineOwnProperty("name", environment.CreateDataDescriptor(environment.CreateString("URIError"), true, false, true), false);
+            DefineOwnProperty("message", environment.CreateDataDescriptor(environment.CreateString(""), true, false, true), false);
         }
     }
 }

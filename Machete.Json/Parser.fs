@@ -59,7 +59,7 @@ module Parser =
         }
 
     let jsonMemberList =
-        manySepFold jsonMember (satisfy (fun v -> v = ValueSeparator)) JsonNil (fun a b -> JsonMemberList (a, b))
+        manySepFold jsonMember (satisfy (fun v -> v = ValueSeparator)) JsonMemberList JsonNil //(fun a b -> JsonMemberList (a, b))
 
     let jsonObject =
         parse {

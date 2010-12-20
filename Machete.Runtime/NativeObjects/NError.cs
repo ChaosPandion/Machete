@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Machete.Interfaces;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
-using Machete.Interfaces;
 
 namespace Machete.Runtime.NativeObjects
 {
@@ -12,7 +8,8 @@ namespace Machete.Runtime.NativeObjects
         public NError(IEnvironment environment)
             : base(environment)
         {
-
+            Class = "Error";
+            Extensible = true;
         }
     }
 }

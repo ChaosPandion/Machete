@@ -185,14 +185,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PrefixIncrement()
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_PrefixDecrement()
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_Plus()
@@ -207,14 +205,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PostfixIncrement()
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_PostfixDecrement()
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_GetProperty(IDynamic name)
@@ -264,8 +260,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IObject ConvertToObject()
         {
-            _environment.CreateTypeError().Op_Throw();
-            return null;
+            throw _environment.CreateTypeError("");
         }
 
         public INumber ConvertToInteger()
@@ -290,15 +285,14 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         
         public IDynamic Get(string name, bool strict)
         {
-            _environment.CreateReferenceError().Op_Throw();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public void Set(string name, IDynamic value, bool strict)
         {
             if (strict)
             {
-                _environment.CreateReferenceError().Op_Throw();
+                throw _environment.CreateReferenceError("");
             }
             _environment.GlobalObject.Put(name, value, false);
         }

@@ -554,14 +554,14 @@ module Parser =
     and variableDeclarationList = 
         manySepFold variableDeclaration expectComma VariableDeclarationList SourceElement.Nil //(fun x y -> VariableDeclarationList (x, y))
 
-    and variableDeclarationListNoIn = zero
-        //manySepFold variableDeclarationNoIn expectComma SourceElement.Nil (fun x y -> VariableDeclarationListNoIn (x, y))
+    and variableDeclarationListNoIn =
+        manySepFold variableDeclarationNoIn expectComma VariableDeclarationListNoIn SourceElement.Nil //(fun x y -> VariableDeclarationListNoIn (x, y))
 
     and variableDeclaration =
         tuple2 expectIdentifier (initializer <|> nil) VariableDeclaration
 
-    and variableDeclarationNoIn = zero
-        //tuple2 expectIdentifier (initializerNoIn <|> nil) VariableDeclarationNoIn
+    and variableDeclarationNoIn = 
+        tuple2 expectIdentifier (initializerNoIn <|> nil) VariableDeclarationNoIn
 
     and initializer =
         parse {

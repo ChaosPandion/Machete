@@ -187,14 +187,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PrefixIncrement()
         {
-            _environment.CreateReferenceError();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_PrefixDecrement()
         {
-            _environment.CreateReferenceError();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_Plus()
@@ -219,14 +217,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_PostfixIncrement()
         {
-            _environment.CreateReferenceError();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_PostfixDecrement()
         {
-            _environment.CreateReferenceError();
-            return null;
+            throw _environment.CreateReferenceError("");
         }
 
         public IDynamic Op_GetProperty(IDynamic name)
@@ -276,7 +272,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IObject ConvertToObject()
         {
-            return new NBoolean(_environment, this);
+            return _environment.BooleanConstructor.Op_Construct(_environment.CreateArgs(this));
         }
 
         public INumber ConvertToInteger()

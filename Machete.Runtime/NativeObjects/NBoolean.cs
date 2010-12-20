@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Machete.Interfaces;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
-using Machete.Interfaces;
 
 namespace Machete.Runtime.NativeObjects
 {
@@ -11,10 +7,10 @@ namespace Machete.Runtime.NativeObjects
     {
         public IDynamic PrimitiveValue { get; set; }
 
-        public NBoolean(IEnvironment environment, LBoolean value)
+        public NBoolean(IEnvironment environment)
             : base(environment)
         {
-            PrimitiveValue = value;
+
         }
     }
 }

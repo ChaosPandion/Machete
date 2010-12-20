@@ -96,8 +96,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var func = right as NFunction;
             if (func == null)
             {
-                environment.CreateTypeError();
-                return null;
+                throw environment.CreateTypeError("");
             }
             return environment.CreateBoolean(func.HasInstance(left));
         }
@@ -107,8 +106,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var obj = right as LObject;
             if (obj == null)
             {
-                environment.CreateTypeError().Op_Throw();
-                return null;
+                throw environment.CreateTypeError("");
             }
             return environment.CreateBoolean(obj.HasProperty(left.ConvertToString().BaseValue));
         }
@@ -223,8 +221,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var callable = value as ICallable;
             if (callable == null)
             {
-                environment.CreateTypeError().Op_Throw();
-                return null;
+                throw environment.CreateTypeError("");
             }
             return callable.Call(environment, environment.Undefined, args);
         }
@@ -409,7 +406,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (strict)
                 {
-                    environment.CreateTypeError().Op_Throw();
+                    throw environment.CreateTypeError("");
                 }
                 return;
             }
@@ -418,7 +415,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (strict)
                 {
-                    environment.CreateTypeError().Op_Throw();
+                    throw environment.CreateTypeError("");
                 }
                 return;
             }
@@ -432,7 +429,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (strict)
                 {
-                    environment.CreateTypeError().Op_Throw();
+                    throw environment.CreateTypeError("");
                 }
                 return;
             }

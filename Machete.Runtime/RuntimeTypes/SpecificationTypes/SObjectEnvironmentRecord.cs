@@ -52,8 +52,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             if (!_bindingObject.HasProperty(n))
             {
                 if (!s) return _environment.Undefined;
-                _environment.CreateReferenceError().Op_Throw();
-                return null;
+                throw _environment.CreateReferenceError("");
             }
             return _bindingObject.Get(n);
         }

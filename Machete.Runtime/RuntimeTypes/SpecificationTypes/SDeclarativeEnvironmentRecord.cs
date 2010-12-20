@@ -36,7 +36,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             var binding = _bindings[n];
             if ((binding.Flags & BFlags.Immutable) == BFlags.Immutable)
             {
-                _environment.CreateTypeError().Op_Throw();
+                throw _environment.CreateUriError("");
             }
             binding.Value = v;
         }
@@ -47,8 +47,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             if ((binding.Flags & BFlags.Uninitialized) == BFlags.Uninitialized)
             {
                 if (!s) return _environment.Undefined;
-                _environment.CreateReferenceError().Op_Throw();
-                return null;
+                throw _environment.CreateReferenceError("");
             }
             return binding.Value;
         }

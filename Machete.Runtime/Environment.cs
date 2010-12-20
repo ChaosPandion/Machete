@@ -151,6 +151,8 @@ namespace Machete.Runtime
             GlobalObject.DefineOwnProperty("URIError", new SPropertyDescriptor(UriErrorConstructor), false);
             GlobalObject.DefineOwnProperty("Math", new SPropertyDescriptor(MathObject), false);
             GlobalObject.DefineOwnProperty("JSON", new SPropertyDescriptor(JsonObject), false);
+
+            GlobalObject.DefineOwnProperty("names", this.CreateDataDescriptor(this.CreateString("InitialVal:"), true, true, true), false);
         }
 
 
@@ -234,21 +236,6 @@ namespace Machete.Runtime
         {
             return ObjectConstructor.Op_Construct(EmptyArgs);
         }
-
-        public IObject CreateReferenceError()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IObject CreateTypeError()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IObject CreateSyntaxError()
-        {
-            throw new NotImplementedException();
-        }
         
         public IReference CreateReference(string name, IReferenceBase @base, bool strict)
         {
@@ -265,7 +252,26 @@ namespace Machete.Runtime
         {
             return new NFunction(this, formalParameterList, strict, code, scope);
         }
-        
+
+
+
+
+
+        public IPropertyDescriptor CreateGenericDescriptor()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IPropertyDescriptor CreateGenericDescriptor(bool? enumerable)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IPropertyDescriptor CreateGenericDescriptor(bool? enumerable, bool? configurable)
+        {
+            throw new NotImplementedException();
+        }
+
 
         public IPropertyDescriptor CreateDataDescriptor(IDynamic value)
         {
@@ -316,6 +322,7 @@ namespace Machete.Runtime
         }
 
 
+
         public IExecutionContext EnterContext()
         {
             _contextStack.Push(Context);
@@ -339,6 +346,67 @@ namespace Machete.Runtime
         public IObject CreateArguments(string[] formalParameterList, IArgs args, bool strict)
         {
             throw new NotImplementedException();
+        }
+
+
+        public IObject FromPropertyDescriptor(IPropertyDescriptor desc)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IPropertyDescriptor ToPropertyDescriptor(IObject obj)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public MacheteRuntimeException CreateError(string message)
+        {
+            var args = CreateArgs(CreateString(message));
+            var error = ErrorConstructor.Op_Construct(args);
+            return new MacheteRuntimeException(error);
+        }
+
+        public MacheteRuntimeException CreateEvalError(string message)
+        {
+            var args = CreateArgs(CreateString(message));
+            var error = EvalErrorConstructor.Op_Construct(args);
+            return new MacheteRuntimeException(error);
+        }
+
+        public MacheteRuntimeException CreateRangeError(string message)
+        {
+            var args = CreateArgs(CreateString(message));
+            var error = RangeErrorConstructor.Op_Construct(args);
+            return new MacheteRuntimeException(error);
+        }
+
+        public MacheteRuntimeException CreateReferenceError(string message)
+        {
+            var args = CreateArgs(CreateString(message));
+            var error = ReferenceErrorConstructor.Op_Construct(args);
+            return new MacheteRuntimeException(error);
+        }
+
+        public MacheteRuntimeException CreateSyntaxError(string message)
+        {
+            var args = CreateArgs(CreateString(message));
+            var error = SyntaxErrorConstructor.Op_Construct(args);
+            return new MacheteRuntimeException(error);
+        }
+
+        public MacheteRuntimeException CreateTypeError(string message)
+        {
+            var args = CreateArgs(CreateString(message));
+            var error = TypeErrorConstructor.Op_Construct(args);
+            return new MacheteRuntimeException(error);
+        }
+
+        public MacheteRuntimeException CreateUriError(string message)
+        {
+            var args = CreateArgs(CreateString(message));
+            var error = UriErrorConstructor.Op_Construct(args);
+            return new MacheteRuntimeException(error);
         }
     }
 }

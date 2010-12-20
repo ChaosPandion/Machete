@@ -209,8 +209,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 if (_strictReference)
                 {
-                    _environment.CreateSyntaxError().Op_Throw();
-                    return null;
+                    throw _environment.CreateSyntaxError("");
                 }
                 return _environment.True;
             }
@@ -218,8 +217,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 if (_strictReference)
                 {
-                    _environment.CreateSyntaxError().Op_Throw();
-                    return null;
+                    throw _environment.CreateSyntaxError("");
                 }
                 return _environment.CreateBoolean(((IEnvironmentRecord)_base).DeleteBinding(_referencedName));
             }
@@ -293,8 +291,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             var callable = Value as ICallable;
             if (callable == null)
             {
-                _environment.CreateTypeError().Op_Throw();
-                return null;
+                throw _environment.CreateTypeError("");
             }
             if (IsPropertyReference)
             {
@@ -363,7 +360,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         {
             if (_strictReference && _base is IEnvironmentRecord && (_referencedName == "eval" || _referencedName == "arguments"))
             {
-                _environment.CreateSyntaxError().Op_Throw();
+                throw _environment.CreateSyntaxError("");
             }
         }
     }
