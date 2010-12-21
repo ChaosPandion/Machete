@@ -318,16 +318,19 @@ type Compiler(environment:IEnvironment) as this =
         | Arguments Nil -> 
             call environmentParam Reflection.IEnvironment.get_EmptyArgs Array.empty
         | Arguments e ->
-            evalArgumentList { state with element = e }
+            let result = evalArgumentList [] { state with element = e } |> List.rev
+            let newArray = exp.NewArrayInit(typeof<IDynamic>, result)
+            call environmentParam Reflection.IEnvironment.createArgsMany [| newArray |]
 
-    and evalArgumentList (state:State) =
+    and evalArgumentList (result:list<exp>) (state:State) =
         match state.element with
         | ArgumentList (Nil, e) -> 
-            call environmentParam Reflection.IEnvironment.createArgsSingle [| evalAssignmentExpression { state with element = e } |]
+            let arg = evalAssignmentExpression { state with element = e }
+            arg::result
         | ArgumentList (e1, e2) ->
-            let first = evalArgumentList { state with element = e1 }
-            let last = call environmentParam Reflection.IEnvironment.createArgsSingle [| evalAssignmentExpression { state with element = e2 } |]
-            call environmentParam Reflection.IEnvironment.concatArgs [| first; last |]
+            let result = evalArgumentList result { state with element = e1 } 
+            let arg = evalAssignmentExpression { state with element = e2 }
+            arg::result
 
     and evalCallExpression (state:State) =    
         match state.element with

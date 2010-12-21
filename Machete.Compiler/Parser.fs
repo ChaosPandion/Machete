@@ -340,7 +340,7 @@ module Parser =
     and objectLiteral =
         parse {
             do! skip expectOpenBrace
-            let! e = propertyNameAndValueList
+            let! e = propertyNameAndValueList <|> nil
             do! skip (maybe expectComma)
             do! skip expectCloseBrace
             return ObjectLiteral e

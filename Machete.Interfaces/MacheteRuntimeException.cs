@@ -5,6 +5,12 @@
         private readonly IDynamic _thrown;
 
 
+        public override string Message
+        {
+            get { 
+                return _thrown.ToString(); }
+        }
+
         public MacheteRuntimeException(IDynamic thrown)
         {
             _thrown = thrown;

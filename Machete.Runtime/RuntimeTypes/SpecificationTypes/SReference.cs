@@ -288,21 +288,26 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public IDynamic Op_Call(IArgs args)
         {
-            var callable = Value as ICallable;
-            if (callable == null)
+            var c = Value as ICallable;
+            if (c == null)
             {
-                throw _environment.CreateTypeError("");
+                throw _environment.CreateTypeError("'" + _referencedName + "' is not a callable object.");
             }
             if (IsPropertyReference)
             {
-                return callable.Call(_environment, (IDynamic)_base, args);
+                return c.Call(_environment, (IDynamic)_base, args);
             }
-            return callable.Call(_environment, ((IEnvironmentRecord)_base).ImplicitThisValue(), args);
+            return c.Call(_environment, ((IEnvironmentRecord)_base).ImplicitThisValue(), args);
         }
 
         public IObject Op_Construct(IArgs args)
         {
-            return Value.Op_Construct(args);
+            var c = Value as IConstructable;
+            if (c == null)
+            {
+                throw _environment.CreateTypeError("'" + _referencedName + "' is not a constructable object.");
+            }
+            return c.Construct(_environment, args);
         }
 
         public void Op_Throw()

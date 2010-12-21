@@ -1,6 +1,8 @@
-﻿namespace Machete.Interfaces
+﻿using System;
+
+namespace Machete.Interfaces
 {
-    public interface IPropertyDescriptor
+    public interface IPropertyDescriptor : IEquatable<IPropertyDescriptor>
     {
         IDynamic Value { get; set; }
         bool? Writable { get; set; }
@@ -12,5 +14,7 @@
         bool IsDataDescriptor { get; }
         bool IsGenericDescriptor { get; }
         bool IsEmpty { get; }
+
+        IPropertyDescriptor Copy();
     }
 }

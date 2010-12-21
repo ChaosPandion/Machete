@@ -102,57 +102,55 @@ namespace Machete.Runtime
             TypeErrorPrototype.Prototype = ErrorPrototype;
             UriErrorPrototype.Prototype = ErrorPrototype;
 
-            ObjectConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(ObjectPrototype), false);
-            FunctionConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(FunctionPrototype), false);
-            ArrayConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(ArrayPrototype), false);
-            StringConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(StringPrototype), false);
-            BooleanConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(BooleanPrototype), false);
-            NumberConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(NumberPrototype), false);
-            DateConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(DatePrototype), false);
-            RegExpConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(RegExpPrototype), false);
-            ErrorConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(ErrorPrototype), false);
-            EvalErrorConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(EvalErrorPrototype), false);
-            RangeErrorConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(RangeErrorPrototype), false);
-            ReferenceErrorConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(ReferenceErrorPrototype), false);
-            SyntaxErrorConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(SyntaxErrorPrototype), false);
-            TypeErrorConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(TypeErrorPrototype), false);
-            UriErrorConstructor.DefineOwnProperty("prototype", new SPropertyDescriptor(UriErrorPrototype), false);
+            ObjectConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ObjectPrototype), false);
+            FunctionConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(FunctionPrototype), false);
+            ArrayConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ArrayPrototype), false);
+            StringConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(StringPrototype), false);
+            BooleanConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(BooleanPrototype), false);
+            NumberConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(NumberPrototype), false);
+            DateConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(DatePrototype), false);
+            RegExpConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(RegExpPrototype), false);
+            ErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ErrorPrototype), false);
+            EvalErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(EvalErrorPrototype), false);
+            RangeErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(RangeErrorPrototype), false);
+            ReferenceErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ReferenceErrorPrototype), false);
+            SyntaxErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(SyntaxErrorPrototype), false);
+            TypeErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(TypeErrorPrototype), false);
+            UriErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(UriErrorPrototype), false);
 
-            ObjectPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(ObjectConstructor), false);
-            FunctionPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(FunctionConstructor), false);
-            ArrayPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(ArrayConstructor), false);
-            StringPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(StringConstructor), false);
-            BooleanPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(BooleanConstructor), false);
-            NumberPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(NumberConstructor), false);
-            DatePrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(DateConstructor), false);
-            RegExpPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(RegExpConstructor), false);
-            ErrorPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(ErrorConstructor), false);
-            EvalErrorPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(EvalErrorConstructor), false);
-            RangeErrorPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(RangeErrorConstructor), false);
-            ReferenceErrorPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(ReferenceErrorConstructor), false);
-            SyntaxErrorPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(SyntaxErrorConstructor), false);
-            TypeErrorPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(TypeErrorConstructor), false);
-            UriErrorPrototype.DefineOwnProperty("constructor", new SPropertyDescriptor(UriErrorConstructor), false);
+            ObjectPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ObjectConstructor), false);
+            FunctionPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(FunctionConstructor), false);
+            ArrayPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ArrayConstructor), false);
+            StringPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(StringConstructor), false);
+            BooleanPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(BooleanConstructor), false);
+            NumberPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(NumberConstructor), false);
+            DatePrototype.DefineOwnProperty("constructor", CreateDataDescriptor(DateConstructor), false);
+            RegExpPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(RegExpConstructor), false);
+            ErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ErrorConstructor), false);
+            EvalErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(EvalErrorConstructor), false);
+            RangeErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(RangeErrorConstructor), false);
+            ReferenceErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ReferenceErrorConstructor), false);
+            SyntaxErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(SyntaxErrorConstructor), false);
+            TypeErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(TypeErrorConstructor), false);
+            UriErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(UriErrorConstructor), false);
 
-            GlobalObject.DefineOwnProperty("Object", new SPropertyDescriptor(ObjectConstructor), false);
-            GlobalObject.DefineOwnProperty("Function", new SPropertyDescriptor(FunctionConstructor), false);
-            GlobalObject.DefineOwnProperty("Array", new SPropertyDescriptor(ArrayConstructor), false);
-            GlobalObject.DefineOwnProperty("String", new SPropertyDescriptor(StringConstructor), false);
-            GlobalObject.DefineOwnProperty("Boolean", new SPropertyDescriptor(BooleanConstructor), false);
-            GlobalObject.DefineOwnProperty("Number", new SPropertyDescriptor(NumberConstructor), false);
-            GlobalObject.DefineOwnProperty("Date", new SPropertyDescriptor(DateConstructor), false);
-            GlobalObject.DefineOwnProperty("RegExp", new SPropertyDescriptor(RegExpConstructor), false);
-            GlobalObject.DefineOwnProperty("Error", new SPropertyDescriptor(ErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("EvalError", new SPropertyDescriptor(EvalErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("RangeError", new SPropertyDescriptor(RangeErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("ReferenceError", new SPropertyDescriptor(ReferenceErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("SyntaxError", new SPropertyDescriptor(SyntaxErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("TypeError", new SPropertyDescriptor(TypeErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("URIError", new SPropertyDescriptor(UriErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("Math", new SPropertyDescriptor(MathObject), false);
-            GlobalObject.DefineOwnProperty("JSON", new SPropertyDescriptor(JsonObject), false);
-
-            GlobalObject.DefineOwnProperty("names", this.CreateDataDescriptor(this.CreateString("InitialVal:"), true, true, true), false);
+            GlobalObject.DefineOwnProperty("Object", CreateDataDescriptor(ObjectConstructor), false);
+            GlobalObject.DefineOwnProperty("Function", CreateDataDescriptor(FunctionConstructor), false);
+            GlobalObject.DefineOwnProperty("Array", CreateDataDescriptor(ArrayConstructor), false);
+            GlobalObject.DefineOwnProperty("String", CreateDataDescriptor(StringConstructor), false);
+            GlobalObject.DefineOwnProperty("Boolean", CreateDataDescriptor(BooleanConstructor), false);
+            GlobalObject.DefineOwnProperty("Number", CreateDataDescriptor(NumberConstructor), false);
+            GlobalObject.DefineOwnProperty("Date", CreateDataDescriptor(DateConstructor), false);
+            GlobalObject.DefineOwnProperty("RegExp", CreateDataDescriptor(RegExpConstructor), false);
+            GlobalObject.DefineOwnProperty("Error", CreateDataDescriptor(ErrorConstructor), false);
+            GlobalObject.DefineOwnProperty("EvalError", CreateDataDescriptor(EvalErrorConstructor), false);
+            GlobalObject.DefineOwnProperty("RangeError", CreateDataDescriptor(RangeErrorConstructor), false);
+            GlobalObject.DefineOwnProperty("ReferenceError", CreateDataDescriptor(ReferenceErrorConstructor), false);
+            GlobalObject.DefineOwnProperty("SyntaxError", CreateDataDescriptor(SyntaxErrorConstructor), false);
+            GlobalObject.DefineOwnProperty("TypeError", CreateDataDescriptor(TypeErrorConstructor), false);
+            GlobalObject.DefineOwnProperty("URIError", CreateDataDescriptor(UriErrorConstructor), false);
+            GlobalObject.DefineOwnProperty("Math", CreateDataDescriptor(MathObject), false);
+            GlobalObject.DefineOwnProperty("JSON", CreateDataDescriptor(JsonObject), false);
         }
 
 
@@ -196,6 +194,7 @@ namespace Machete.Runtime
         public IObject UriErrorPrototype { get; private set; }
         public IObject JsonObject { get; private set; }
 
+ 
         
         public IBoolean CreateBoolean(bool value)
         {

@@ -28,7 +28,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         IObject IConstructable.Construct(IEnvironment environment, IArgs args)
         {
-            var obj = environment.CreateObject();
+            var obj = new LObject(environment);
             obj.Class = "Object";
             obj.Extensible = true;
             obj.Prototype = environment.ObjectPrototype;

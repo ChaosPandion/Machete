@@ -76,7 +76,6 @@
     | InputElement of InputElement
     | Expression of SourceElement * SourceElement
     | ExpressionNoIn of SourceElement * SourceElement
-    //| AssignmentOperator of InputElement
     | AssignmentExpression of SourceElement * AssignmentOperator * SourceElement
     | AssignmentExpressionNoIn of SourceElement * AssignmentOperator * SourceElement
     | ConditionalExpression of SourceElement * SourceElement * SourceElement
@@ -100,16 +99,10 @@
     | MultiplicativeExpression of SourceElement * MultiplicativeOperator * SourceElement
     | UnaryExpression of UnaryOperator * SourceElement
     | PostfixExpression of SourceElement * PostfixOperator
-
     | MemberExpression of SourceElement * SourceElement
-    //| MemberExpressionRest of SourceElement * SourceElement
-
     | Arguments of SourceElement
     | ArgumentList of SourceElement * SourceElement
-
-    | CallExpression of SourceElement * SourceElement// * SourceElement
-    //| CallExpressionRest of SourceElement * SourceElement
-
+    | CallExpression of SourceElement * SourceElement
     | NewExpression of SourceElement
     | LeftHandSideExpression of SourceElement
     | PrimaryExpression of SourceElement

@@ -160,7 +160,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 ((ICallable)desc.Set).Call(null, this, new SArgs(_environment, value));
             }
-            var newDesc = new SPropertyDescriptor(value, true, true, true);
+            var newDesc = Environment.CreateDataDescriptor(value, true, true, true);
             DefineOwnProperty(p, newDesc, @throw);
         }
 
@@ -193,31 +193,30 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public virtual IDynamic DefaultValue(string hint)
         {
-            if (hint == "String")
+            var toString = Get("toString") as ICallable;
+            var valueOf = Get("valueOf") as ICallable;
+            var first = hint == "String" ? toString : valueOf;
+            var second = hint == "String" ? valueOf : toString;
+
+            if (first != null)
             {
-                var func = Get("toString") as ICallable ?? Get("valueOf") as ICallable;
-                if (func != null)
+                var result = first.Call(Environment, this, Environment.EmptyArgs);
+                if (result.IsPrimitive)
                 {
-                    var result = func.Call(Environment, this, new SArgs(Environment));
-                    if (result.IsPrimitive)
-                    {
-                        return result;
-                    }
+                    return result;
                 }
             }
-            else
+
+            if (second != null)
             {
-                var func = Get("valueOf") as ICallable ?? Get("toString") as ICallable;
-                if (func != null)
+                var result = second.Call(Environment, this, Environment.EmptyArgs);
+                if (result.IsPrimitive)
                 {
-                    var result = func.Call(Environment, this, new SArgs(Environment));
-                    if (result.IsPrimitive)
-                    {
-                        return result;
-                    }
+                    return result;
                 }
             }
-            throw _environment.CreateTypeError("");
+
+            throw _environment.CreateTypeError("No primitive value was found for object.");
         }
 
         public virtual bool DefineOwnProperty(string p, IPropertyDescriptor desc, bool @throw)
@@ -252,7 +251,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 );
                 return true;
             }
-            else if (desc.IsEmpty || ((SPropertyDescriptor)current).Matches(desc))
+            else if (desc.IsEmpty || current.Equals(desc))
             {
                 return true;
             }
@@ -325,7 +324,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             current.Set = desc.Set ?? current.Set;
             current.Enumerable = desc.Enumerable ?? current.Enumerable;
             current.Configurable = desc.Configurable ?? current.Configurable;
-            _map[p] = (SPropertyDescriptor)current;
+            _map[p] = current;
             return true;
         }
         
@@ -527,7 +526,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Call(IArgs args)
         {
-            return LType.Op_Call(_environment, this, args);
+            var c = this as ICallable;
+            if (c == null)
+            {
+                throw Environment.CreateTypeError("");
+            }
+            return c.Call(Environment, this, args);
         }
 
         public IObject Op_Construct(IArgs args)
@@ -535,10 +539,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             var c = this as IConstructable;
             if (c == null)
             {
-                throw new Exception();
+                throw Environment.CreateTypeError("");
             }
             return c.Construct(Environment, args);
-            //return LType.Op_Construct(_environment, this, args);
         }
 
         public void Op_Throw()
