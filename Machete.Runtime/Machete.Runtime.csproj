@@ -105,7 +105,6 @@
     <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PObject.cs" />
     <Compile Include="NativeObjects\NArguments.cs" />
     <Compile Include="NativeObjects\NArray.cs" />
-    <Compile Include="NativeObjects\NativeFunctionAttribute.cs" />
     <Compile Include="NativeObjects\NBoolean.cs" />
     <Compile Include="NativeObjects\NDate.cs" />
     <Compile Include="NativeObjects\NError.cs" />

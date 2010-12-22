@@ -45,6 +45,8 @@ namespace Machete.Interfaces
         IObject UriErrorPrototype { get; }
         IObject JsonObject { get; }
 
+        IFunction ThrowTypeErrorFunction { get; } 
+
         IReference CreateReference(string name, IReferenceBase @base, bool strict);
         IBoolean CreateBoolean(bool value);
         IString CreateString(string value);
@@ -68,10 +70,10 @@ namespace Machete.Interfaces
         MacheteRuntimeException CreateTypeError(string message);
         MacheteRuntimeException CreateUriError(string message);
 
-        IObject CreateArguments(string[] formalParameterList, IArgs args, bool strict);
+        IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict);
 
-        IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code);
-        IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
+        IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code);
+        IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
 
 
         IPropertyDescriptor CreateGenericDescriptor();

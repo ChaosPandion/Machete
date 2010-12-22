@@ -11,17 +11,20 @@ using Machete.Runtime.NativeObjects;
 using Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Interfaces;
+using Machete.Compiler;
 
 namespace Machete.Runtime
 {
     public sealed class Environment : IEnvironment
     {
         private readonly Stack<IExecutionContext> _contextStack;
+        private readonly Machete.Compiler.Compiler _compiler;
     
 
         public Environment()
         {
             _contextStack = new Stack<IExecutionContext>();
+            _compiler = new Compiler.Compiler(this);
 
             EmptyArgs = new SArgs(this);
             True = new LBoolean(this, true);
@@ -194,6 +197,7 @@ namespace Machete.Runtime
         public IObject UriErrorPrototype { get; private set; }
         public IObject JsonObject { get; private set; }
 
+        public IFunction ThrowTypeErrorFunction { get; private set; }
  
         
         public IBoolean CreateBoolean(bool value)
@@ -241,15 +245,39 @@ namespace Machete.Runtime
             return new SReference(this, @base, name, strict);
         }
 
-        
-        public IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code)
+
+        public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code)
         {
-            return new NFunction(this, formalParameterList, strict, code, Context.VariableEnviroment);
+            return CreateFunction(formalParameterList, strict, code, Context.VariableEnviroment);
         }
 
-        public IObject CreateFunction(string[] formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope)
+        public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope)
         {
-            return new NFunction(this, formalParameterList, strict, code, scope);
+            // 13.2 Creating Function Objects 
+
+            var f = new NFunction(this);
+            {
+                f.Class = "Function";
+                f.Extensible = true;
+                f.Prototype = FunctionPrototype;
+                f.FormalParameterList = formalParameterList;
+                f.Code = code;
+                f.Strict = strict;
+                f.Scope = scope;
+                f.DefineOwnProperty("length", CreateDataDescriptor(CreateNumber(formalParameterList.Count)), false);
+
+                var proto = ObjectConstructor.Op_Construct(EmptyArgs);
+                f.DefineOwnProperty("constructor", CreateDataDescriptor(proto, true, false, true), false);
+                f.DefineOwnProperty("prototype", CreateDataDescriptor(proto, true, false, false), false);
+
+                if (strict)
+                {
+                    var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
+                    f.DefineOwnProperty("caller", desc, false);
+                    f.DefineOwnProperty("argument", desc, false);
+                }
+            }
+            return f;
         }
 
 
@@ -336,17 +364,77 @@ namespace Machete.Runtime
         }
 
 
-        public IObject CreateArguments(string[] formalParameterList, IArgs args)
+
+
+        public IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict)
         {
-            throw new NotImplementedException();
+            var obj = new NArguments(this);
+            var len = CreateNumber(args.Count);
+            var lenDesc = CreateDataDescriptor(len, true, false, true);
+            var map = ObjectConstructor.Op_Construct(EmptyArgs);
+            var mappedNames = new List<string>();
+            var index = args.Count - 1;
+
+            obj.Class = "Arguments";
+            obj.Extensible = true;
+            obj.Prototype = ObjectPrototype;
+            obj.DefineOwnProperty("length", lenDesc, false);
+
+            do
+            {
+                var val = args[index];
+                var valDesc = CreateDataDescriptor(val, true, true, true);
+
+                obj.DefineOwnProperty(index.ToString(), valDesc, false);
+                if (index < formalParameterList.Count)
+                {
+                    var name = formalParameterList[index];
+                    if (!strict)
+                    {
+                        var g = MakeArgGetter(name);
+                        var p = MakeArgSetter(name);
+                        var desc = CreateAccessorDescriptor(g, p, false, true);
+
+                        map.DefineOwnProperty(name, desc, false);
+                        mappedNames.Add(name);
+                    }
+                }
+            } while (--index >= 0) ;
+
+            if (mappedNames.Count > 0)
+            {
+                obj.ParameterMap = map;
+            }
+
+            if (!strict)
+            {
+                var desc = CreateDataDescriptor(Context.CurrentFunction, true, false, true);
+                obj.DefineOwnProperty("callee", desc, false);
+            }
+            else
+            {
+                var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
+                obj.DefineOwnProperty("caller", desc, false);
+                obj.DefineOwnProperty("callee", desc, false);
+            }
+
+            return obj;
         }
 
-
-        public IObject CreateArguments(string[] formalParameterList, IArgs args, bool strict)
+        private IObject MakeArgGetter(string name)
         {
-            throw new NotImplementedException();
+            var fpl = ReadOnlyList<string>.Empty;
+            var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, "return " + name + ";"));
+            return CreateFunction(fpl, true, code, Context.VariableEnviroment);
         }
 
+        private IObject MakeArgSetter(string name)
+        {
+            var param = name + "_arg";
+            var fpl = new ReadOnlyList<string>(param);
+            var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, name + " = " + param + ";"));
+            return CreateFunction(fpl, true, code, Context.VariableEnviroment);
+        }
 
         public IObject FromPropertyDescriptor(IPropertyDescriptor desc)
         {

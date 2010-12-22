@@ -9,7 +9,7 @@ namespace Machete.Runtime.NativeObjects
 {
     public sealed class NArguments : LObject
     {
-        public LObject ParameterMap { get; set; }
+        public IObject ParameterMap { get; set; }
 
         public NArguments(IEnvironment environment)
             : base(environment)

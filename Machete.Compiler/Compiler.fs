@@ -17,7 +17,7 @@ type internal State = {
     strict : bool
     element : SourceElement
     labels : list<Map<string, label>>
-    functions : list<string * string[] * SourceElement>
+    functions : list<string * ReadOnlyList<string> * SourceElement>
     variables : list<string>
     returnExpression : exp
 } 
@@ -459,7 +459,7 @@ type Compiler(environment:IEnvironment) as this =
                 let createDesc = call environmentParam Reflection.IEnvironment.createDataDescriptor4 [| getValue; nullTrue; nullTrue; nullTrue  |]
                 name, DataProperty, createDesc
             | FunctionBody _ ->                
-                let code = lazy(compileFunctionCode(Array.empty, e2))
+                let code = lazy(compileFunctionCode(ReadOnlyList<string>.Empty, e2))
                 let args = [| constant Array.empty<string>; constant state.strict; constant code |]  
                 let createFunction = call environmentParam Reflection.IEnvironment.createFunction1 args
                 let createDesc = call environmentParam Reflection.IEnvironment.createAccessorDescriptor3 [| createFunction; constant null; nullTrue; nullTrue  |]
@@ -467,7 +467,7 @@ type Compiler(environment:IEnvironment) as this =
         | PropertyAssignment (e1, e2, e3) ->
             let name = evalPropertyName { state with element = e1 } 
             let setParams =  evalPropertySetParameterList { state with element = e2 }                 
-            let code = lazy(compileFunctionCode(Array.empty, e2))
+            let code = lazy(compileFunctionCode(setParams, e2))
             let args = [| constant setParams; constant state.strict; constant code |]  
             let createFunction = call environmentParam Reflection.IEnvironment.createFunction1 args
             let createDesc = call environmentParam Reflection.IEnvironment.createAccessorDescriptor3 [| constant null; createFunction; nullTrue; nullTrue  |]
@@ -487,7 +487,7 @@ type Compiler(environment:IEnvironment) as this =
     and evalPropertySetParameterList (state:State) =
         match state.element with
         | PropertySetParameterList e ->
-            [| Lexer.IdentifierNameParser.evalIdentifierName e |]
+            ReadOnlyList<string>([| Lexer.IdentifierNameParser.evalIdentifierName e |])
 
     and evalArrayLiteral (state:State) =
         let arrayVar = exp.Variable(typeof<IObject>, "array")
@@ -999,13 +999,13 @@ type Compiler(environment:IEnvironment) as this =
         match state.element with
         | FunctionDeclaration (Lexer.Identifier e1, e2, e3) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
-            let formalParameterList = match e2 with | SourceElement.Nil -> Array.empty | _ -> evalFormalParameterList { state with element = e2 } 
+            let formalParameterList = match e2 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e2 } 
             getUndefined, { state with functions = (identifier, formalParameterList, e3)::state.functions }
 
     and evalFunctionExpression (state:State) =
         match state.element with
         | FunctionExpression (Lexer.Nil, e1, e2) ->
-            let formalParameterList = match e2 with | SourceElement.Nil -> Array.empty | _ -> evalFormalParameterList { state with element = e1 }          
+            let formalParameterList = match e2 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e1 }          
             let code = lazy(compileFunctionCode(formalParameterList, e2))
             let args = [| constant formalParameterList; constant state.strict; constant code |]  
             call environmentParam Reflection.IEnvironment.createFunction1 args
@@ -1017,7 +1017,7 @@ type Compiler(environment:IEnvironment) as this =
             let getEnv = call getEnv Reflection.ILexicalEnvironment.newDeclarativeEnvironment Array.empty
             let assignScope = exp.Assign(scopeVar, getEnv) :> exp
             let getRecord = exp.Convert(call scopeVar Reflection.ILexicalEnvironment.get_Record Array.empty, typeof<IDeclarativeEnvironmentRecord>)
-            let formalParameterList = match e2 with | SourceElement.Nil -> Array.empty | _ -> evalFormalParameterList { state with element = e2 }          
+            let formalParameterList = match e2 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e2 }          
             let code = lazy(compileFunctionCode(formalParameterList, e3))
             let args = [| constant formalParameterList; constant state.strict; constant code; scopeVar:>exp |] 
             let createFunction = call environmentParam Reflection.IEnvironment.createFunction2 args
@@ -1039,7 +1039,7 @@ type Compiler(environment:IEnvironment) as this =
                 match e1 with
                 | InputElement(Lexer.Identifier e1) ->
                     Lexer.IdentifierNameParser.evalIdentifierName e1::result
-        run [] state.element |> List.toArray
+        ReadOnlyList<string>(run [] state.element)
 
     and evalFunctionBody (state:State) =
         let target = state.labels.Head.["return"].Target
@@ -1092,7 +1092,7 @@ type Compiler(environment:IEnvironment) as this =
         let r = continuation.Invoke (environment, args)
         r
   
-    and performFunctionArgumentsBinding (formalParameterList:string[]) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
+    and performFunctionArgumentsBinding (formalParameterList:ReadOnlyList<string>) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
         let i = ref -1
         let env = environment.Context.VariableEnviroment.Record
         for name in formalParameterList do
@@ -1124,7 +1124,7 @@ type Compiler(environment:IEnvironment) as this =
         let continuation = exp.Lambda<Code>(block [| body; returnLabel |], [| environmentParam; argsParam |]).Compile()
         Code(performDeclarationBinding false state continuation)
 
-    and compileFunctionCode (formalParameterList:string[], functionBody:SourceElement) =
+    and compileFunctionCode (formalParameterList:ReadOnlyList<string>, functionBody:SourceElement) =
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
         let state = { strict = false; element = functionBody; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
         let body, state = evalFunctionBody state
@@ -1138,8 +1138,15 @@ type Compiler(environment:IEnvironment) as this =
     member this.CompileEvalCode (input:string) =
         compileEvalCode input
 
-    member this.CompileFunctionCode (formalParameterList:string[], functionBody:SourceElement) =
+    member this.CompileFunctionCode (formalParameterList:ReadOnlyList<string>, functionBody:SourceElement) =
         compileFunctionCode (formalParameterList, functionBody)
+
+    member this.CompileFunctionCode (formalParameterList:ReadOnlyList<string>, functionBody:string) =
+        let functionBody = 
+            let r = Parser.parse functionBody
+            match r with
+            | Program e -> e
+        compileFunctionCode (formalParameterList, FunctionBody(functionBody))
 
     static member private equalityTest (left:obj, right:obj) =
         let left = left :?> IDynamic
