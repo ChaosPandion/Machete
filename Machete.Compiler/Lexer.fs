@@ -68,98 +68,6 @@ module Lexer =
     | RegularExpressionClassChars of InputElement * InputElement
     | RegularExpressionClassChar of InputElement
     | RegularExpressionFlags of InputElement * InputElement
-//    | Null
-//    | True
-//    | False
-//    | Break 
-//    | Case 
-//    | Catch 
-//    | Continue 
-//    | Debugger 
-//    | Default 
-//    | Delete 
-//    | Do
-//    | Else 
-//    | Finally 
-//    | For 
-//    | Function
-//    | If 
-//    | In 
-//    | Instanceof 
-//    | New
-//    | Return
-//    | Switch
-//    | This 
-//    | Throw 
-//    | Try 
-//    | Typeof
-//    | Var 
-//    | Void
-//    | While 
-//    | With
-//    | Class
-//    | Const
-//    | Enum
-//    | Export
-//    | Extends
-//    | Implements
-//    | Import
-//    | Interface
-//    | Let
-//    | Package
-//    | Private
-//    | Protected
-//    | Public
-//    | Static
-//    | Super
-//    | Yield
-//    | LeftCurlyBracket
-//    | RightCurlyBracket
-//    | LeftParenthesis
-//    | RightParenthesis
-//    | LeftSquareBracket
-//    | RightSquareBracket
-//    | FullStop
-//    | Comma
-//    | LessThan
-//    | GreaterThan
-//    | LessThanOrEqual
-//    | GreaterThanOrEqual
-//    | Equal
-//    | DoesNotEqual
-//    | StrictEqual
-//    | StrictDoesNotEqual
-//    | Plus
-//    | Minus
-//    | Multiply
-//    | Divide
-//    | Modulus
-//    | Increment
-//    | Decrement
-//    | LeftShift
-//    | SignedRightShift
-//    | UnsignedRightShift
-//    | BitwiseAnd
-//    | BitwiseOr
-//    | BitwiseXor
-//    | LogicalNot
-//    | BitwiseNot
-//    | LogicalAnd
-//    | LogicalOr
-//    | QuestionMark
-//    | Colon
-//    | Assign
-//    | PlusAssign
-//    | MinusAssign
-//    | MultiplyAssign
-//    | DivideAssign
-//    | ModulusAssign
-//    | LeftShiftAssign
-//    | SignedRightShiftAssign
-//    | UnsignedRightShiftAssign
-//    | BitwiseAndAssign
-//    | BitwiseOrAssign
-//    | BitwiseXorAssign
 
 
     type LexerState = {
@@ -170,6 +78,8 @@ module Lexer =
     let str s = pstring s |>> Str
     let chr c = pchar c |>> Chr
     let maybe p = p <|> preturn Nil
+
+    let identifierStart, identifierStartRef = createParserForwardedToRef<InputElement, LexerState>()
 
     module WhiteSpace =
         let parseWhiteSpace<'a> : Parser<InputElement, 'a> =
@@ -203,10 +113,10 @@ module Lexer =
     
         let hexIntegerLiteral<'a> : Parser<InputElement, 'a> =
             parse {
-                let! a = anyOf "0"
-                let! b = anyOf "xX"
-                let! c = many1Fold Nil (fun x y -> HexIntegerLiteral (x, y)) hexDigit 
-                return c 
+                do! skipChar '0'
+                do! skipAnyOf "xX"
+                let! r = many1Fold Nil (fun x y -> HexIntegerLiteral (x, y)) hexDigit <?> "A hex integer literal was found to be incomplete."
+                return r
             }
 
         let nonZeroDigit<'a> : Parser<InputElement, 'a> =
@@ -237,19 +147,35 @@ module Lexer =
             |>> (fun a -> DecimalIntegerLiteral a)
         
         let decimalLiteral<'a> : Parser<InputElement, 'a> =
-            let optExp = exponentPart <|> nil
-            let top = pipe3 decimalPoint (decimalDigits <|> nil) optExp (fun a b c -> a, b, c)
-            let middle = pipe3 decimalPoint decimalDigits optExp (fun a b c -> a, b, c)
-            let bottom = optExp |>> (fun a -> Nil, Nil, a)
-            let completeTopOrBottom a (b, c, d) = DecimalLiteral (a, b, c, d)
-            let completeMiddle a b c = DecimalLiteral (Nil, a, b, c)
-            let left = pipe2 decimalIntegerLiteral (top <|> bottom) completeTopOrBottom
-            let right = pipe3 decimalPoint decimalDigits optExp completeMiddle
-            left <|> right
+            attempt (parse {
+                let! i = decimalIntegerLiteral
+                do! skipChar '.'
+                let! f = decimalDigits <|> nil
+                let! e = exponentPart <|> nil
+                return DecimalLiteral (i, DecimalPoint, f, e)
+            }) <|> parse {
+                do! skipChar '.'
+                let! f = decimalDigits
+                let! e = exponentPart <|> nil
+                return DecimalLiteral (Nil, DecimalPoint, f, e)
+            } <|> attempt (parse {
+                let! i = decimalIntegerLiteral
+                let! e = exponentPart <|> nil
+                return DecimalLiteral (i, Nil, Nil, e)
+            })
 
-        let numericLiteral<'a> : Parser<InputElement, 'a> =
-            (decimalLiteral <|> hexIntegerLiteral) |>> NumericLiteral
-
+        let numericLiteral =
+            attempt (parse {
+                let! r = decimalLiteral
+                do! notFollowedBy identifierStart
+                do! notFollowedBy decimalDigit
+                return NumericLiteral r
+            }) <|> parse {
+                let! r = hexIntegerLiteral
+                do! notFollowedBy identifierStart
+                do! notFollowedBy decimalDigit
+                return NumericLiteral r
+            }
 
         let evalHexDigit v =
             match v with
@@ -360,23 +286,30 @@ module Lexer =
                 | DecimalIntegerLiteral (_, _), DecimalPoint, Nil, Nil ->
                     evalDecimalIntegerLiteral a |> double
                 | DecimalIntegerLiteral (_, _), DecimalPoint, DecimalDigits (_, _), Nil -> 
-                    let n = int (10.0 ** -float (countDecimalDigits c 0)) 
-                    evalDecimalIntegerLiteral a + (n * evalDecimalDigits c) |> double
+                    let digitCount = countDecimalDigits c 0 |> double
+                    let fValue = evalDecimalDigits c |> double
+                    let iValue = evalDecimalIntegerLiteral a |> double
+                    iValue + (fValue * 10.0 ** -digitCount)
                 | DecimalIntegerLiteral (_, _), Nil, Nil, ExponentPart (_, _)
                 | DecimalIntegerLiteral (_, _), DecimalPoint, Nil, ExponentPart (_, _) ->
-                    let e = int (10.0 ** -float (evalExponentPart d))
-                    evalDecimalIntegerLiteral a * e |> double
+                    let e = evalExponentPart d |> double
+                    let i = evalDecimalIntegerLiteral a |> double
+                    i * 10.0 ** e
                 | DecimalIntegerLiteral (_, _), DecimalPoint, DecimalDigits (_, _), ExponentPart (_, _) -> 
-                    let n = int (10.0 ** -float (countDecimalDigits c 0))
-                    let e = int (10.0 ** -float (evalExponentPart d))
-                    evalDecimalIntegerLiteral a + (n * evalDecimalDigits c) * e |> double
+                    let digitCount = countDecimalDigits c 0 |> double
+                    let eValue = evalExponentPart d |> double
+                    let fValue = evalDecimalDigits c |> double
+                    let iValue = evalDecimalIntegerLiteral a |> double
+                    (iValue + (fValue * 10.0 ** -digitCount)) * (10.0 ** eValue)
                 | Nil, DecimalPoint, DecimalDigits (_, _), Nil -> 
-                    let n = int (10.0 ** -float (countDecimalDigits c 0))
-                    n * evalDecimalDigits c |> double
+                    let digitCount = countDecimalDigits c 0 |> double
+                    let fValue = evalDecimalDigits c |> double
+                    fValue * 10.0 ** -digitCount
                 | Nil, DecimalPoint, DecimalDigits (_, _), ExponentPart (_, _) -> 
-                    let n = countDecimalDigits c 0
-                    let e = evalExponentPart d
-                    evalDecimalDigits c * int (10.0 ** float (e - n)) |> double
+                    let digitCount = countDecimalDigits c 0 |> double
+                    let eValue = evalExponentPart d |> double
+                    let fValue = evalDecimalDigits c |> double
+                    fValue * 10.0 ** (eValue - digitCount)
                 | _ -> invalidOp "Invalid DecimalLiteral pattern found."                  
             | _ -> invalidArg "v" "Expected DecimalLiteral."
 
@@ -419,10 +352,10 @@ module Lexer =
             (singleEscapeCharacter <|> nonEscapeCharacter) |>> CharacterEscapeSequence 
 
         let hexEscapeSequence<'a> : Parser<InputElement, 'a> =
-            pipe2 hexDigit hexDigit (fun a b -> HexEscapeSequence (a, b))
+            pipe3 (skipChar 'x') hexDigit hexDigit (fun () a b -> HexEscapeSequence (a, b))
 
         let unicodeEscapeSequence<'a> : Parser<InputElement, 'a> =
-            pipe4 hexDigit hexDigit hexDigit hexDigit (fun a b c d -> UnicodeEscapeSequence (a, b, c, d))
+            pipe5 (skipChar 'u') hexDigit hexDigit hexDigit hexDigit (fun () a b c d -> UnicodeEscapeSequence (a, b, c, d))
     
         let escapeSequence<'a> : Parser<InputElement, 'a> =
             let a = characterEscapeSequence
@@ -435,18 +368,25 @@ module Lexer =
             pipe2 (pchar '\\') LineTerminator.parseLineTerminatorSequence (fun a b -> LineContinuation)
 
         let doubleStringCharacter<'a> : Parser<InputElement, 'a> =
-            satisfy (fun c -> c <> '\"' && c <> '\\' && not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr |>> DoubleStringCharacter
+            choice [
+                (satisfy (fun c -> c <> '\"' && c <> '\\' && not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr)
+                attempt (skipChar '\\' >>. escapeSequence)
+                (lineContinuation)
+            ] |>> DoubleStringCharacter
 
         let singleStringCharacter<'a> : Parser<InputElement, 'a> =
-            satisfy (fun c -> c <> '\'' && c <> '\\' && not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr |>> SingleStringCharacter
+            choice [
+                (satisfy (fun c -> c <> ''' && c <> '\\' && not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr)
+                attempt (skipChar '\\' >>. escapeSequence)
+                (lineContinuation)
+            ] |>> SingleStringCharacter
+
     
         let doubleStringCharacters<'a> : Parser<InputElement, 'a> =
             many doubleStringCharacter |>> List.rev |>> List.fold (fun x y -> DoubleStringCharacters (y, x)) Nil 
-            //manyReduce (fun x y -> DoubleStringCharacters (y, x)) Nil doubleStringCharacter
 
         let singleStringCharacters<'a> : Parser<InputElement, 'a> =
             many singleStringCharacter |>> List.rev |>> List.fold (fun x y -> SingleStringCharacters (y, x)) Nil 
-            //manyFold Nil (fun x y -> SingleStringCharacters (y, x)) singleStringCharacter
 
         let stringLiteral<'a> : Parser<InputElement, 'a> =
             let d = between doubleQuote doubleQuote (doubleStringCharacters <|> nil) |>> StringLiteral
@@ -538,7 +478,7 @@ module Lexer =
                 | SingleStringCharacter _, Nil ->
                     evalSingleStringCharacter l |> string
                 | SingleStringCharacter _, SingleStringCharacters (_, _) ->
-                    (evalSingleStringCharacter l |> string) + evalSingleStringCharacters l
+                    (evalSingleStringCharacter l |> string) + evalSingleStringCharacters r
                 | _ -> invalidOp ""                 
             | _ -> invalidArg "v" "Expected SingleStringCharacters."
 
@@ -603,6 +543,8 @@ module Lexer =
 
         let identifierName<'a> : Parser<InputElement, 'a> =
             pipe2 (identifierStart |>> fun a -> IdentifierName (a, Nil)) (many identifierPart) (fun a b -> b |> List.fold (fun a b -> IdentifierName(a, b)) a)
+
+        do identifierStartRef := identifierStart
 
         let evalIdentifierStart v =
             match v with
@@ -747,64 +689,11 @@ module Lexer =
             LineTerminator.parseLineTerminator
             Comment.parseComment
             IdentifierNameParser.identifierName
-            Punctuator.parsePunctuator
             NumericLiteralParser.numericLiteral
+            Punctuator.parsePunctuator
             StringLiteralParser.stringLiteral
             divChoice  
         ]
-
-//    let reservedWordMap =
-//        Map.ofList [
-//            // Keyword
-//            ("break", Break)
-//            ("case", Case)
-//            ("catch", Catch)
-//            ("continue", Continue)
-//            ("debugger", Debugger)
-//            ("default", Default)
-//            ("delete", Delete)
-//            ("do", Do)
-//            ("else", Else)
-//            ("finally", Finally); 
-//            ("for", For)
-//            ("function", Function)
-//            ("if", If)
-//            ("in", In)
-//            ("instanceof", Instanceof)
-//            ("new", New)
-//            ("return", Return)
-//            ("switch", Switch)
-//            ("this", This)
-//            ("throw", Throw)
-//            ("try", Try)
-//            ("typeof", Typeof)
-//            ("var", Var)
-//            ("void", Void)
-//            ("while", While)
-//            ("with", With)
-//            // FutureReservedWord
-//            ("class", Class); 
-//            ("const", Const)
-//            ("enum", Enum); 
-//            ("export", Export)
-//            ("extends", Extends)
-//            ("implements", Implements)
-//            ("import", Import)
-//            ("interface", Interface)
-//            ("let", Let)
-//            ("package", Package)
-//            ("private", Private)
-//            ("protected", Protected)
-//            ("public", Public)
-//            ("static", Static)
-//            ("super", Super)
-//            ("yield", Yield)
-//            // NullLiteral
-//            ("null", Null)
-//            // BooleanLiteral
-//            ("true", True)
-//            ("false", False)
-//        ]
 
     let tokenize (input:string) =        
         let rec tokenize i r =

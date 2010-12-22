@@ -7,7 +7,7 @@ using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LNull : INull
+    public sealed class LNull : INull
     {
         private readonly IEnvironment _environment;
 

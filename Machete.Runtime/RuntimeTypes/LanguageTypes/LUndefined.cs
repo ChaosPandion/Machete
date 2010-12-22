@@ -2,7 +2,7 @@
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LUndefined : IUndefined
+    public sealed class LUndefined : IUndefined
     {
         private readonly IEnvironment _environment;
 
@@ -285,16 +285,13 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         
         public IDynamic Get(string name, bool strict)
         {
-            throw _environment.CreateReferenceError("");
+            throw _environment.CreateReferenceError("The name '" + name + "' could not be resolved.");
         }
 
         public void Set(string name, IDynamic value, bool strict)
         {
-            if (strict)
-            {
-                throw _environment.CreateReferenceError("");
-            }
-            _environment.GlobalObject.Put(name, value, false);
+            if (strict) throw _environment.CreateReferenceError("The name '" + name + "' could not be resolved.");      
+            _environment.GlobalObject.Put(name, value, strict);                       
         }
 
         public override string ToString()

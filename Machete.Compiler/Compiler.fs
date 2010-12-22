@@ -13,11 +13,18 @@ type internal label = System.Linq.Expressions.LabelExpression
 type internal methodinfo = System.Reflection.MethodInfo
 type internal dyn = Machete.Interfaces.IDynamic
 
+type internal Function = {
+    identifier : string
+    formalParameterList : ReadOnlyList<string>
+    strict : bool
+    functionBody : SourceElement 
+}
+
 type internal State = {
     strict : bool
     element : SourceElement
     labels : list<Map<string, label>>
-    functions : list<string * ReadOnlyList<string> * SourceElement>
+    functions : list<Function>
     variables : list<string>
     returnExpression : exp
 } 
@@ -29,20 +36,17 @@ type internal PropertyType =
 
 
 module TreeTraverser =
-    type TraverseResult<'a> = 
-    | Success of 'a
-    | Failure
 
-    type Test<'a, 'b> = 'a -> TraverseResult<'b>
+    type NodeTest<'a, 'b> = 'a -> option<'b>
 
     type TreeTraverser() =
-        member x.Bind (f:Test<'a, 'b>, g:unit -> Test<'b, 'c>) (v:'a) = 
+        member x.Bind (f:NodeTest<'a, 'b>, g:unit -> NodeTest<'b, 'c>) (v:'a) = 
             match f v with
-            | Success v -> g () v
-            | Failure -> TraverseResult<'c>.Failure               
-        member x.Delay (f:unit -> Test<'a, 'b>) = f()
-        member x.Return v1 v2 = Success v1
-        member x.ReturnFrom (f:Test<'a, 'b>) v = f v
+            | Some v -> g () v
+            | None -> None               
+        member x.Delay (f:unit -> NodeTest<'a, 'b>) = f()
+        member x.Return v1 v2 = Some v1
+        member x.ReturnFrom (f:NodeTest<'a, 'b>) v = f v
         
     let traverse = TreeTraverser()
     
@@ -74,58 +78,58 @@ type Compiler(environment:IEnvironment) as this =
 
     let isStrictCode e =
         let isStrictCode = traverse {
-            do! function | SourceElement e -> Success e | _ -> Failure
-            do! function | Statement e -> Success e | _ -> Failure
-            do! function | ExpressionStatement e -> Success e | _ -> Failure
-            do! function | Expression (SourceElement.Nil, e) -> Success e | _ -> Failure
-            do! function | AssignmentExpression (e, AssignmentOperator.Nil, SourceElement.Nil) -> Success e | _ -> Failure
-            do! function | ConditionalExpression (e, SourceElement.Nil, SourceElement.Nil) -> Success e | _ -> Failure            
-            do! function | LogicalORExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
-            do! function | LogicalANDExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
-            do! function | BitwiseORExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
-            do! function | BitwiseXORExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
-            do! function | BitwiseANDExpression (SourceElement.Nil, e) -> Success e | _ -> Failure            
-            do! function | EqualityExpression (SourceElement.Nil, EqualityOperator.Nil, e) -> Success e | _ -> Failure
-            do! function | RelationalExpression (SourceElement.Nil, RelationalOperator.Nil, e) -> Success e | _ -> Failure
-            do! function | ShiftExpression (SourceElement.Nil, BitwiseShiftOperator.Nil, e) -> Success e | _ -> Failure            
-            do! function | AdditiveExpression (SourceElement.Nil, AdditiveOperator.Nil, e) -> Success e | _ -> Failure
-            do! function | MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, e) -> Success e | _ -> Failure
-            do! function | UnaryExpression (UnaryOperator.Nil, e) -> Success e | _ -> Failure
-            do! function | PostfixExpression (e, PostfixOperator.Nil) -> Success e | _ -> Failure            
-            do! function | LeftHandSideExpression (e) -> Success e | _ -> Failure
-            do! function | NewExpression (e) -> Success e | _ -> Failure
-            do! function | MemberExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
-            do! function | PrimaryExpression (e) -> Success e | _ -> Failure
-            do! function | InputElement (e) -> Success e | _ -> Failure
-            do! function | Lexer.Literal (e) -> Success e | _ -> Failure
+            do! function | SourceElement e -> Some e | _ -> None
+            do! function | Statement e -> Some e | _ -> None
+            do! function | ExpressionStatement e -> Some e | _ -> None
+            do! function | Expression (Nil, e) -> Some e | _ -> None
+            do! function | AssignmentExpression (e, AssignmentOperator.Nil, Nil) -> Some e | _ -> None
+            do! function | ConditionalExpression (e, Nil, Nil) -> Some e | _ -> None            
+            do! function | LogicalORExpression (Nil, e) -> Some e | _ -> None
+            do! function | LogicalANDExpression (Nil, e) -> Some e | _ -> None
+            do! function | BitwiseORExpression (Nil, e) -> Some e | _ -> None
+            do! function | BitwiseXORExpression (Nil, e) -> Some e | _ -> None
+            do! function | BitwiseANDExpression (Nil, e) -> Some e | _ -> None            
+            do! function | EqualityExpression (Nil, EqualityOperator.Nil, e) -> Some e | _ -> None
+            do! function | RelationalExpression (Nil, RelationalOperator.Nil, e) -> Some e | _ -> None
+            do! function | ShiftExpression (Nil, BitwiseShiftOperator.Nil, e) -> Some e | _ -> None            
+            do! function | AdditiveExpression (Nil, AdditiveOperator.Nil, e) -> Some e | _ -> None
+            do! function | MultiplicativeExpression (Nil, MultiplicativeOperator.Nil, e) -> Some e | _ -> None
+            do! function | UnaryExpression (UnaryOperator.Nil, e) -> Some e | _ -> None
+            do! function | PostfixExpression (e, PostfixOperator.Nil) -> Some e | _ -> None            
+            do! function | LeftHandSideExpression (e) -> Some e | _ -> None
+            do! function | NewExpression (e) -> Some e | _ -> None
+            do! function | MemberExpression (Nil, e) -> Some e | _ -> None
+            do! function | PrimaryExpression (e) -> Some e | _ -> None
+            do! function | InputElement (e) -> Some e | _ -> None
+            do! function | Lexer.Literal (e) -> Some e | _ -> None
             return! fun e ->
                         match e with 
                         | Lexer.StringLiteral _ 
-                            when Lexer.StringLiteralParser.evalStringLiteral e = "use strict" -> Success true 
-                        | Lexer.StringLiteral _ -> Success false
-                        | _ -> Failure
+                            when Lexer.StringLiteralParser.evalStringLiteral e = "use strict" -> Some true 
+                        | Lexer.StringLiteral _ -> Some false
+                        | _ -> None
         }
 
-        let rec reduce e =
+        let rec check e =
             match e with
-            | SourceElements (SourceElement.Nil, e) -> isStrictCode e
+            | SourceElements (Nil, e) -> isStrictCode e
             | SourceElements (e1, e2) ->
-                let r = reduce e1
+                let r = check e1
                 match r with
-                | Success false -> isStrictCode e2  
+                | Some false -> isStrictCode e2  
                 | _ -> r
 
-        match reduce e with
-        | Success true -> true
+        match check e with
+        | Some true -> true
         | _ -> false
 
-    let evalIdentifier identifier =
-        match identifier with
+    let evalIdentifier e (strict:bool) =
+        match e with
         | Lexer.Identifier e ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e
             let context = call environmentParam Reflection.IEnvironment.get_Context [||]
             let lex = call context Reflection.IExecutionContext.get_LexicalEnviroment [||]
-            call lex Reflection.ILexicalEnvironment.getIdentifierReference [| constant identifier; constant false|]
+            call lex Reflection.ILexicalEnvironment.getIdentifierReference [| constant identifier; constant strict|]
 
     let rec evalExpression (state:State) =
         match state.element with
@@ -459,7 +463,7 @@ type Compiler(environment:IEnvironment) as this =
                     let context = call environmentParam Reflection.IEnvironment.get_Context [||]
                     call context Reflection.IExecutionContext.get_ThisBinding [||]
                 | Lexer.Identifier _ ->
-                    evalIdentifier e
+                    evalIdentifier e state.strict 
                 | Lexer.Literal e ->
                     match e with
                     | Lexer.NullLiteral "null" ->
@@ -687,7 +691,7 @@ type Compiler(environment:IEnvironment) as this =
                 match e1 with
                 | Lexer.Identifier e ->
                     Lexer.IdentifierNameParser.evalIdentifierName e
-            let left = evalIdentifier e1
+            let left = evalIdentifier e1 state.strict 
             let right = evalInitialiser { state with element = e2 }
             call left Reflection.IDynamic.set_Value [| right |], { state with variables = identifier::state.variables }
 
@@ -848,7 +852,7 @@ type Compiler(environment:IEnvironment) as this =
             | VariableDeclarationNoIn (ie, _), Expression (_, _), SourceElement.Nil, Statement (_) ->    
                 let enumeratorVar = exp.Variable(typeof<IEnumerator<string>>, "enumerator")
                 let varName, state = evalVariableDeclaration { state with element = e1 }
-                let varRef = evalIdentifier ie 
+                let varRef = evalIdentifier ie state.strict 
                 let experRef = evalExpression { state with element = e2 }
                 let experValue = call experRef Reflection.IDynamic.get_Value Array.empty
                 let obj = call experValue Reflection.IDynamic.convertToObject Array.empty
@@ -1066,10 +1070,17 @@ type Compiler(environment:IEnvironment) as this =
         match state.element with
         | FunctionDeclaration (Lexer.Identifier e1, e2, e3) ->
             let strict = match e3 with | FunctionBody e -> isStrictCode e
-            let state =  { state with strict = strict }      
-            let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
-            let formalParameterList = match e2 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e2 } 
-            getUndefined, { state with functions = (identifier, formalParameterList, e3)::state.functions }
+            let state =  { state with strict = strict }     
+            let f = { 
+                identifier = Lexer.IdentifierNameParser.evalIdentifierName e1 
+                formalParameterList =
+                    match e2 with 
+                    | SourceElement.Nil -> ReadOnlyList<string>.Empty 
+                    | _ -> evalFormalParameterList { state with element = e2 }  
+                strict = strict; 
+                functionBody = e3 
+            }
+            empty, { state with functions = f::state.functions }
 
     and evalFunctionExpression (state:State) =
         match state.element with
@@ -1158,14 +1169,13 @@ type Compiler(environment:IEnvironment) as this =
             if not (env.HasBinding name) then
                 env.CreateMutableBinding (name, configurableBindings)
                 env.SetMutableBinding (name, environment.Undefined, state.strict)
-        for name, formalParameterList, functionBody in state.functions do
-            let code = lazy(compileFunctionCode(formalParameterList, functionBody))
-            let fo = environment.CreateFunction(formalParameterList, state.strict, code)
-            if not (env.HasBinding name) then
-                env.CreateMutableBinding (name, configurableBindings)
-            env.SetMutableBinding (name, fo, state.strict)            
-        let r = continuation.Invoke (environment, args)
-        r
+        for f in state.functions do
+            let code = lazy(compileFunctionCode(f.formalParameterList, f.functionBody))
+            let fo = environment.CreateFunction(f.formalParameterList, f.strict, code)
+            if not (env.HasBinding f.identifier) then
+                env.CreateMutableBinding (f.identifier, configurableBindings)
+            env.SetMutableBinding (f.identifier, fo, f.strict)            
+        continuation.Invoke (environment, args)
   
     and performFunctionArgumentsBinding (formalParameterList:ReadOnlyList<string>) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
         let i = ref -1
@@ -1227,84 +1237,3 @@ type Compiler(environment:IEnvironment) as this =
         let left = left :?> IDynamic
         let right = right :?> IDynamic
         left.Op_StrictEquals(right).ConvertToBoolean().BaseValue
-
-
-
-
-//        let isStrictCode1 e =
-//            match e with 
-//            | SourceElement e ->
-//                match e with 
-//                | Statement e -> 
-//                    match e with 
-//                    | ExpressionStatement e -> 
-//                        match e with 
-//                        | Expression (SourceElement.Nil, e) ->
-//                            match e with 
-//                            | AssignmentExpression (e, AssignmentOperator.Nil, SourceElement.Nil) ->
-//                                match e with 
-//                                | ConditionalExpression (e, SourceElement.Nil, SourceElement.Nil) ->
-//                                    match e with 
-//                                    | LogicalORExpression (SourceElement.Nil, e) ->
-//                                        match e with 
-//                                        | LogicalANDExpression (SourceElement.Nil, e) ->
-//                                            match e with 
-//                                            | BitwiseORExpression (SourceElement.Nil, e) ->
-//                                                match e with 
-//                                                | BitwiseXORExpression (SourceElement.Nil, e) ->
-//                                                    match e with 
-//                                                    | BitwiseANDExpression (SourceElement.Nil, e) ->
-//                                                        match e with 
-//                                                        | EqualityExpression (SourceElement.Nil, EqualityOperator.Nil, e) ->
-//                                                            match e with 
-//                                                            | RelationalExpression (SourceElement.Nil, RelationalOperator.Nil, e) ->
-//                                                                match e with 
-//                                                                | ShiftExpression (SourceElement.Nil, BitwiseShiftOperator.Nil, e) ->
-//                                                                    match e with 
-//                                                                    | AdditiveExpression (SourceElement.Nil, AdditiveOperator.Nil, e) ->
-//                                                                        match e with 
-//                                                                        | MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, e) ->                                                                            
-//                                                                            match e with 
-//                                                                            | UnaryExpression (UnaryOperator.Nil, e) ->                                                                            
-//                                                                                match e with 
-//                                                                                | PostfixExpression (e, PostfixOperator.Nil) ->                                                                            
-//                                                                                    match e with 
-//                                                                                    | LeftHandSideExpression (e) ->                                                                            
-//                                                                                        match e with 
-//                                                                                        | NewExpression (e) ->                                                                           
-//                                                                                            match e with 
-//                                                                                            | MemberExpression (SourceElement.Nil, e) ->                                                                          
-//                                                                                                match e with 
-//                                                                                                | PrimaryExpression (e) ->                                                                          
-//                                                                                                    match e with 
-//                                                                                                    | InputElement (e) ->                                                                          
-//                                                                                                        match e with 
-//                                                                                                        | Literal (e) ->
-//                                                                                                            match e with
-//                                                                                                            StringLiteral _ ->
-//                                                                                                                StringLiteralParser.evalStringLiteral e = "use strict"
-//                                                                                                            | _ -> false
-//                                                                                                        | _ -> false
-//                                                                                                    | _ -> false
-//                                                                                                | _ -> false
-//                                                                                            | _ -> false
-//                                                                                        | _ -> false
-//                                                                                    | _ -> false
-//                                                                                | _ -> false
-//                                                                            | _ -> false
-//                                                                        | _ -> false
-//                                                                    | _ -> false
-//                                                                | _ -> false
-//                                                            | _ -> false
-//                                                        | _ -> false
-//                                                    | _ -> false
-//                                                | _ -> false
-//                                            | _ -> false
-//                                        | _ -> false
-//                                    | _ -> false 
-//                                | _ -> false 
-//                            | _ -> false 
-//                        | _ -> false 
-//                    | _ -> false
-//                | _ -> false
-//            | _ -> false

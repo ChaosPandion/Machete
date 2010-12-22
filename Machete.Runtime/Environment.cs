@@ -31,6 +31,7 @@ namespace Machete.Runtime
             True = new LBoolean(this, true);
             False = new LBoolean(this, false);
             Undefined = new LUndefined(this);
+            Null = new LNull(this);
 
             GlobalObject = new BGlobal(this);
             MathObject = new BMath(this);

@@ -17,6 +17,14 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             Class = "Global";
             Prototype = null;
             Extensible = true;
+            DefineOwnProperty("NaN", environment.CreateDataDescriptor(environment.CreateNumber(double.NaN), false, false, false), false);
+            DefineOwnProperty("Infinity", environment.CreateDataDescriptor(environment.CreateNumber(double.PositiveInfinity), false, false, false), false);
+            DefineOwnProperty("undefined", environment.CreateDataDescriptor(environment.Undefined, false, false, false), false);
+        }
+
+        public override IDynamic DefaultValue(string hint)
+        {
+            return Environment.CreateString("Global");
         }
 
         //internal BGlobal()

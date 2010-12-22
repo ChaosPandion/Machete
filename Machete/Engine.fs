@@ -1,5 +1,6 @@
 ﻿namespace Machete
 
+open Machete.Interfaces
 open Machete.Runtime
 open Machete.Compiler
 
@@ -20,7 +21,14 @@ type Engine () =
                     try
                         let r = compiler.CompileGlobalCode(script)
                         let r = r.Invoke(environment, environment.EmptyArgs)
-                        channel.Reply (r.Value.ToString():>obj)
+                        let r = 
+                            match r.Value with
+                            | :? INull as r -> null :> obj
+                            | :? IBoolean as r -> r.BaseValue :> obj
+                            | :? INumber as r -> r.BaseValue :> obj
+                            | :? IString as r -> r.BaseValue :> obj
+                            | _ -> r.ToString() :> obj
+                        channel.Reply r
                     with | e ->
                         channel.Reply e
             with | e -> ()
