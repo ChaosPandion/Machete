@@ -14,13 +14,11 @@ namespace Machete.Interfaces
 
         public ReadOnlyList(params T[] items)
         {
-            Contract.Requires<ArgumentNullException>(items != null);
             _items = items;
         }
 
         public ReadOnlyList(IEnumerable<T> items)
         {
-            Contract.Requires<ArgumentNullException>(items != null);
             _items = items.ToArray();
         }
 
@@ -29,7 +27,6 @@ namespace Machete.Interfaces
         {
             get
             {
-                Contract.Requires<IndexOutOfRangeException>(index < 0 || index > _items.Length);
                 return _items[index];
             }
         }

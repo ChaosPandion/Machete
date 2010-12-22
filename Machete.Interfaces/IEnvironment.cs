@@ -56,7 +56,7 @@ namespace Machete.Interfaces
         IArgs CreateArgs(IEnumerable<IDynamic> values);
         IArgs ConcatArgs(IArgs first, IArgs second);
 
-        IObject FromPropertyDescriptor(IPropertyDescriptor desc);
+        IDynamic FromPropertyDescriptor(IPropertyDescriptor desc);
         IPropertyDescriptor ToPropertyDescriptor(IObject obj);
 
         IObject CreateArray();

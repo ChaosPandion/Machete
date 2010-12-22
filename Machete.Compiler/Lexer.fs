@@ -441,10 +441,12 @@ module Lexer =
             satisfy (fun c -> c <> '\'' && c <> '\\' && not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr |>> SingleStringCharacter
     
         let doubleStringCharacters<'a> : Parser<InputElement, 'a> =
-            manyFold Nil (fun x y -> DoubleStringCharacters (y, x)) doubleStringCharacter
+            many doubleStringCharacter |>> List.rev |>> List.fold (fun x y -> DoubleStringCharacters (y, x)) Nil 
+            //manyReduce (fun x y -> DoubleStringCharacters (y, x)) Nil doubleStringCharacter
 
         let singleStringCharacters<'a> : Parser<InputElement, 'a> =
-            manyFold Nil (fun x y -> SingleStringCharacters (y, x)) singleStringCharacter
+            many singleStringCharacter |>> List.rev |>> List.fold (fun x y -> SingleStringCharacters (y, x)) Nil 
+            //manyFold Nil (fun x y -> SingleStringCharacters (y, x)) singleStringCharacter
 
         let stringLiteral<'a> : Parser<InputElement, 'a> =
             let d = between doubleQuote doubleQuote (doubleStringCharacters <|> nil) |>> StringLiteral
@@ -547,7 +549,7 @@ module Lexer =
                 | DoubleStringCharacter _, Nil ->
                     evalDoubleStringCharacter l |> string
                 | DoubleStringCharacter _, DoubleStringCharacters (_, _) ->
-                    (evalDoubleStringCharacter l |> string) + evalDoubleStringCharacters l
+                    (evalDoubleStringCharacter l |> string) + evalDoubleStringCharacters r
                 | _ -> invalidOp ""                 
             | _ -> invalidArg "v" "Expected DoubleStringCharacter."
         

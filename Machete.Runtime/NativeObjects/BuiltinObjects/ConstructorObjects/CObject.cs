@@ -10,7 +10,6 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         {
             Class = "Function";
             Extensible = true;
-            InitializeNativeFunctions();
         }
 
         IDynamic ICallable.Call(IEnvironment environment, IDynamic thisBinding, IArgs args)

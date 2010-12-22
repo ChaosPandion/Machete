@@ -35,7 +35,8 @@ namespace Machete.Runtime.NativeObjects
 
             if (BindFunction)
             {
-                // NOTE Function objects created using Function.prototype.bind use the default [[Get]] internal method. 
+                // NOTE Function objects created using Function.prototype.bind 
+                // use the default [[Get]] internal method. 
 
                 return base.Get(p);
             }

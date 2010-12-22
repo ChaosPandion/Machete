@@ -4,9 +4,9 @@ open System
 open System.Collections
 open System.Collections.Generic
 open System.Reflection
-open System.Linq.Expressions
 open Machete
 open Machete.Interfaces
+
 
 type internal exp = System.Linq.Expressions.Expression
 type internal label = System.Linq.Expressions.LabelExpression
@@ -27,8 +27,28 @@ type internal PropertyType =
 | GetProperty
 | SetProperty
 
-type Compiler(environment:IEnvironment) as this =
 
+module TreeTraverser =
+    type TraverseResult<'a> = 
+    | Success of 'a
+    | Failure
+
+    type Test<'a, 'b> = 'a -> TraverseResult<'b>
+
+    type TreeTraverser() =
+        member x.Bind (f:Test<'a, 'b>, g:unit -> Test<'b, 'c>) (v:'a) = 
+            match f v with
+            | Success v -> g () v
+            | Failure -> TraverseResult<'c>.Failure               
+        member x.Delay (f:unit -> Test<'a, 'b>) = f()
+        member x.Return v1 v2 = Success v1
+        member x.ReturnFrom (f:Test<'a, 'b>) v = f v
+        
+    let traverse = TreeTraverser()
+    
+open TreeTraverser
+
+type Compiler(environment:IEnvironment) as this =
 
 
     let call (e:exp) (m:methodinfo) (a:exp[]) = exp.Call (e, m, a) :> exp
@@ -51,6 +71,53 @@ type Compiler(environment:IEnvironment) as this =
 
     let equalityTestMethod = this.GetType().GetMethod ("equalityTest", BindingFlags.Static ||| BindingFlags.NonPublic)
 
+
+    let isStrictCode e =
+        let isStrictCode = traverse {
+            do! function | SourceElement e -> Success e | _ -> Failure
+            do! function | Statement e -> Success e | _ -> Failure
+            do! function | ExpressionStatement e -> Success e | _ -> Failure
+            do! function | Expression (SourceElement.Nil, e) -> Success e | _ -> Failure
+            do! function | AssignmentExpression (e, AssignmentOperator.Nil, SourceElement.Nil) -> Success e | _ -> Failure
+            do! function | ConditionalExpression (e, SourceElement.Nil, SourceElement.Nil) -> Success e | _ -> Failure            
+            do! function | LogicalORExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
+            do! function | LogicalANDExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
+            do! function | BitwiseORExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
+            do! function | BitwiseXORExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
+            do! function | BitwiseANDExpression (SourceElement.Nil, e) -> Success e | _ -> Failure            
+            do! function | EqualityExpression (SourceElement.Nil, EqualityOperator.Nil, e) -> Success e | _ -> Failure
+            do! function | RelationalExpression (SourceElement.Nil, RelationalOperator.Nil, e) -> Success e | _ -> Failure
+            do! function | ShiftExpression (SourceElement.Nil, BitwiseShiftOperator.Nil, e) -> Success e | _ -> Failure            
+            do! function | AdditiveExpression (SourceElement.Nil, AdditiveOperator.Nil, e) -> Success e | _ -> Failure
+            do! function | MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, e) -> Success e | _ -> Failure
+            do! function | UnaryExpression (UnaryOperator.Nil, e) -> Success e | _ -> Failure
+            do! function | PostfixExpression (e, PostfixOperator.Nil) -> Success e | _ -> Failure            
+            do! function | LeftHandSideExpression (e) -> Success e | _ -> Failure
+            do! function | NewExpression (e) -> Success e | _ -> Failure
+            do! function | MemberExpression (SourceElement.Nil, e) -> Success e | _ -> Failure
+            do! function | PrimaryExpression (e) -> Success e | _ -> Failure
+            do! function | InputElement (e) -> Success e | _ -> Failure
+            do! function | Lexer.Literal (e) -> Success e | _ -> Failure
+            return! fun e ->
+                        match e with 
+                        | Lexer.StringLiteral _ 
+                            when Lexer.StringLiteralParser.evalStringLiteral e = "use strict" -> Success true 
+                        | Lexer.StringLiteral _ -> Success false
+                        | _ -> Failure
+        }
+
+        let rec reduce e =
+            match e with
+            | SourceElements (SourceElement.Nil, e) -> isStrictCode e
+            | SourceElements (e1, e2) ->
+                let r = reduce e1
+                match r with
+                | Success false -> isStrictCode e2  
+                | _ -> r
+
+        match reduce e with
+        | Success true -> true
+        | _ -> false
 
     let evalIdentifier identifier =
         match identifier with
@@ -435,7 +502,7 @@ type Compiler(environment:IEnvironment) as this =
             exp.Block(variables, result) :> exp
 
 
-    and evalPropertyNameAndValueList (objectVar:ParameterExpression) (results:list<string * PropertyType * exp>) (state:State) =
+    and evalPropertyNameAndValueList (objectVar:System.Linq.Expressions.ParameterExpression) (results:list<string * PropertyType * exp>) (state:State) =
         match state.element with
         | PropertyNameAndValueList (Nil, e1) ->
             let name, propType, desc = evalPropertyAssignment { state with element = e1 } 
@@ -519,7 +586,7 @@ type Compiler(environment:IEnvironment) as this =
         | Elision (Nil) -> 1.0
         | Elision (e) -> evalElision { state with element = e } + 1.0
 
-    and evalElementList (arrayVar:ParameterExpression) (lengthVar:ParameterExpression) (results:list<exp>) (state:State) =
+    and evalElementList (arrayVar:System.Linq.Expressions.ParameterExpression) (lengthVar:System.Linq.Expressions.ParameterExpression) (results:list<exp>) (state:State) =
         match state.element with
         | ElementList (Nil, e1, e2) ->
             let initResult = evalAssignmentExpression { state with element = e2 }
@@ -904,7 +971,7 @@ type Compiler(environment:IEnvironment) as this =
             evalCaseClauses { state with element = e1 }, evalDefaultClause { state with element = e2 }, evalCaseClauses { state with element = e3 }         
 
     and evalCaseClauses (state:State) =
-        let rec run (result:list<SwitchCase>) (element:SourceElement) =
+        let rec run (result:list<System.Linq.Expressions.SwitchCase>) (element:SourceElement) =
             match element with
             | CaseClauses (Nil, e1) ->
                 evalCaseClause { state with element = e1 } :: result
@@ -998,6 +1065,8 @@ type Compiler(environment:IEnvironment) as this =
     and evalFunctionDeclaration (state:State) =
         match state.element with
         | FunctionDeclaration (Lexer.Identifier e1, e2, e3) ->
+            let strict = match e3 with | FunctionBody e -> isStrictCode e
+            let state =  { state with strict = strict }      
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let formalParameterList = match e2 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e2 } 
             getUndefined, { state with functions = (identifier, formalParameterList, e3)::state.functions }
@@ -1005,11 +1074,15 @@ type Compiler(environment:IEnvironment) as this =
     and evalFunctionExpression (state:State) =
         match state.element with
         | FunctionExpression (Lexer.Nil, e1, e2) ->
-            let formalParameterList = match e2 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e1 }          
+            let strict = match e2 with | FunctionBody e -> isStrictCode e
+            let state =  { state with strict = strict }  
+            let formalParameterList = match e1 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e1 }          
             let code = lazy(compileFunctionCode(formalParameterList, e2))
             let args = [| constant formalParameterList; constant state.strict; constant code |]  
             call environmentParam Reflection.IEnvironment.createFunction1 args
         | FunctionExpression (Lexer.Identifier e1, e2, e3) -> 
+            let strict = match e3 with | FunctionBody e -> isStrictCode e
+            let state =  { state with strict = strict } 
             let scopeVar = exp.Variable(typeof<ILexicalEnvironment>, "scope")
             let functionVar = exp.Variable(typeof<IObject>, "function")
             let getEnv = call environmentParam Reflection.IEnvironment.get_Context Array.empty
@@ -1060,6 +1133,8 @@ type Compiler(environment:IEnvironment) as this =
                 evalFunctionDeclaration { state with element = e }
 
     and evalSourceElements (state:State) : exp * State =
+        let strict = isStrictCode state.element
+        let state =  { state with strict = strict }
         match state.element with
         | SourceElements (Nil, e) ->
             evalSourceElement { state with element = e }
@@ -1152,3 +1227,84 @@ type Compiler(environment:IEnvironment) as this =
         let left = left :?> IDynamic
         let right = right :?> IDynamic
         left.Op_StrictEquals(right).ConvertToBoolean().BaseValue
+
+
+
+
+//        let isStrictCode1 e =
+//            match e with 
+//            | SourceElement e ->
+//                match e with 
+//                | Statement e -> 
+//                    match e with 
+//                    | ExpressionStatement e -> 
+//                        match e with 
+//                        | Expression (SourceElement.Nil, e) ->
+//                            match e with 
+//                            | AssignmentExpression (e, AssignmentOperator.Nil, SourceElement.Nil) ->
+//                                match e with 
+//                                | ConditionalExpression (e, SourceElement.Nil, SourceElement.Nil) ->
+//                                    match e with 
+//                                    | LogicalORExpression (SourceElement.Nil, e) ->
+//                                        match e with 
+//                                        | LogicalANDExpression (SourceElement.Nil, e) ->
+//                                            match e with 
+//                                            | BitwiseORExpression (SourceElement.Nil, e) ->
+//                                                match e with 
+//                                                | BitwiseXORExpression (SourceElement.Nil, e) ->
+//                                                    match e with 
+//                                                    | BitwiseANDExpression (SourceElement.Nil, e) ->
+//                                                        match e with 
+//                                                        | EqualityExpression (SourceElement.Nil, EqualityOperator.Nil, e) ->
+//                                                            match e with 
+//                                                            | RelationalExpression (SourceElement.Nil, RelationalOperator.Nil, e) ->
+//                                                                match e with 
+//                                                                | ShiftExpression (SourceElement.Nil, BitwiseShiftOperator.Nil, e) ->
+//                                                                    match e with 
+//                                                                    | AdditiveExpression (SourceElement.Nil, AdditiveOperator.Nil, e) ->
+//                                                                        match e with 
+//                                                                        | MultiplicativeExpression (SourceElement.Nil, MultiplicativeOperator.Nil, e) ->                                                                            
+//                                                                            match e with 
+//                                                                            | UnaryExpression (UnaryOperator.Nil, e) ->                                                                            
+//                                                                                match e with 
+//                                                                                | PostfixExpression (e, PostfixOperator.Nil) ->                                                                            
+//                                                                                    match e with 
+//                                                                                    | LeftHandSideExpression (e) ->                                                                            
+//                                                                                        match e with 
+//                                                                                        | NewExpression (e) ->                                                                           
+//                                                                                            match e with 
+//                                                                                            | MemberExpression (SourceElement.Nil, e) ->                                                                          
+//                                                                                                match e with 
+//                                                                                                | PrimaryExpression (e) ->                                                                          
+//                                                                                                    match e with 
+//                                                                                                    | InputElement (e) ->                                                                          
+//                                                                                                        match e with 
+//                                                                                                        | Literal (e) ->
+//                                                                                                            match e with
+//                                                                                                            StringLiteral _ ->
+//                                                                                                                StringLiteralParser.evalStringLiteral e = "use strict"
+//                                                                                                            | _ -> false
+//                                                                                                        | _ -> false
+//                                                                                                    | _ -> false
+//                                                                                                | _ -> false
+//                                                                                            | _ -> false
+//                                                                                        | _ -> false
+//                                                                                    | _ -> false
+//                                                                                | _ -> false
+//                                                                            | _ -> false
+//                                                                        | _ -> false
+//                                                                    | _ -> false
+//                                                                | _ -> false
+//                                                            | _ -> false
+//                                                        | _ -> false
+//                                                    | _ -> false
+//                                                | _ -> false
+//                                            | _ -> false
+//                                        | _ -> false
+//                                    | _ -> false 
+//                                | _ -> false 
+//                            | _ -> false 
+//                        | _ -> false 
+//                    | _ -> false
+//                | _ -> false
+//            | _ -> false

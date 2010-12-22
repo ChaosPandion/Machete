@@ -12,6 +12,7 @@ using Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Interfaces;
 using Machete.Compiler;
+using System.Diagnostics;
 
 namespace Machete.Runtime
 {
@@ -353,8 +354,7 @@ namespace Machete.Runtime
         public IExecutionContext EnterContext()
         {
             _contextStack.Push(Context);
-            Context = new ExecutionContext(() => Context = _contextStack.Pop());
-            return Context;
+            return Context = new ExecutionContext(() => Context = _contextStack.Pop());
         }
 
 
@@ -436,14 +436,102 @@ namespace Machete.Runtime
             return CreateFunction(fpl, true, code, Context.VariableEnviroment);
         }
 
-        public IObject FromPropertyDescriptor(IPropertyDescriptor desc)
+        public IDynamic FromPropertyDescriptor(IPropertyDescriptor desc)
         {
-            throw new NotImplementedException();
+            // 8.10.4 FromPropertyDescriptor ( Desc ) 
+
+            if (desc == null) // Property descriptors use null rather than undefined to simplify interaction.
+            {
+                return Undefined;
+            }
+
+            var obj = ObjectConstructor.Op_Construct(EmptyArgs);
+
+            if (desc.IsDataDescriptor)
+            {
+                var value = CreateDataDescriptor(desc.Value, true, true, true);
+                var writable = CreateDataDescriptor(CreateBoolean(desc.Writable.Value), true, true, true);
+
+                obj.DefineOwnProperty("value", value, false);
+                obj.DefineOwnProperty("writable", writable, false);
+            }
+            else
+            {
+                Debug.Assert(desc.IsAccessorDescriptor);
+
+                var get = CreateDataDescriptor(desc.Get, true, true, true);
+                var set = CreateDataDescriptor(desc.Set, true, true, true);
+
+                obj.DefineOwnProperty("get", get, false);
+                obj.DefineOwnProperty("set", set, false);
+            }
+
+            var enumerable = CreateDataDescriptor(CreateBoolean(desc.Enumerable.Value), true, true, true);
+            var configurable = CreateDataDescriptor(CreateBoolean(desc.Configurable.Value), true, true, true);
+
+            obj.DefineOwnProperty("enumerable", enumerable, false);
+            obj.DefineOwnProperty("configurable", configurable, false);
+
+            return obj;
         }
 
         public IPropertyDescriptor ToPropertyDescriptor(IObject obj)
         {
-            throw new NotImplementedException();
+            // 8.10.5 ToPropertyDescriptor ( Obj ) 
+
+            Debug.Assert(obj != null);
+
+            var desc = new SPropertyDescriptor();
+
+            if (obj.HasProperty("enumerable"))
+            {
+                desc.Enumerable = obj.Get("enumerable").ConvertToBoolean().BaseValue;
+            }
+
+            if (obj.HasProperty("configurable"))
+            {
+                desc.Enumerable = obj.Get("configurable").ConvertToBoolean().BaseValue;
+            }
+
+            if (obj.HasProperty("value"))
+            {
+                desc.Value = obj.Get("value");
+            }
+
+            if (obj.HasProperty("writable"))
+            {
+                desc.Enumerable = obj.Get("writable").ConvertToBoolean().BaseValue;
+            }
+
+            if (obj.HasProperty("get"))
+            {
+                var getter = obj.Get("get");
+                if (getter.TypeCode != LanguageTypeCode.Undefined && !(getter is ICallable))
+                {
+                    throw CreateTypeError("");
+                }
+                desc.Get = getter;
+            }
+
+            if (obj.HasProperty("set"))
+            {
+                var setter = obj.Get("set");
+                if (setter.TypeCode != LanguageTypeCode.Undefined && !(setter is ICallable))
+                {
+                    throw CreateTypeError("");
+                }
+                desc.Get = setter;
+            }
+
+            if (desc.Get != null || desc.Set != null)
+            {
+                if (desc.Value != null || desc.Writable != null)
+                {
+                    throw CreateTypeError("");
+                }
+            }
+
+            return desc;
         }
 
 

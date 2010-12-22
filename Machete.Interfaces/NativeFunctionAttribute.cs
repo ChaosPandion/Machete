@@ -11,8 +11,6 @@ namespace Machete.Interfaces
 
         public NativeFunctionAttribute(string identifier, params string[] formalParameterList)
         {
-            Contract.Requires<ArgumentNullException>(formalParameterList != null);
-
             Identifier = identifier;
             FormalParameterList = new ReadOnlyList<string>(formalParameterList);
         }
