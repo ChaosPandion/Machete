@@ -46,6 +46,7 @@
     <Compile Include="NumericLiteralTests.fs" />
     <Compile Include="StringLiteralTests.fs" />
     <Compile Include="ExpressionTests.fs" />
+    <Compile Include="StatementTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">

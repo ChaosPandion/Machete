@@ -809,15 +809,16 @@ type Compiler(environment:IEnvironment) as this =
                 loop,  { state with labels = state.labels.Tail }
 
             | VariableDeclarationListNoIn (_), Expression (_, _), Expression (_, _), Statement (_) ->
-                let e1, state = evalVariableDeclaration { state with element = e1 }
+                let e1, state = evalVariableDeclarationList { state with element = e1 }
                 let e2 = evalExpression { state with element = e2 }
                 let e3 = evalExpression { state with element = e3 }
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
                 let e2 = convertToBool e2 
-                let e3 = call e2 Reflection.IDynamic.get_Value Array.empty
-                let body = exp.IfThenElse(e2, block [| e3; e4 |], exp.Break(breakLabel.Target))
+                let e3 = call e3 Reflection.IDynamic.get_Value Array.empty
+                let body = exp.IfThenElse(e2, block [| e4; e3; |], exp.Break(breakLabel.Target))
                 let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
-                loop,  { state with labels = state.labels.Tail }
+                let body = exp.Block ([| e1; loop |])
+                body :> exp,  { state with labels = state.labels.Tail }
 
             | LeftHandSideExpression (_), Expression (_, _), SourceElement.Nil, Statement (_) ->
                 let enumeratorVar = exp.Variable(typeof<IEnumerator<string>>, "enumerator")
