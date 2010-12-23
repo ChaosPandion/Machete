@@ -1,7 +1,9 @@
-﻿using Machete.Interfaces;
+﻿using System.Diagnostics;
+using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {
+    [DebuggerStepThrough]
     public sealed class SPropertyDescriptor : IPropertyDescriptor
     {
         public IDynamic Value { get; set; }
@@ -13,43 +15,24 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public bool IsAccessorDescriptor
         {
-            get 
-            { 
-                return Get != null 
-                    && Set != null; 
-            }
+            get { return !(Get == null && Set == null); }
         }
 
         public bool IsDataDescriptor
         {
-            get 
-            { 
-                return Value != null 
-                    && Writable != null; 
-            }
+            get { return !(Value == null && Writable == null); }
         }
 
         public bool IsGenericDescriptor
         {
-            get 
-            { 
-                return !IsAccessorDescriptor 
-                    && !IsDataDescriptor; 
-            }
+            get { return !IsAccessorDescriptor && !IsDataDescriptor; }
         }
 
         public bool IsEmpty
         {
-            get 
-            { 
-                return Value == null 
-                    && Writable == null 
-                    && Get == null 
-                    && Set == null 
-                    && Enumerable == null 
-                    && Configurable == null; 
-            }
+            get { return Value == null && Writable == null && Get == null && Set == null && Enumerable == null && Configurable == null; }
         }
+        
 
         public IPropertyDescriptor Copy()
         {

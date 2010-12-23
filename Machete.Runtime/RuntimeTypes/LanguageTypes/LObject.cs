@@ -97,7 +97,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
             else
             {
-                return ((ICallable)desc.Get).Call(null, this, new SArgs(Environment));
+                return ((ICallable)desc.Get).Call(Environment, this, new SArgs(Environment));
             }
         }
 
@@ -149,17 +149,22 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 }
                 return;
             }
+
             var ownDesc = GetOwnProperty(p);
             if (ownDesc != null && ownDesc.IsDataDescriptor)
             {
                 var valueDesc = new SPropertyDescriptor() { Value = value };
                 DefineOwnProperty(p, valueDesc, @throw);
+                return;
             }
+
             var desc = GetProperty(p);
             if (desc != null && desc.IsAccessorDescriptor)
             {
-                ((ICallable)desc.Set).Call(null, this, new SArgs(_environment, value));
+                ((ICallable)desc.Set).Call(Environment, this, new SArgs(_environment, value));
+                return;
             }
+
             var newDesc = Environment.CreateDataDescriptor(value, true, true, true);
             DefineOwnProperty(p, newDesc, @throw);
         }
@@ -480,7 +485,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Typeof()
         {
-            return Environment.CreateString("object");
+            return Environment.CreateString(this is ICallable ? "function" : "object");
         }
 
         public IDynamic Op_PrefixIncrement()

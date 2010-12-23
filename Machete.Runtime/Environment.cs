@@ -381,7 +381,7 @@ namespace Machete.Runtime
             obj.Prototype = ObjectPrototype;
             obj.DefineOwnProperty("length", lenDesc, false);
 
-            do
+            while (--index >= 0)
             {
                 var val = args[index];
                 var valDesc = CreateDataDescriptor(val, true, true, true);
@@ -400,7 +400,7 @@ namespace Machete.Runtime
                         mappedNames.Add(name);
                     }
                 }
-            } while (--index >= 0) ;
+            }
 
             if (mappedNames.Count > 0)
             {

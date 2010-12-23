@@ -90,7 +90,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public IDynamic Op_LogicalAnd(IDynamic other)
         {
-            return Value.Op_LogicalOr(other);
+            return Value.Op_LogicalAnd(other);
         }
 
         public IDynamic Op_BitwiseNot()
@@ -241,7 +241,10 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
         public IDynamic Op_PrefixIncrement()
         {
             StrictReferenceCondition();
-            return Value = _environment.CreateNumber(Value.ConvertToNumber().BaseValue + 1.0);
+            var oldNum = Value.ConvertToNumber();
+            var newNum = _environment.CreateNumber(oldNum.BaseValue + 1.0);
+            Value = newNum;
+            return newNum;
         }
 
         public IDynamic Op_PrefixDecrement()

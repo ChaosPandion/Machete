@@ -713,24 +713,24 @@ module Parser =
         expressionRef :=
             parse {
                 let! e1 = assignmentExpression
+                let e1 = Expression (SourceElement.Nil, e1)
                 return! parse {
-                    let! _ = expectPunctuator ","
-                    let! e2 = assignmentExpression
-                    return Expression (e2, e1)
-                } 
-                return Expression (SourceElement.Nil, e1)
-            } 
+                    do! skip expectComma
+                    return! manySepFold assignmentExpression expectComma Expression e1
+                }
+                return e1
+            }
 
-        expressionNoInRef := 
+        expressionNoInRef :=
             parse {
                 let! e1 = assignmentExpressionNoIn
+                let e1 = ExpressionNoIn (SourceElement.Nil, e1)
                 return! parse {
-                    let! _ = expectPunctuator ","
-                    let! e2 = assignmentExpressionNoIn
-                    return ExpressionNoIn (e2, e1)
-                } 
-                return ExpressionNoIn (SourceElement.Nil, e1)
-            } 
+                    do! skip expectComma
+                    return! manySepFold assignmentExpressionNoIn expectComma ExpressionNoIn e1
+                }
+                return e1
+            }
 
         memberExpressionRef :=
             parse {

@@ -320,49 +320,7 @@ module Lexer =
                 | DecimalLiteral (_, _, _, _) ->
                     evalDecimalLiteral v
                 | HexIntegerLiteral (_, _) ->
-                    evalHexIntegerLiteral v
-
-        module Tests =
-            
-            open Xunit
-
-            let makeNumber input =
-                let state = { previousElement = None }
-                let result = runParserOnString numericLiteral state "" input
-                match result with
-                | Success (v, _, _) ->
-                    evalNumericLiteral v
-                | Failure (m, _, _) ->
-                    failwith m
-
-            [<Fact(DisplayName = "Numeric Literal: Decimal Literal")>]
-            let decimalLiteral () =
-                Assert.Equal<double> (1.0, makeNumber "1")
-                Assert.Equal<double> (1.2, makeNumber "1.2")
-                Assert.Equal<double> (1.2e2, makeNumber "1.2e2")
-                Assert.Equal<double> (120.0, makeNumber "1.2e+2")
-                Assert.Equal<double> (0.012, makeNumber "1.2e-2")
-                Assert.Equal<double> (0.2, makeNumber ".2")
-                Assert.Equal<double> (0.2e2, makeNumber ".2e2")
-                Assert.Equal<double> (0.2e+2, makeNumber ".2e+2")
-                Assert.Equal<double> (0.2e-2, makeNumber ".2e-2")
-                Assert.Equal<double> (1e2, makeNumber "1e2")
-
-            [<Fact(DisplayName = "Numeric Literal: Hex Integer Literal")>]
-            let hexIntegerLiteral () =
-                Assert.Equal<double> (0x0 |> double, makeNumber "0x0")
-                Assert.Equal<double> (0xF |> double, makeNumber "0xF")
-                Assert.Equal<double> (0xF |> double, makeNumber "0XF")
-                Assert.Equal<double> (0xFF |> double, makeNumber "0xFF")
-                Assert.Equal<double> (0xFF |> double, makeNumber "0XFF")
-                Assert.Equal<double> (0x123456 |> double, makeNumber "0x123456")
-                Assert.Equal<double> (0xABCDEF |> double, makeNumber "0xABCDEF")
-                Assert.Throws<exn>(fun () -> makeNumber "0xAG" |> ignore) |> ignore
-
-            [<Fact(DisplayName = "Numeric Literal: No Trailing IdentifierStart Or DecimalDigit")>]
-            let noTrailingIdentifierStartOrDecimalDigit () =
-                Assert.Throws<exn>(fun () -> makeNumber "3in" |> ignore) |> ignore
-                
+                    evalHexIntegerLiteral v                
 
     module StringLiteralParser =
 
@@ -546,50 +504,7 @@ module Lexer =
                     evalSingleStringCharacters v
                 | _ -> ""                
             | _ -> invalidArg "v" "Expected StringLiteral."
-
-        
-        module Tests =
             
-            open Xunit
-
-            let makeString input =
-                let state = { previousElement = None }
-                let result = runParserOnString stringLiteral state "" input
-                match result with
-                | Success (v, _, _) ->
-                    evalStringLiteral v
-                | Failure (m, _, _) ->
-                    failwith m
-                    
-            [<Fact(DisplayName = "String Literal: Basic")>]
-            let basic () =
-                Assert.Equal<string> ("string", makeString "\"string\"")
-                Assert.Equal<string> ("string", makeString "'string'")
-        
-            [<Fact(DisplayName = "String Literal: LineContinuation")>]
-            let lineContinuation () =
-                Assert.Equal<string> ("", makeString "'\\\r'") 
-                Assert.Equal<string> ("", makeString "\"\\\r\"")
-                
-            [<Fact(DisplayName = "String Literal: Zero Char")>]
-            let zeroChar () =
-                Assert.Equal<string> ("\u0000", makeString "'\\0'") 
-                Assert.Equal<string> ("\u0000", makeString "\"\\0\"")
-                
-            [<Fact(DisplayName = "String Literal: SingleEscapeCharacter")>]
-            let singleEscapeCharacter () =
-                Assert.Equal<string> ("'\"\\\b\f\n\r\t\v", makeString "'\\'\\\"\\\\\\b\\f\\n\\r\\t\\v'")        
-                Assert.Equal<string> ("'\"\\\b\f\n\r\t\v", makeString "\"\\'\\\"\\\\\\b\\f\\n\\r\\t\\v\"")
-                
-            [<Fact(DisplayName = "String Literal: HexEscapeSequence")>]
-            let hexEscapeSequence () =
-                Assert.Equal<string> ("\u0001", makeString "'\\x01'")
-                Assert.Equal<string> ("\u00F0", makeString "\"\\xF0\"")
-                
-            [<Fact(DisplayName = "String Literal: UnicodeEscapeSequence")>]
-            let unicodeEscapeSequence () =
-                Assert.Equal<string> ("\u0001", makeString "'\\u0001'")
-                Assert.Equal<string> ("\u00F0", makeString "\"\\u00F0\"")
 
     module IdentifierNameParser =
 
@@ -751,7 +666,7 @@ module Lexer =
         let parseRegularExpressionBody<'a> : Parser<InputElement, 'a> =
             tuple2 parseRegularExpressionFirstChar parseRegularExpressionChars |>> RegularExpressionBody
         let parseRegularExpressionLiteral<'a> : Parser<InputElement, 'a> =
-            tuple4 (chr '/') parseRegularExpressionBody (chr '/') parseRegularExpressionFlags |>> RegularExpressionLiteral
+            attempt <| tuple4 (chr '/') parseRegularExpressionBody (chr '/') parseRegularExpressionFlags |>> RegularExpressionLiteral
             
     let private divChoice : Parser<InputElement, LexerState> =
         getUserState >>=
@@ -761,13 +676,13 @@ module Lexer =
                     match element with
                     | IdentifierName (_, _) ->
                         match IdentifierNameParser.evalIdentifierName element with
-                        | "true" | "false" | "null" | "this" -> DivPunctuator.parseDivPunctuator
-                        | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral   
+                        | "true" | "false" | "null" | "this" -> DivPunctuator.parseDivPunctuator <|> RegularExpressionLiteral.parseRegularExpressionLiteral
+                        | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator   
                     | Punctuator (Str "]")
                     | Punctuator (Str ")")
                     | NumericLiteral _ 
-                    | StringLiteral _ -> DivPunctuator.parseDivPunctuator
-                    | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral
+                    | StringLiteral _ -> DivPunctuator.parseDivPunctuator <|> RegularExpressionLiteral.parseRegularExpressionLiteral
+                    | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
                 | None -> RegularExpressionLiteral.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
 
     let private exec =

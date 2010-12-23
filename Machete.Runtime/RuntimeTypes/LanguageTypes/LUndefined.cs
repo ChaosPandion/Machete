@@ -180,7 +180,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Typeof()
         {
-            return _environment.CreateString("object");
+            return _environment.CreateString("undefined");
         }
 
         public IDynamic Op_PrefixIncrement()

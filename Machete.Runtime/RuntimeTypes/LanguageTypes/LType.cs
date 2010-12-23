@@ -63,7 +63,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public static IDynamic Op_Greaterthan(IEnvironment environment, IDynamic left, IDynamic right)
         {
-            var r = RelationalComparison(environment, false, left, right);
+            var r = RelationalComparison(environment, false, right, left);
             if (r.TypeCode == LanguageTypeCode.Undefined)
             {
                 return environment.False;
@@ -73,12 +73,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public static IDynamic Op_LessthanOrEqual(IEnvironment environment, IDynamic left, IDynamic right)
         {
-            var r = RelationalComparison(environment, false, left, right);
+            var r = RelationalComparison(environment, false, right, left);
             if (r.TypeCode == LanguageTypeCode.Undefined || (bool)(LBoolean)r)
             {
-                return environment.True;
+                return environment.False;
             }
-            return environment.False;
+            return environment.True;
         }
 
         public static IDynamic Op_GreaterthanOrEqual(IEnvironment environment, IDynamic left, IDynamic right)

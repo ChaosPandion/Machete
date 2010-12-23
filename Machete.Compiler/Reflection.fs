@@ -27,8 +27,8 @@ module Reflection =
 
         let createReference = t.GetMethod "CreateReference"
 
-        let createFunction1 = t.GetMethod ("CreateFunction", [| typeof<string[]>; typeof<bool>; typeof<Lazy<Code>> |])
-        let createFunction2 = t.GetMethod ("CreateFunction", [| typeof<string[]>; typeof<bool>; typeof<Lazy<Code>>; typeof<ILexicalEnvironment> |])
+        let createFunction1 = t.GetMethod ("CreateFunction", [| typeof<ReadOnlyList<string>>; typeof<bool>; typeof<Lazy<Code>> |])
+        let createFunction2 = t.GetMethod ("CreateFunction", [| typeof<ReadOnlyList<string>>; typeof<bool>; typeof<Lazy<Code>>; typeof<ILexicalEnvironment> |])
         
         let createDataDescriptor1 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic> |])
         let createDataDescriptor2 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic>; typeof<Nullable<bool>> |])

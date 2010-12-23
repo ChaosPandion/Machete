@@ -6,6 +6,7 @@ open System.Collections.Generic
 open System.Reflection
 open Machete
 open Machete.Interfaces
+open Tools.TreeTraverser
 
 
 type internal exp = System.Linq.Expressions.Expression
@@ -26,7 +27,6 @@ type internal State = {
     labels : list<Map<string, label>>
     functions : list<Function>
     variables : list<string>
-    returnExpression : exp
 } 
 
 type internal PropertyType =
@@ -34,23 +34,6 @@ type internal PropertyType =
 | GetProperty
 | SetProperty
 
-
-module TreeTraverser =
-
-    type NodeTest<'a, 'b> = 'a -> option<'b>
-
-    type TreeTraverser() =
-        member x.Bind (f:NodeTest<'a, 'b>, g:unit -> NodeTest<'b, 'c>) (v:'a) = 
-            match f v with
-            | Some v -> g () v
-            | None -> None               
-        member x.Delay (f:unit -> NodeTest<'a, 'b>) = f()
-        member x.Return v1 v2 = Some v1
-        member x.ReturnFrom (f:NodeTest<'a, 'b>) v = f v
-        
-    let traverse = TreeTraverser()
-    
-open TreeTraverser
 
 type Compiler(environment:IEnvironment) as this =
 
@@ -112,6 +95,7 @@ type Compiler(environment:IEnvironment) as this =
 
         let rec check e =
             match e with
+            | Nil -> None
             | SourceElements (Nil, e) -> isStrictCode e
             | SourceElements (e1, e2) ->
                 let r = check e1
@@ -132,14 +116,17 @@ type Compiler(environment:IEnvironment) as this =
             call lex Reflection.ILexicalEnvironment.getIdentifierReference [| constant identifier; constant strict|]
 
     let rec evalExpression (state:State) =
-        match state.element with
-        | Expression (Nil, e) | ExpressionNoIn (Nil, e) ->
-            let r : exp = evalAssignmentExpression { state with element = e }
-            call r Reflection.IDynamic.get_Value Array.empty
-        | Expression (left, right) | ExpressionNoIn (left, right) ->
-            let left = evalExpression { state with element = left }
-            let r = evalAssignmentExpression { state with element = right }
-            block [| left; call r Reflection.IDynamic.get_Value Array.empty |]
+        let rec evalExpression result state =                  
+            match state.element with
+            | Expression (Nil, e) | ExpressionNoIn (Nil, e) ->
+                let r = evalAssignmentExpression { state with element = e }
+                call r Reflection.IDynamic.get_Value Array.empty :: result
+            | Expression (e1, e2) | ExpressionNoIn (e1, e2) ->
+                let result = evalExpression result { state with element = e1 } 
+                let r = evalAssignmentExpression { state with element = e2 }
+                call r Reflection.IDynamic.get_Value Array.empty :: result
+        let result = evalExpression [] state |> List.rev
+        exp.Block (result) :> exp
             
     and evalAssignmentExpression (state:State) =
         let simpleAssignment left right =
@@ -210,6 +197,8 @@ type Compiler(environment:IEnvironment) as this =
             evalLogicalORExpression { state with element = left }
         | ConditionalExpression (test, ifTrue, ifFalse) | ConditionalExpressionNoIn (test, ifTrue, ifFalse) ->
             let test = evalLogicalORExpression { state with element = test }
+            let test = call test Reflection.IDynamic.convertToBoolean Array.empty
+            let test = call test Reflection.IBoolean.get_BaseValue Array.empty
             let ifTrue = evalAssignmentExpression { state with element = ifTrue }
             let ifFalse = evalAssignmentExpression { state with element = ifFalse }
             condition test ifTrue ifFalse
@@ -520,6 +509,7 @@ type Compiler(environment:IEnvironment) as this =
 
     and evalPropertyAssignment (state:State) =
         let nullTrue = exp.Convert(constant true, typeof<Nullable<bool>>)
+        let nullDyn = exp.Constant(null, typeof<IDynamic>) :> exp
         match state.element with
         | PropertyAssignment (e1, SourceElement.Nil, e2) ->
             let name = evalPropertyName { state with element = e1 } 
@@ -531,17 +521,17 @@ type Compiler(environment:IEnvironment) as this =
                 name, DataProperty, createDesc
             | FunctionBody _ ->                
                 let code = lazy(compileFunctionCode(ReadOnlyList<string>.Empty, e2))
-                let args = [| constant Array.empty<string>; constant state.strict; constant code |]  
+                let args = [| constant ReadOnlyList<string>.Empty; constant state.strict; constant code |]  
                 let createFunction = call environmentParam Reflection.IEnvironment.createFunction1 args
-                let createDesc = call environmentParam Reflection.IEnvironment.createAccessorDescriptor3 [| createFunction; constant null; nullTrue; nullTrue  |]
+                let createDesc = call environmentParam Reflection.IEnvironment.createAccessorDescriptor3 [| createFunction; nullDyn; nullTrue; nullTrue  |]
                 name, GetProperty, createDesc      
         | PropertyAssignment (e1, e2, e3) ->
             let name = evalPropertyName { state with element = e1 } 
             let setParams =  evalPropertySetParameterList { state with element = e2 }                 
-            let code = lazy(compileFunctionCode(setParams, e2))
+            let code = lazy(compileFunctionCode(setParams, e3))
             let args = [| constant setParams; constant state.strict; constant code |]  
             let createFunction = call environmentParam Reflection.IEnvironment.createFunction1 args
-            let createDesc = call environmentParam Reflection.IEnvironment.createAccessorDescriptor3 [| constant null; createFunction; nullTrue; nullTrue  |]
+            let createDesc = call environmentParam Reflection.IEnvironment.createAccessorDescriptor3 [| nullDyn; createFunction; nullTrue; nullTrue  |]
             name, SetProperty, createDesc 
              
     and evalPropertyName (state:State) =
@@ -557,7 +547,7 @@ type Compiler(environment:IEnvironment) as this =
 
     and evalPropertySetParameterList (state:State) =
         match state.element with
-        | PropertySetParameterList e ->
+        | PropertySetParameterList (Lexer.Identifier e) ->
             ReadOnlyList<string>([| Lexer.IdentifierNameParser.evalIdentifierName e |])
 
     and evalArrayLiteral (state:State) =
@@ -1120,9 +1110,9 @@ type Compiler(environment:IEnvironment) as this =
                     Lexer.IdentifierNameParser.evalIdentifierName e1::result
             | FormalParameterList (e1, e2) ->
                 let result = run result e1                
-                match e1 with
-                | InputElement(Lexer.Identifier e1) ->
-                    Lexer.IdentifierNameParser.evalIdentifierName e1::result
+                match e2 with
+                | InputElement(Lexer.Identifier e2) ->
+                    Lexer.IdentifierNameParser.evalIdentifierName e2::result
         ReadOnlyList<string>(run [] state.element)
 
     and evalFunctionBody (state:State) =
@@ -1131,7 +1121,8 @@ type Compiler(environment:IEnvironment) as this =
         | FunctionBody Nil -> 
             exp.Return (target, getUndefined, typeof<dyn>) :> exp, state
         | FunctionBody e -> 
-            evalSourceElements { state with element = e }
+            let e, s = evalSourceElements { state with element = e }
+            e :> exp, s
 
     and evalSourceElement (state:State) =
         match state.element with
@@ -1139,27 +1130,42 @@ type Compiler(environment:IEnvironment) as this =
             match e with
             | Statement _ ->
                 let e, s = evalStatement { state with element = e } 
-                if e.Type <> typeof<System.Void> then e, { s with returnExpression = e } else e, s
+                e, s
             | FunctionDeclaration (_, _, _) ->
                 evalFunctionDeclaration { state with element = e }
 
-    and evalSourceElements (state:State) : exp * State =
+    and evalSourceElements (state:State) : System.Linq.Expressions.BlockExpression * State =
+        let rec evalSourceElements result state =
+            let filter result e state =
+                let r, s = evalSourceElement { state with element = e }
+                match r.NodeType with
+                | System.Linq.Expressions.ExpressionType.Default -> result, s 
+                | _ -> r::result, s                   
+            match state.element with
+            | SourceElements (Nil, e) ->
+                filter result e state
+            | SourceElements (e1, e2) ->
+                let result, state = evalSourceElements result { state with element = e1 } 
+                filter result e2 state
         let strict = isStrictCode state.element
-        let state =  { state with strict = strict }
-        match state.element with
-        | SourceElements (Nil, e) ->
-            evalSourceElement { state with element = e }
-        | SourceElements (e1, e2) ->
-            let e1, state = evalSourceElements { state with element = e1 } 
-            let e2, state = evalSourceElement { state with element = e2 } 
-            block [|e1;e2|] , state         
-
+        let state =  { state with strict = strict }        
+        let result, state = evalSourceElements [] state        
+        let label = state.labels.Head.["return"]
+        if result.IsEmpty then
+            let result = (label:>exp)::result |> List.rev
+            exp.Block(typeof<IDynamic>, result), state
+        else
+            let noRet = result.Head.Type <> typeof<IDynamic>
+            let result = if noRet then result else (exp.Return(label.Target, result.Head, typeof<IDynamic>):>exp)::result.Tail
+            let result = (label:>exp)::result |> List.rev
+            exp.Block(typeof<IDynamic>, result), state            
+         
     and evalProgram (state:State) =
         match state.element with
         | Program e ->
             match e with
             | Nil ->
-                exp.Empty() :> exp , state 
+                exp.Block([| exp.Empty() :> exp |]) , state 
             | SourceElements (_, _) ->
                 evalSourceElements { state with element = e }
                         
@@ -1198,22 +1204,22 @@ type Compiler(environment:IEnvironment) as this =
     and compileGlobalCode (input:string) =
         let input = Parser.parse (input + ";")
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
-        let body, state = evalProgram { strict = false; element = input; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
-        let continuation = exp.Lambda<Code>(block [| body; exp.Return(returnLabel.Target, state.returnExpression); returnLabel |], [| environmentParam; argsParam |]).Compile()
+        let body, state = evalProgram { strict = false; element = input; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = [] }
+        let continuation = exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
         Code(performDeclarationBinding true state continuation)
         
     and compileEvalCode (input:string) =
         let input = Parser.parse (input + ";")
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
-        let body, state = evalProgram { strict = false; element = input; labels =  [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
-        let continuation = exp.Lambda<Code>(block [| body; returnLabel |], [| environmentParam; argsParam |]).Compile()
+        let body, state = evalProgram { strict = false; element = input; labels =  [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = [] }
+        let continuation = exp.Lambda<Code>(block [| body:>exp; returnLabel |], [| environmentParam; argsParam |]).Compile()
         Code(performDeclarationBinding false state continuation)
 
     and compileFunctionCode (formalParameterList:ReadOnlyList<string>, functionBody:SourceElement) =
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
-        let state = { strict = false; element = functionBody; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = []; returnExpression = getUndefined }
+        let state = { strict = false; element = functionBody; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = [] }
         let body, state = evalFunctionBody state
-        let continuation = exp.Lambda<Code>(block [| body; returnLabel |], [| environmentParam; argsParam |]).Compile()
+        let continuation = exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
         let continuation = Code(performFunctionArgumentsBinding formalParameterList state continuation)
         Code(performDeclarationBinding true state continuation)
 

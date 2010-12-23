@@ -2,6 +2,21 @@
 
 module Tools =
 
+    module TreeTraverser = 
+
+        type NodeTest<'a, 'b> = 'a -> option<'b>
+
+        type TreeTraverser() =
+            member x.Bind (f:NodeTest<'a, 'b>, g:unit -> NodeTest<'b, 'c>) (v:'a) = 
+                match f v with
+                | Some v -> g () v
+                | None -> None               
+            member x.Delay (f:unit -> NodeTest<'a, 'b>) = f()
+            member x.Return v1 v2 = Some v1
+            member x.ReturnFrom (f:NodeTest<'a, 'b>) v = f v
+        
+        let traverse = TreeTraverser()
+
     open System
     open System.Collections.Generic
     open System.Diagnostics
