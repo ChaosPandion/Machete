@@ -9,13 +9,13 @@ module Parsers =
         
     
     let whiteSpace<'a> : Parser<InputElement, 'a> =
-        satisfy CharSets.lineTerminatorCharSet.Contains |>> (fun c -> WhiteSpace)
+        satisfy CharSets.isLineTerminator |>> (fun c -> WhiteSpace)
 
     let lineTerminator<'a> : Parser<InputElement, 'a> =
-        satisfy CharSets.lineTerminatorCharSet.Contains |>> (fun c -> LineTerminator)
+        satisfy CharSets.isLineTerminator |>> (fun c -> LineTerminator)
     
     let lineTerminatorSequence<'a> : Parser<InputElement, 'a> =
-        satisfy CharSets.lineTerminatorCharSet.Contains |>> (fun c -> LineTerminatorSequence)
+        satisfy CharSets.isLineTerminator |>> (fun c -> LineTerminatorSequence)
 
     let booleanLiteral<'a> : Parser<InputElement, 'a> =
         (pstring "true" <|> pstring "false") |>> BooleanLiteral

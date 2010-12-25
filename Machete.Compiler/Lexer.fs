@@ -83,17 +83,17 @@ module Lexer =
 
     module WhiteSpace =
         let parseWhiteSpace<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.whiteSpaceCharSet.Contains |>> (fun c -> WhiteSpace)
+            satisfy CharSets.isWhiteSpace |>> (fun c -> WhiteSpace)
 
     module LineTerminator =        
         let parseLineTerminator<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.lineTerminatorCharSet.Contains |>> (fun c -> LineTerminator)    
+            satisfy CharSets.isLineTerminator |>> (fun c -> LineTerminator)    
         let parseLineTerminatorSequence<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.lineTerminatorCharSet.Contains |>> (fun c -> LineTerminatorSequence)
+            satisfy CharSets.isLineTerminator |>> (fun c -> LineTerminatorSequence)
 
     module Comment =            
         let parseSingleLineComment<'a> : Parser<InputElement, 'a> =
-            pipe2 (pstring "//") (manyCharsTill anyChar (lookAhead (satisfy CharSets.lineTerminatorCharSet.Contains))) (fun a b -> SingleLineComment b)
+            pipe2 (pstring "//") (manyCharsTill anyChar (lookAhead (satisfy CharSets.isLineTerminator))) (fun a b -> SingleLineComment b)
         let parseMultiLineComment<'a> : Parser<InputElement, 'a> =
             (between (pstring "/*") (pstring "*/") (manyCharsTill anyChar (lookAhead (pstring "*/")))) |>> MultiLineComment
         let parseComment<'a> : Parser<InputElement, 'a> =
@@ -123,7 +123,7 @@ module Lexer =
             satisfy CharSets.nonZeroDigitCharSet.Contains |>> Chr |>> NonZeroDigit
 
         let decimalDigit<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.decimalDigitCharSet.Contains |>> Chr |>> DecimalDigit
+            satisfy CharSets.isDecimalDigit |>> Chr |>> DecimalDigit
 
         let decimalDigits<'a> : Parser<InputElement, 'a> =
             many1Fold Nil (fun x y -> DecimalDigits (x, y)) decimalDigit         
@@ -177,7 +177,7 @@ module Lexer =
                 return NumericLiteral r
             }
 
-        let evalHexDigit v =
+        let inline evalHexDigit v =
             match v with
             | HexDigit v -> 
                 match v with
@@ -201,7 +201,7 @@ module Lexer =
                 | _ -> invalidOp "Unexpected pattern for HexIntegerLiteral."       
             | _ -> invalidArg "v" "Expected HexDigit."
 
-        let evalDecimalDigit v =
+        let inline evalDecimalDigit v =
             match v with
             | DecimalDigit v -> 
                 match v with
@@ -368,14 +368,14 @@ module Lexer =
 
         let doubleStringCharacter<'a> : Parser<InputElement, 'a> =
             choice [
-                (satisfy (fun c -> c <> '\"' && c <> '\\' && not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr)
+                (satisfy (fun c -> c <> '\"' && c <> '\\' && not (CharSets.isLineTerminator c)) |>> Chr)
                 attempt (skipChar '\\' >>. escapeSequence)
                 (lineContinuation)
             ] |>> DoubleStringCharacter
 
         let singleStringCharacter<'a> : Parser<InputElement, 'a> =
             choice [
-                (satisfy (fun c -> c <> ''' && c <> '\\' && not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr)
+                (satisfy (fun c -> c <> ''' && c <> '\\' && not (CharSets.isLineTerminator c)) |>> Chr)
                 attempt (skipChar '\\' >>. escapeSequence)
                 (lineContinuation)
             ] |>> SingleStringCharacter
@@ -624,7 +624,7 @@ module Lexer =
         let parseRegularExpressionFlags<'a> : Parser<InputElement, 'a> =
             manyFold (RegularExpressionFlags (Nil, Nil)) (fun x y -> RegularExpressionFlags (x, y)) IdentifierNameParser.identifierPart
         let parseRegularExpressionNonTerminator<'a> : Parser<InputElement, 'a> =
-            satisfy (fun c -> not (CharSets.lineTerminatorCharSet.Contains c)) |>> Chr |>> RegularExpressionNonTerminator
+            satisfy (fun c -> not (CharSets.isLineTerminator c)) |>> Chr |>> RegularExpressionNonTerminator
         let parseRegularExpressionBackslashSequence<'a> : Parser<InputElement, 'a> =
             tuple2 (chr '\\') parseRegularExpressionNonTerminator |>> RegularExpressionBackslashSequence
         let parseRegularExpressionClassChar<'a> : Parser<InputElement, 'a> =
@@ -706,7 +706,7 @@ module Lexer =
                     | WhiteSpace
                     | Comment (SingleLineComment _) -> ()
                     | Comment (MultiLineComment ct) ->
-                        if ct |> Seq.exists CharSets.lineTerminatorCharSet.Contains then
+                        if ct |> Seq.exists CharSets.isLineTerminator then
                             yield LineTerminator
                     | _ -> 
                         yield v

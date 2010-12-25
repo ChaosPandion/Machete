@@ -131,7 +131,7 @@ namespace Machete.Runtime.NativeObjects
                 }
 
                 var result = ((ICallable)this).Call(environment, obj, args);
-                if (proto.TypeCode == LanguageTypeCode.Object)
+                if (result.TypeCode == LanguageTypeCode.Object)
                 {
                     return (IObject)result;
                 }

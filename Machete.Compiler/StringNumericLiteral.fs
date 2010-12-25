@@ -36,7 +36,7 @@ module StringNumericLiteral =
         }
 
     let parseDecimalDigit<'a> =
-        (satisfy CharSets.decimalDigitCharSet.Contains) |>> DecimalDigit
+        (satisfy CharSets.isDecimalDigit) |>> DecimalDigit
         
     let parseDecimalDigits<'a> =
         many1Fold Nil (fun a b -> DecimalDigits (a, b)) parseDecimalDigit

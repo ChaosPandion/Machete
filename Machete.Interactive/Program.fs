@@ -111,13 +111,17 @@ module Program =
         writeColored message ConsoleColor.Blue
         writeNewLineStart ()
         writeNewLineStart ()
+        let sw = System.Diagnostics.Stopwatch()
         while true do
             let text = read [] ""
             if text.Length > 0 then
                     try
                         if not (commandStart.IsMatch text) then
                             writeNewLineStart ()
+                            sw.Restart()
                             writeColored (engine.Value.ExecuteScript (text, 60000) |> string) ConsoleColor.DarkCyan
+                            writeNewLineStart ()
+                            writeColored ("Execution Time: " + sw.Elapsed.ToString()) ConsoleColor.DarkGray
                             writeNewLineStart ()
                         else
                             let r = run CommandParser.parse text

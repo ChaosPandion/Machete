@@ -34,8 +34,6 @@ namespace Machete.Runtime
             Null = new LNull(this);
 
             GlobalObject = new BGlobal(this);
-            MathObject = new BMath(this);
-            JsonObject = new BJson(this);
 
             var record = new SObjectEnvironmentRecord(this, GlobalObject, false);
             var environment = new SLexicalEnvironment(this, record, null);
@@ -43,6 +41,8 @@ namespace Machete.Runtime
             Context.LexicalEnviroment = Context.VariableEnviroment = environment;
             Context.ThisBinding = GlobalObject;
 
+            MathObject = new BMath(this);
+            JsonObject = new BJson(this);
             ObjectConstructor = new CObject(this);
             FunctionConstructor = new CFunction(this);
             ArrayConstructor = new CArray(this);
@@ -123,7 +123,6 @@ namespace Machete.Runtime
             TypeErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(TypeErrorPrototype), false);
             UriErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(UriErrorPrototype), false);
 
-            ObjectPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ObjectConstructor), false);
             FunctionPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(FunctionConstructor), false);
             ArrayPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ArrayConstructor), false);
             StringPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(StringConstructor), false);
@@ -156,6 +155,41 @@ namespace Machete.Runtime
             GlobalObject.DefineOwnProperty("URIError", CreateDataDescriptor(UriErrorConstructor), false);
             GlobalObject.DefineOwnProperty("Math", CreateDataDescriptor(MathObject), false);
             GlobalObject.DefineOwnProperty("JSON", CreateDataDescriptor(JsonObject), false);
+
+
+            GlobalObject.Initialize();
+            MathObject.Initialize();
+            JsonObject.Initialize();
+            ObjectConstructor.Initialize();
+            FunctionConstructor.Initialize();
+            ArrayConstructor.Initialize();
+            StringConstructor.Initialize();
+            BooleanConstructor.Initialize();
+            NumberConstructor.Initialize();
+            DateConstructor.Initialize();
+            RegExpConstructor.Initialize();
+            ErrorConstructor.Initialize();
+            EvalErrorConstructor.Initialize();
+            RangeErrorConstructor.Initialize();
+            ReferenceErrorConstructor.Initialize();
+            SyntaxErrorConstructor.Initialize();
+            TypeErrorConstructor.Initialize();
+            UriErrorConstructor.Initialize();
+            ObjectPrototype.Initialize();
+            FunctionPrototype.Initialize();
+            ArrayPrototype.Initialize();
+            StringPrototype.Initialize();
+            BooleanPrototype.Initialize();
+            NumberPrototype.Initialize();
+            DatePrototype.Initialize();
+            RegExpPrototype.Initialize();
+            ErrorPrototype.Initialize();
+            EvalErrorPrototype.Initialize();
+            RangeErrorPrototype.Initialize();
+            ReferenceErrorPrototype.Initialize();
+            SyntaxErrorPrototype.Initialize();
+            TypeErrorPrototype.Initialize();
+            UriErrorPrototype.Initialize();
         }
 
 

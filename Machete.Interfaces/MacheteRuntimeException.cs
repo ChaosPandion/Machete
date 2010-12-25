@@ -2,24 +2,22 @@
 {
     public class MacheteRuntimeException : MacheteException
     {
-        private readonly IDynamic _thrown;
-
+        public IDynamic Thrown { get; private set; }
 
         public override string Message
         {
-            get { 
-                return _thrown.ToString(); }
+            get { return Thrown.ToString(); }
         }
 
         public MacheteRuntimeException(IDynamic thrown)
         {
-            _thrown = thrown;
+            Thrown = thrown;
         }
 
 
         public override string ToString()
         {
-            return _thrown.ToString();
+            return Thrown.ToString();
         }
     }
 }

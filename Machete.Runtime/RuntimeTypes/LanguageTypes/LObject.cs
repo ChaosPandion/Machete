@@ -7,6 +7,7 @@ using Machete.Runtime.NativeObjects;
 using Machete.Interfaces;
 using System.Reflection;
 using System.Collections;
+using System.Diagnostics;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
@@ -50,7 +51,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         }
         
 
-        public virtual IPropertyDescriptor GetOwnProperty(string p)
+        public IPropertyDescriptor GetOwnProperty(string p)
         {
             IPropertyDescriptor value;
             if (_map.TryGetValue(p, out value))
@@ -63,21 +64,22 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
         }
 
-        public virtual IPropertyDescriptor GetProperty(string p)
+        public IPropertyDescriptor GetProperty(string p)
         {
-            var prop = GetOwnProperty(p);
-            if (prop != null)
+            IObject obj = this;
+            IPropertyDescriptor value;
+
+            do
             {
-                return prop;
-            }
-            else if (Prototype == null)
-            {
-                return null;
-            }
-            else
-            {
-                return ((LObject)Prototype).GetProperty(p);
-            }
+                value = obj.GetOwnProperty(p);
+                if (value != null)
+                {
+                    return value;
+                }
+                obj = obj.Prototype;
+            } while (obj != null);
+
+            return null;
         }
 
         public virtual IDynamic Get(string p)
@@ -101,19 +103,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
         }
 
-        public virtual bool CanPut(string p)
+        public bool CanPut(string p)
         {
-            var desc = GetOwnProperty(p);
-            if (desc != null)
+            IPropertyDescriptor desc;
+            if (_map.TryGetValue(p, out desc))
             {
-                if (desc.IsAccessorDescriptor)
-                {
-                    return !(desc.Set is LUndefined);
-                }
-                else
-                {
-                    return true;
-                }
+                return desc.IsAccessorDescriptor ? !(desc.Set is IUndefined) : true; 
             }
             else if (Prototype == null)
             {
@@ -127,7 +122,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
             else if (inherited.IsAccessorDescriptor)
             {
-                return !(inherited.Set is LUndefined);
+                return !(inherited.Set is IUndefined);
             }
             else if (Extensible)
             {
@@ -169,10 +164,9 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             DefineOwnProperty(p, newDesc, @throw);
         }
 
-        public virtual bool HasProperty(string p)
+        public bool HasProperty(string p)
         {
-            var desc = GetProperty(p);
-            return desc != null;
+            return _map.ContainsKey(p);
         }
 
         public virtual bool Delete(string p, bool @throw)
@@ -226,34 +220,33 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public virtual bool DefineOwnProperty(string p, IPropertyDescriptor desc, bool @throw)
         {
-            var reject = new Func<bool>(() => {
-                if (!@throw) return false;
-                throw _environment.CreateTypeError("");
-            });
             var current = GetOwnProperty(p);
             if (current == null)
             {
                 if (!Extensible)
                 {
-                    return reject();
+                    return Reject(p, @throw);
                 }
-                _map.Add(p,
-                    desc.IsGenericDescriptor || desc.IsDataDescriptor 
-                    ? new SPropertyDescriptor()
+                if (desc.IsGenericDescriptor || desc.IsDataDescriptor )
+                {
+                    _map.Add(p, new SPropertyDescriptor()
                         {
                             Value = desc.Value ?? Environment.Undefined,
                             Writable = desc.Writable ?? false,
                             Enumerable = desc.Enumerable ?? false,
                             Configurable = desc.Configurable ?? false
-                        } 
-                    : new SPropertyDescriptor()
-                        {
-                            Get = desc.Get ?? Environment.Undefined,
-                            Set = desc.Set ?? Environment.Undefined,
-                            Enumerable = desc.Enumerable ?? false,
-                            Configurable = desc.Configurable ?? false
-                        }
-                );
+                        });
+                }
+                else
+                {
+                    _map.Add(p, new SPropertyDescriptor()
+                    {
+                        Get = desc.Get ?? Environment.Undefined,
+                        Set = desc.Set ?? Environment.Undefined,
+                        Enumerable = desc.Enumerable ?? false,
+                        Configurable = desc.Configurable ?? false
+                    });
+                }
                 return true;
             }
             else if (desc.IsEmpty || current.Equals(desc))
@@ -264,11 +257,11 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             {
                 if (desc.Configurable.GetValueOrDefault())
                 {
-                    return reject();
+                    return Reject(p, @throw);
                 }
                 else if (desc.Enumerable != null && desc.Enumerable.GetValueOrDefault() ^ current.Enumerable.GetValueOrDefault())
                 {
-                    return reject();
+                    return Reject(p, @throw);
                 }
             }
             else if (!desc.IsGenericDescriptor)
@@ -277,7 +270,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 {
                     if (!current.Configurable.Value)
                     {
-                        return reject();
+                        return Reject(p, @throw);
                     }
                     else if (current.IsDataDescriptor)
                     {
@@ -300,11 +293,11 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                     {
                         if (!desc.Writable.Value && current.Writable.Value)
                         {
-                            return reject();
+                            return Reject(p, @throw);
                         }
                         else if (!current.Writable.Value && current.Value != desc.Value)
                         {
-                            return reject();
+                            return Reject(p, @throw);
                         }
                     }
                 }
@@ -314,11 +307,11 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                     {
                         if (desc.Set != null && desc.Set != current.Set)
                         {
-                            return reject();
+                            return Reject(p, @throw);
                         }
                         else if (desc.Get != null && desc.Get != current.Get)
                         {
-                            return reject();
+                            return Reject(p, @throw);
                         }
                     }
                 }
@@ -332,7 +325,14 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             _map[p] = current;
             return true;
         }
-        
+
+        private bool Reject(string name, bool @throw)
+        {
+            if (!@throw) return false;
+            throw _environment.CreateTypeError("");
+        }
+
+
         public IDynamic Op_LogicalNot()
         {
             return LType.Op_LogicalNot(_environment, this);
@@ -613,8 +613,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         IEnumerator<string> IEnumerable<string>.GetEnumerator()
         {
-            var props = _map.Keys.ToArray();
-            foreach (var prop in props)
+            foreach (var prop in _map.Keys)
             {
                 IPropertyDescriptor desc;
                 if (_map.TryGetValue(prop, out desc))
@@ -625,6 +624,14 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                     }
                 }
             }
+
+            if (Prototype != null)
+            {
+                foreach (var prop in Prototype)
+                {
+                    yield return prop;
+                }
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -633,19 +640,31 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         }
 
 
-        protected void InitializeNativeFunctions()
+        public virtual void Initialize()
         {
-            foreach (var mi in this.GetType().GetMethods(BindingFlags.Static | BindingFlags.NonPublic))
+            foreach (var m in this.GetType().GetMethods(BindingFlags.Static | BindingFlags.NonPublic))
             {
-                var method = mi;
-                foreach (var ai in mi.GetCustomAttributes(false))
+                NativeFunctionAttribute nf = null;
+                DataDescriptorAttribute dd = null;
+
+                foreach (var a in m.GetCustomAttributes(false))
                 {
-                    var nf = ai as NativeFunctionAttribute;
-                    if (nf != null)
+                    nf = nf ?? a as NativeFunctionAttribute;
+                    dd = dd ?? a as DataDescriptorAttribute;
+                    if (nf != null && dd != null)
                     {
-                        DefineOwnProperty(nf.Identifier, Environment.CreateDataDescriptor(Environment.CreateFunction(nf.FormalParameterList, true, new Lazy<Code>(() => (Code)Delegate.CreateDelegate(typeof(Code), method)))), false);
+                        break;
                     }
                 }
+
+                // For now I want to assume native functions will always be stored in data descriptors.
+                Debug.Assert(nf != null && dd != null);
+
+                var code = (Code)Delegate.CreateDelegate(typeof(Code), m);
+                var func = Environment.CreateFunction(nf.FormalParameterList, true,  new Lazy<Code>(() => code));
+                var desc = Environment.CreateDataDescriptor(func, dd.Writable, dd.Enumerable, dd.Configurable);
+
+                DefineOwnProperty(nf.Identifier, desc, false);
             }
         }
 

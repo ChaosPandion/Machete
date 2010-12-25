@@ -17,5 +17,7 @@ namespace Machete.Interfaces
         bool Delete(string name, bool strict);
         IDynamic DefaultValue(string hint);
         bool DefineOwnProperty(string name, IPropertyDescriptor value, bool strict);
+
+        void Initialize();
     }
 }

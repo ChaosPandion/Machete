@@ -12,7 +12,6 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             Extensible = true;
             DefineOwnProperty("name", environment.CreateDataDescriptor(environment.CreateString("Error"), true, false, true), false);
             DefineOwnProperty("message", environment.CreateDataDescriptor(environment.CreateString(""), true, false, true), false);
-            InitializeNativeFunctions();
         }
 
 

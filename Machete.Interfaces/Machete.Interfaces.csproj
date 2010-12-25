@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code.cs" />
+    <Compile Include="DataDescriptorAttribute.cs" />
     <Compile Include="IArgs.cs" />
     <Compile Include="IBoolean.cs" />
     <Compile Include="ICallable.cs" />

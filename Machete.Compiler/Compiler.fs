@@ -649,13 +649,18 @@ type Compiler(environment:IEnvironment) as this =
             evalStatementList { state with element = e }  
 
     and evalStatementList (state:State) =
-        match state.element with
-        | StatementList (Nil, e) ->
-            evalStatement { state with element = e }
-        | StatementList (e1, e2) ->
-            let e1, state = evalStatementList { state with element = e1 } 
-            let e2, state = evalStatement { state with element = e2 } 
-            block [|e1;e2|] , state
+        let rec evalStatementList result state =                  
+            match state.element with
+            | StatementList (Nil, e) ->
+                let r, s = evalStatement { state with element = e }
+                r :: result, s
+            | StatementList (e1, e2) ->
+                let result, s = evalStatementList result { state with element = e1 } 
+                let r, s = evalStatement { s with element = e2 }
+                r :: result, s
+        let result, state = evalStatementList [] state
+        let result = if not result.IsEmpty && result.Head.Type <> typeof<IDynamic> then getUndefined::result else result
+        exp.Block (typeof<IDynamic>, result |> List.rev) :> exp, state
 
     and evalVariableStatement (state:State) =
         match state.element with
@@ -721,21 +726,22 @@ type Compiler(environment:IEnvironment) as this =
         match state.element with
         | IterationStatement (e1, e2, e3, e4) ->
             match e1, e2, e3, e4 with
-            | Statement (_), Expression (_, _), SourceElement.Nil, SourceElement.Nil -> 
-                let e1, s1 = evalStatement { state with labels = labels::state.labels; element = e1 } 
-                let e2 = evalExpression { state with element = e2 }
-                let e2 = call e2 Reflection.IDynamic.convertToBoolean Array.empty
-                let e2 = call e2 Reflection.IBoolean.get_BaseValue Array.empty
-                let body = exp.IfThenElse(e2, e1, exp.Break(breakLabel.Target))
-                exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp, { state with labels = state.labels.Tail }
 
-            | Expression (_, _), Statement (_), SourceElement.Nil, SourceElement.Nil ->  
-                let eStatement, s1 = evalStatement { state with labels = labels::state.labels; element = e2 } 
-                let e2 = evalExpression { state with element = e1 }
+            | Statement (_), Expression (_, _), SourceElement.Nil, SourceElement.Nil -> // IterationStatement: do Statement while ( Expression ); 
+                let e1, s1 = evalStatement { state with labels = labels::state.labels; element = e1 } 
+                let e2 = evalExpression { s1 with element = e2 }
                 let e2 = call e2 Reflection.IDynamic.convertToBoolean Array.empty
                 let e2 = call e2 Reflection.IBoolean.get_BaseValue Array.empty
-                let body = block [| eStatement; exp.IfThen(exp.Not e2, exp.Break(breakLabel.Target)) |]
-                exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp, { state with labels = state.labels.Tail }
+                let body = exp.Block([| e1; exp.IfThen(exp.Not(e2), exp.Break(breakLabel.Target)) :> exp |])
+                exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp, { s1 with labels = s1.labels.Tail }
+
+            | Expression (_, _), Statement (_), SourceElement.Nil, SourceElement.Nil -> // IterationStatement: while ( Expression ) Statement   
+                let eStatement, s1 = evalStatement { state with labels = labels::state.labels; element = e2 } 
+                let e2 = evalExpression { s1 with element = e1 }
+                let e2 = call e2 Reflection.IDynamic.convertToBoolean Array.empty
+                let e2 = call e2 Reflection.IBoolean.get_BaseValue Array.empty
+                let body = block [| exp.IfThenElse(exp.Not e2, exp.Break(breakLabel.Target), eStatement) |]
+                exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp, { s1 with labels = s1.labels.Tail }
                 
             | SourceElement.Nil, SourceElement.Nil, SourceElement.Nil, Statement (_) ->                                             
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
@@ -759,9 +765,9 @@ type Compiler(environment:IEnvironment) as this =
             | SourceElement.Nil, Expression (_, _), Expression (_, _), Statement (_) -> 
                 let e2 = convertToBool (evalExpression { state with element = e2 })                       
                 let e3 = evalExpression { state with element = e3 }
-                let e3 = call e3 Reflection.IDynamic.get_Value Array.empty                        
-                let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
-                let body = exp.IfThenElse(e2, block [| e3; e4 |], exp.Break(breakLabel.Target))
+                let e3 = call e3 Reflection.IDynamic.get_Value Array.empty   
+                let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 }                      
+                let body = exp.IfThenElse(e2, block [| e4; e3 |], exp.Break(breakLabel.Target))
                 let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
                 loop,  { state with labels = state.labels.Tail }
 
@@ -789,24 +795,26 @@ type Compiler(environment:IEnvironment) as this =
                 let e3 = evalExpression { state with element = e3 }
                 let e3 = call e2 Reflection.IDynamic.get_Value Array.empty
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 }
-                let body = exp.IfThenElse(e2, block [| e3; e4 |], exp.Break(breakLabel.Target))
+                let body = exp.IfThenElse(e2, block [| e4; e3 |], exp.Break(breakLabel.Target))
                 let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
                 block [| e1; loop |],  { state with labels = state.labels.Tail }
 
-            | VariableDeclarationListNoIn (_), SourceElement.Nil, SourceElement.Nil, Statement (_) ->
-                let e1, state = evalVariableDeclaration { state with element = e1 }
+            | VariableDeclarationListNoIn (_), SourceElement.Nil, SourceElement.Nil, Statement (_) -> // for ( var VariableDeclarationListNoIn; ; ) Statement 
+                let e1, state = evalVariableDeclarationList { state with element = e1 }
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
-                let loop = exp.Loop (e4, breakLabel.Target, continueLabel.Target) :> exp
-                loop,  { state with labels = state.labels.Tail }
+                let body = exp.Loop (e4, breakLabel.Target, continueLabel.Target) :> exp
+                let body = exp.Block([| e1; body; |]) :> exp
+                body,  { state with labels = state.labels.Tail }
                 
             | VariableDeclarationListNoIn (_), Expression (_, _), SourceElement.Nil, Statement (_) ->
-                let e1, state = evalVariableDeclaration { state with element = e1 }
+                let e1, state = evalVariableDeclarationList { state with element = e1 }
                 let e2 = evalExpression { state with element = e2 }
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
                 let e2 = convertToBool e2 
                 let body = exp.IfThenElse(e2, e4, exp.Break(breakLabel.Target))
-                let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
-                loop,  { state with labels = state.labels.Tail }
+                let body = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
+                let body = exp.Block([| e1; body; |]) :> exp
+                body,  { state with labels = state.labels.Tail }
 
             | VariableDeclarationListNoIn (_), Expression (_, _), Expression (_, _), Statement (_) ->
                 let e1, state = evalVariableDeclarationList { state with element = e1 }
@@ -828,10 +836,10 @@ type Compiler(environment:IEnvironment) as this =
                 let obj = call experValue Reflection.IDynamic.convertToObject Array.empty
                 let getEnumerator = call (exp.Convert(obj, typeof<IEnumerable<string>>)) Reflection.IEnumerableString.getEnumerator Array.empty
                 let assignEnumeratorVar = assign enumeratorVar getEnumerator                 
-                let current = call (exp.Convert(obj, typeof<IEnumerator<string>>)) Reflection.IEnumeratorString.get_Current Array.empty
+                let current = call (exp.Convert(enumeratorVar, typeof<IEnumerator<string>>)) Reflection.IEnumeratorString.get_Current Array.empty
                 let moveNext = call (exp.Convert(enumeratorVar, typeof<IEnumerator>)) Reflection.IEnumerator.moveNext Array.empty
                 let dispose = call (exp.Convert(enumeratorVar, typeof<IDisposable>)) Reflection.IDisposable.dispose Array.empty  
-                let eStatement, state = evalStatement { state with labels = labels::state.labels; element = e2 } 
+                let eStatement, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
                 let putCurrent = call lhsRef Reflection.IDynamic.set_Value [| call environmentParam Reflection.IEnvironment.createString [| current |] |]
                 let ifTrue = block [| putCurrent; eStatement |]
                 let loopCondition = exp.IfThenElse (moveNext, ifTrue, exp.Break(breakLabel.Target))
@@ -934,8 +942,8 @@ type Compiler(environment:IEnvironment) as this =
             let assignNewEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| newEnvVar |]
             let assignOldEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| oldEnvVar |]
             let body, state = evalStatement { state with element = e2 } 
-            let tryBody = block [| assignOldEnvVar; assignNewEnvVar |]
-            let finallyBody = block [| assignOldEnvVar; assignNewEnvVar |]
+            let tryBody = block [| assignOldEnvVar; assignNewEnvVar; assignNewEnv; body |]
+            let finallyBody = block [| assignOldEnv |]
             exp.Block (variables, exp.TryFinally (tryBody, finallyBody)) :> exp
 
     and evalSwitchStatement (state:State) = 
@@ -1114,7 +1122,7 @@ type Compiler(environment:IEnvironment) as this =
                 match e2 with
                 | InputElement(Lexer.Identifier e2) ->
                     Lexer.IdentifierNameParser.evalIdentifierName e2::result
-        ReadOnlyList<string>(run [] state.element)
+        ReadOnlyList<string>(run [] state.element |> List.rev)
 
     and evalFunctionBody (state:State) =
         let target = state.labels.Head.["return"].Target
