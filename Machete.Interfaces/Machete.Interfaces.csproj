@@ -44,6 +44,7 @@
     <Compile Include="DataDescriptorAttribute.cs" />
     <Compile Include="IArgs.cs" />
     <Compile Include="IBoolean.cs" />
+    <Compile Include="IBuiltinFunction.cs" />
     <Compile Include="ICallable.cs" />
     <Compile Include="IConstructable.cs" />
     <Compile Include="IDeclarativeEnvironmentRecord.cs" />
@@ -52,6 +53,7 @@
     <Compile Include="IEnvironmentRecord.cs" />
     <Compile Include="IExecutionContext.cs" />
     <Compile Include="IFunction.cs" />
+    <Compile Include="IHasInstance.cs" />
     <Compile Include="ILexicalEnvironment.cs" />
     <Compile Include="INull.cs" />
     <Compile Include="INumber.cs" />

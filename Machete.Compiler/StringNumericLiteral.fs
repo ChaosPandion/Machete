@@ -9,7 +9,7 @@ module StringNumericLiteral =
     type Node =
     | StringNumericLiteral of Node * Node * Node
     | StrWhiteSpace of Node * Node  
-    | StrWhiteSpaceChar of InputElement
+    | StrWhiteSpaceChar of char
     | StrNumericLiteral of Node  
     | StrDecimalLiteral of Node * Node
     | StrUnsignedDecimalLiteral of Node * Node * Node * Node * Node
@@ -26,7 +26,7 @@ module StringNumericLiteral =
     
     
     let parseHexDigit<'a> =
-        (satisfy CharSets.hexDigitCharSet.Contains) |>> HexDigit
+        (satisfy CharSets.isHexDigit) |>> HexDigit
         
     let parseHexIntegerLiteral<'a> =
         parse {
@@ -39,10 +39,15 @@ module StringNumericLiteral =
         (satisfy CharSets.isDecimalDigit) |>> DecimalDigit
         
     let parseDecimalDigits<'a> =
-        many1Fold Nil (fun a b -> DecimalDigits (a, b)) parseDecimalDigit
+        parse {
+            let! first = parseDecimalDigit
+            let first = DecimalDigits (Nil, first) 
+            let! result = manyFold first (fun a b -> DecimalDigits (a, b)) parseDecimalDigit
+            return result
+        }
 
     let parseStrWhiteSpaceChar<'a> =
-        (Parsers.whiteSpace <|> Parsers.lineTerminator) |>> StrWhiteSpaceChar
+        satisfy (fun c -> CharSets.isWhiteSpace c || CharSets.isLineTerminator c) |>> StrWhiteSpaceChar
         
     let parseSignedInteger<'a> =
         tuple2 ((anyOf "+-" |>> Char) <|> preturn Nil) parseDecimalDigits |>> SignedInteger
@@ -54,35 +59,53 @@ module StringNumericLiteral =
         tuple2 parseExponentIndicator parseSignedInteger |>> ExponentPart
         
     let parseStrUnsignedDecimalLiteral<'a> =
-        tuple5 ((pstring "Infinity" |>> String) <|> preturn Nil) 
-            parseDecimalDigits 
-            ((pchar '.' |>> Char) <|> preturn Nil) 
-            (parseDecimalDigits <|> preturn Nil)
-            (parseExponentPart <|> preturn Nil) 
-        |>> StrUnsignedDecimalLiteral
+        attempt (parse {
+            let! e1 = pstring "Infinity" |>> String
+            return StrUnsignedDecimalLiteral (e1, Nil, Nil, Nil, Nil)
+        }) <|> parse {
+            let! e1 = pchar '.' |>> Char
+            let! e2 = parseDecimalDigits
+            let! e3 = parseExponentPart <|> preturn Nil
+            return StrUnsignedDecimalLiteral (Nil, Nil, e1, e2, e3)
+        } <|>  parse {
+            let! e1 = parseDecimalDigits
+            let! e2 = (pchar '.' |>> Char) <|> preturn Nil 
+            let! e3 = parseDecimalDigits <|> preturn Nil
+            let! e4 = parseExponentPart <|> preturn Nil
+            return StrUnsignedDecimalLiteral (Nil, e1, e2, e3, e4)
+        }
         
     let parseStrDecimalLiteral<'a> =
-        tuple2 ((anyOf "+-" |>> Char) <|> preturn Nil) parseStrUnsignedDecimalLiteral |>> StrDecimalLiteral
+        parse {
+            let! e1 = anyOf "+-" |>> Char <|> preturn Nil
+            let! e2 = parseStrUnsignedDecimalLiteral
+            return StrDecimalLiteral (e1, e2)
+        }
         
     let parseStrNumericLiteral<'a> =
-        (parseStrDecimalLiteral <|> parseHexIntegerLiteral) |>> StrNumericLiteral
+        (attempt parseHexIntegerLiteral <|> parseStrDecimalLiteral) |>> StrNumericLiteral
 
     let parseStrWhiteSpace<'a> =
         many1Fold Nil (fun a b -> StrWhiteSpace (a, b)) parseStrWhiteSpaceChar
 
     let parseStringNumericLiteral<'a> =
-        let ws = parseStrWhiteSpace <|> preturn Nil
-        tuple3 ws parseStrNumericLiteral ws |>> StringNumericLiteral
+        parse {
+            let ws = attempt (parseStrWhiteSpace) <|> preturn Nil
+            let! e1 = ws
+            let! e2 = parseStrNumericLiteral <|> (eof |>> fun () -> Nil)
+            let! e3 = ws
+            return  StringNumericLiteral (e1, e2, e3)
+        }
 
     let parse input =
-        match runParserOnString parseStringNumericLiteral () input "" with
+        match runParserOnString parseStringNumericLiteral () "" input with
         | Success(a, b, c) -> a
-        | Failure(a, b, c) -> failwith a 
+        | Failure(a, b, c) -> Nil
 
     
     let rec countDecimalDigits v c =
         match v with
-        | DecimalDigits (Nil, d) -> c
+        | DecimalDigits (Nil, d) -> c + 1
         | DecimalDigits (dd, d) -> countDecimalDigits dd (c + 1)
 
     let evalHexDigit v =
@@ -104,7 +127,7 @@ module StringNumericLiteral =
     let rec evalDecimalDigits v =
         match v with
         | DecimalDigits (Nil, d) -> evalDecimalDigit d 
-        | DecimalDigits (dd, d) -> 10.0 + evalDecimalDigits dd + evalDecimalDigit d
+        | DecimalDigits (dd, d) -> (10.0 * evalDecimalDigits dd) + evalDecimalDigit d
         
     let evalSignedInteger v =
         match v with
@@ -124,25 +147,39 @@ module StringNumericLiteral =
         | StrUnsignedDecimalLiteral (Nil, DecimalDigits (_, _), Char '.', DecimalDigits (_, _), Nil) -> 
             match v with 
             | StrUnsignedDecimalLiteral (_, a, _, b, _) -> 
-                evalDecimalDigits a +  evalDecimalDigits b * 10.0 ** (float (-countDecimalDigits b 0)) 
+                let n = countDecimalDigits b 0 |> double
+                let integral = evalDecimalDigits a
+                let fractional = evalDecimalDigits b
+                integral +  (fractional * 10.0 ** -n) 
         | StrUnsignedDecimalLiteral (Nil, DecimalDigits (_, _), Char '.', DecimalDigits (_, _), ExponentPart (_, _)) -> 
             match v with 
-            | StrUnsignedDecimalLiteral (_, a, _, b, c) -> 
-                evalDecimalDigits a +  evalDecimalDigits b * 10.0 ** (evalExponentPart c - float (-countDecimalDigits b 0)) 
-        | StrUnsignedDecimalLiteral (Nil, d, Nil, Nil, e) -> 
-            evalDecimalDigits d * 10.0 ** (float (evalExponentPart e)) 
-        | StrUnsignedDecimalLiteral (Nil, Nil, Char '.', dl, Nil) -> 
-            evalDecimalDigits dl * 10.0 ** (float (-countDecimalDigits dl 0)) 
-        | StrUnsignedDecimalLiteral (Nil, Nil, Char '.', dl, e) -> 
-            evalDecimalDigits dl * 10.0 ** (evalExponentPart e - float (-countDecimalDigits dl 0)) 
+            | StrUnsignedDecimalLiteral (_, a, _, b, c) ->
+                let integral = evalDecimalDigits a
+                let fractional = evalDecimalDigits b  
+                let n = countDecimalDigits b 0 |> double
+                let e = evalExponentPart c
+                (integral + (fractional * (10.0 ** -n))) * (10.0 ** e)
+        | StrUnsignedDecimalLiteral (Nil, d, Nil, Nil, e) ->
+            let integral = evalDecimalDigits d
+            let e = evalExponentPart e 
+            integral * 10.0 ** e 
+        | StrUnsignedDecimalLiteral (Nil, Nil, Char '.', dl, Nil) ->
+            let n = countDecimalDigits dl 0 |> double 
+            let fractional = evalDecimalDigits dl
+            fractional * 10.0 ** -n 
+        | StrUnsignedDecimalLiteral (Nil, Nil, Char '.', dl, e) ->
+            let fractional = evalDecimalDigits dl  
+            let n = countDecimalDigits dl 0 |> double
+            let e = evalExponentPart e 
+            fractional * 10.0 ** (e - n) 
         | StrUnsignedDecimalLiteral (String "Infinity", Nil, Nil, Nil, Nil) -> 
             infinity
 
     let evalStrDecimalLiteral v =
         match v with
         | StrDecimalLiteral (Nil, a)
-        | StrDecimalLiteral (Char '+', a) -> evalStrUnsignedDecimalLiteral v
-        | StrDecimalLiteral (Char '-', a) -> -evalStrUnsignedDecimalLiteral v
+        | StrDecimalLiteral (Char '+', a) -> evalStrUnsignedDecimalLiteral a
+        | StrDecimalLiteral (Char '-', a) -> -evalStrUnsignedDecimalLiteral a
          
     let evalStrNumericLiteral v =
         match v with
@@ -155,8 +192,9 @@ module StringNumericLiteral =
 
     let evalStringNumericLiteral v =
         match v with
+        | Nil -> nan
         | StringNumericLiteral (_, Nil, _) -> 0.0
-        | StringNumericLiteral (_, a, _) -> evalStrDecimalLiteral a
+        | StringNumericLiteral (_, a, _) -> evalStrNumericLiteral a
 
     let eval input =
         evalStringNumericLiteral (parse input)    

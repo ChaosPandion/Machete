@@ -314,23 +314,23 @@ type Compiler(environment:IEnvironment) as this =
         | UnaryExpression (UnaryOperator.Nil, e) ->
             evalPostfixExpression { state with element = e }
         | UnaryExpression (UnaryOperator.Increment, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_PrefixIncrement [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_PrefixIncrement [||]
         | UnaryExpression (UnaryOperator.Decrement, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_PrefixDecrement [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_PrefixDecrement [||]
         | UnaryExpression (UnaryOperator.Plus, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_Plus [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_Plus [||]
         | UnaryExpression (UnaryOperator.Minus, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_Minus [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_Minus [||]
         | UnaryExpression (UnaryOperator.BitwiseNot, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_BitwiseNot [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_BitwiseNot [||]
         | UnaryExpression (UnaryOperator.LogicalNot, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_LogicalNot [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_LogicalNot [||]
         | UnaryExpression (UnaryOperator.Delete, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_Delete [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_Delete [||]
         | UnaryExpression (UnaryOperator.Void, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_Void [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_Void [||]
         | UnaryExpression (UnaryOperator.Typeof, e) ->
-            call (evalPostfixExpression { state with element = e }) Reflection.IDynamic.op_Typeof [||]
+            call (evalUnaryExpression { state with element = e }) Reflection.IDynamic.op_Typeof [||]
 
     and evalPostfixExpression (state:State) =    
         match state.element with
@@ -571,12 +571,12 @@ type Compiler(environment:IEnvironment) as this =
             let len = call lengthVar Reflection.IPropertyDescriptor.get_Value Array.empty
             let value = call (call len Reflection.IDynamic.op_Addition [| pad |]) Reflection.IDynamic.convertToUInt32 Array.empty
             let setValue = call lengthVar Reflection.IPropertyDescriptor.set_Value [| value |]
-            let result = (setValue::result) |> List.rev
-            let result = assignArray::assignLength::result |> List.toArray
+            let result = [ assignArray; assignLength ] @ (result |> List.rev) @ [ setValue; arrayVar ]
             exp.Block(variables, result) :> exp
 
     and evalElision (state:State) =
         match state.element with
+        | Nil -> 0.0
         | Elision (Nil) -> 1.0
         | Elision (e) -> evalElision { state with element = e } + 1.0
 
@@ -688,6 +688,7 @@ type Compiler(environment:IEnvironment) as this =
                     Lexer.IdentifierNameParser.evalIdentifierName e
             let left = evalIdentifier e1 state.strict 
             let right = evalInitialiser { state with element = e2 }
+            let right = call right Reflection.IDynamic.get_Value Array.empty
             call left Reflection.IDynamic.set_Value [| right |], { state with variables = identifier::state.variables }
 
     and evalInitialiser (state:State) =
@@ -1012,7 +1013,7 @@ type Compiler(environment:IEnvironment) as this =
             let labels = state.labels.Head.Add(breakName, breakLabel).Add(continueName, continueLabel)
             let state = { state with labels = labels::state.labels; element = e2 }
             let result, state = evalStatement state
-            block [| breakLabel; result; continueLabel |], { state with labels = state.labels.Tail }
+            block [| continueLabel; result; breakLabel |], { state with labels = state.labels.Tail }
 
     and evalThrowStatement (state:State) =
         match state.element with

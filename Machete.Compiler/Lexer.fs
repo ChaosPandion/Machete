@@ -109,7 +109,7 @@ module Lexer =
             pchar '.' |>> fun c -> DecimalPoint
 
         let hexDigit<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.hexDigitCharSet.Contains |>> Chr |>> HexDigit
+            satisfy CharSets.isHexDigit |>> Chr |>> HexDigit
     
         let hexIntegerLiteral<'a> : Parser<InputElement, 'a> =
             parse {
@@ -120,7 +120,7 @@ module Lexer =
             }
 
         let nonZeroDigit<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.nonZeroDigitCharSet.Contains |>> Chr |>> NonZeroDigit
+            satisfy CharSets.isNonZeroDigit |>> Chr |>> NonZeroDigit
 
         let decimalDigit<'a> : Parser<InputElement, 'a> =
             satisfy CharSets.isDecimalDigit |>> Chr |>> DecimalDigit

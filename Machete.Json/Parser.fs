@@ -1,8 +1,10 @@
 ﻿namespace Machete.Json
 
+open Machete.Interfaces
+open Machete.Compiler.Tools
+
 module Parser =
 
-    open Machete.Compiler.Tools
 
 //    open FParsec.CharParsers
 //    open FParsec.Primitives
@@ -12,8 +14,8 @@ module Parser =
 
     let jsonValue, jsonValueRef : Parser<Token, unit, Node> * Parser<Token, unit, Node> ref = createParserRef()
     
-    let jsonElementList = zero
-        //manySepFold jsonValue (satisfy (fun v -> v = ValueSeparator)) JsonNil (fun a b -> JsonElementList (a, b))
+    let jsonElementList = 
+        manySepFold jsonValue (satisfy (fun v -> v = ValueSeparator)) JsonElementList JsonNil 
     
     let jsonArray =
         between (satisfy (fun v -> v = BeginArray)) (satisfy (fun v -> v = EndArray)) (jsonElementList <|> result JsonNil) |>> JsonArray
@@ -70,7 +72,7 @@ module Parser =
         }
 
     do jsonValueRef := 
-        jsonNullLiteral <|> jsonBooleanLiteral <|> jsonObject <|> jsonArray <|> jsonString <|> jsonNumber
+        (jsonNullLiteral <|> jsonBooleanLiteral <|> jsonObject <|> jsonArray <|> jsonString <|> jsonNumber) |>> JsonValue
     
     let jsonText =
         jsonValue |>> JsonText
@@ -82,5 +84,8 @@ module Parser =
                 | Success (result, state) -> 
                     yield result
                 | Failure (message, state) -> 
-                    ()
+                    yield JsonError message
         } |> Seq.toArray
+
+    
+

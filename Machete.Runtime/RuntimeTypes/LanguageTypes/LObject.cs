@@ -425,7 +425,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Instanceof(IDynamic other)
         {
-            return LType.Op_GreaterthanOrEqual(_environment, this, other);
+            return LType.Op_Instanceof(_environment, this, other);
         }
 
         public IDynamic Op_In(IDynamic other)
@@ -658,7 +658,8 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 }
 
                 // For now I want to assume native functions will always be stored in data descriptors.
-                Debug.Assert(nf != null && dd != null);
+                if (nf == null || dd == null)
+                    continue;
 
                 var code = (Code)Delegate.CreateDelegate(typeof(Code), m);
                 var func = Environment.CreateFunction(nf.FormalParameterList, true,  new Lazy<Code>(() => code));

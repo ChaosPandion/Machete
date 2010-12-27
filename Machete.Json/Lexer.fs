@@ -19,18 +19,18 @@ module Lexer =
         anyOf "\t\r\n " |>> JsonWhiteSpace
 
     let jsonBooleanLiteral =
-        Parsers.booleanLiteral |>> JsonBooleanLiteral
+        (pstring "true" <|> pstring "false") |>> JsonBooleanLiteral
         
-    let evalJsonBooleanLiteral v =
-        match v with
-        | JsonBooleanLiteral v -> evalBooleanLiteral v
+//    let evalJsonBooleanLiteral v =
+//        match v with
+//        | JsonBooleanLiteral "true" -> true
 
     let jsonNullLiteral =
-        Parsers.nullLiteral |>> JsonNullLiteral
+        (pstring "null") |>> JsonNullLiteral
         
-    let evalJsonNullLiteral v =
-        match v with
-        | JsonNullLiteral v -> evalNullLiteral v
+//    let evalJsonNullLiteral v =
+//        match v with
+//        | JsonNullLiteral v -> evalNullLiteral v
 
     let jsonEscapeCharacter =
         anyOf "\"/\\bfnrt" |>> JsonEscapeCharacter

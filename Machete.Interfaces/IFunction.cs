@@ -2,7 +2,7 @@
 
 namespace Machete.Interfaces
 {
-    public interface IFunction : IObject, ICallable, IConstructable
+    public interface IFunction : IObject, ICallable, IConstructable, IHasInstance
     {
         ILexicalEnvironment Scope { get; set; }
         ReadOnlyList<string> FormalParameterList { get; set; }
@@ -12,7 +12,5 @@ namespace Machete.Interfaces
         IArgs BoundArguments { get; set; }
         bool Strict { get; set; }
         bool BindFunction { get; set; }
-
-        bool HasInstance(IDynamic value);
     }
 }

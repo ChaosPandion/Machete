@@ -10,3 +10,4 @@ type Node =
 | JsonElementList of Node * Node
 | JsonToken of Token
 | JsonNil
+| JsonError of list<string>

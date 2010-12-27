@@ -10,7 +10,7 @@ using Machete.Interfaces;
 
 namespace Machete.Runtime.NativeObjects
 {
-    public sealed class NFunction : LObject, IFunction
+    public class NFunction : LObject, IFunction
     {
         public ILexicalEnvironment Scope { get; set; }
         public ReadOnlyList<string> FormalParameterList { get; set; }
@@ -28,6 +28,31 @@ namespace Machete.Runtime.NativeObjects
 
         }
 
+
+        public override void Initialize()
+        {
+            Class = "Function";
+            Extensible = true;
+            Prototype = Environment.FunctionPrototype;
+
+            DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(FormalParameterList.Count)), false);
+
+            var proto = Environment.ObjectConstructor.Op_Construct(Environment.EmptyArgs);
+            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(proto, true, false, true), false);
+            DefineOwnProperty("prototype", Environment.CreateDataDescriptor(proto, true, false, false), false);
+
+            if (Strict)
+            {
+                var desc = Environment.CreateAccessorDescriptor(Environment.ThrowTypeErrorFunction, Environment.ThrowTypeErrorFunction, false, false);
+                DefineOwnProperty("caller", desc, false);
+                DefineOwnProperty("argument", desc, false);
+            }
+
+            if (!(this is IBuiltinFunction))
+            {
+                base.Initialize();
+            }
+        }
 
         public override IDynamic Get(string p)
         {
@@ -55,7 +80,7 @@ namespace Machete.Runtime.NativeObjects
             }
         }
 
-        public IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
+        public virtual IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
         {
             if (BindFunction)
             {
@@ -99,7 +124,7 @@ namespace Machete.Runtime.NativeObjects
             }
         }
 
-        public IObject Construct(IEnvironment environment, IArgs args)
+        public virtual IObject Construct(IEnvironment environment, IArgs args)
         {
             if (BindFunction)
             {
@@ -146,7 +171,7 @@ namespace Machete.Runtime.NativeObjects
             {
                 // 15.3.4.5.3 [[HasInstance]] (V)
 
-                var func = TargetFunction as IFunction;
+                var func = TargetFunction as IHasInstance;
                 if (func == null)
                 {
                     throw Environment.CreateTypeError("");
@@ -155,31 +180,7 @@ namespace Machete.Runtime.NativeObjects
             }
             else
             {
-                // 15.3.5.3 [[HasInstance]] (V)
-
-                var oValue = value as IObject;
-                if (oValue == null)
-                {
-                    return false;
-                }
-
-                var oPrototype = Get("prototype") as IObject;
-                if (oPrototype == null)
-                {
-                    throw Environment.CreateTypeError("");
-                }
-
-                do
-                {
-                    oValue = oValue.Prototype;
-                    if (oValue == oPrototype)
-                    {
-                        return true;
-                    }
-                }
-                while (oValue.Prototype != null);
-
-                return false;
+                return Environment.Instanceof(value, this);
             }
         }
     }

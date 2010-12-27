@@ -109,7 +109,6 @@ namespace Machete.Runtime
 
             ObjectConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ObjectPrototype), false);
             FunctionConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(FunctionPrototype), false);
-            ArrayConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ArrayPrototype), false);
             StringConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(StringPrototype), false);
             BooleanConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(BooleanPrototype), false);
             NumberConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(NumberPrototype), false);
@@ -138,23 +137,6 @@ namespace Machete.Runtime
             TypeErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(TypeErrorConstructor), false);
             UriErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(UriErrorConstructor), false);
 
-            GlobalObject.DefineOwnProperty("Object", CreateDataDescriptor(ObjectConstructor), false);
-            GlobalObject.DefineOwnProperty("Function", CreateDataDescriptor(FunctionConstructor), false);
-            GlobalObject.DefineOwnProperty("Array", CreateDataDescriptor(ArrayConstructor), false);
-            GlobalObject.DefineOwnProperty("String", CreateDataDescriptor(StringConstructor), false);
-            GlobalObject.DefineOwnProperty("Boolean", CreateDataDescriptor(BooleanConstructor), false);
-            GlobalObject.DefineOwnProperty("Number", CreateDataDescriptor(NumberConstructor), false);
-            GlobalObject.DefineOwnProperty("Date", CreateDataDescriptor(DateConstructor), false);
-            GlobalObject.DefineOwnProperty("RegExp", CreateDataDescriptor(RegExpConstructor), false);
-            GlobalObject.DefineOwnProperty("Error", CreateDataDescriptor(ErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("EvalError", CreateDataDescriptor(EvalErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("RangeError", CreateDataDescriptor(RangeErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("ReferenceError", CreateDataDescriptor(ReferenceErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("SyntaxError", CreateDataDescriptor(SyntaxErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("TypeError", CreateDataDescriptor(TypeErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("URIError", CreateDataDescriptor(UriErrorConstructor), false);
-            GlobalObject.DefineOwnProperty("Math", CreateDataDescriptor(MathObject), false);
-            GlobalObject.DefineOwnProperty("JSON", CreateDataDescriptor(JsonObject), false);
 
 
             GlobalObject.Initialize();
@@ -293,25 +275,10 @@ namespace Machete.Runtime
 
             var f = new NFunction(this);
             {
-                f.Class = "Function";
-                f.Extensible = true;
-                f.Prototype = FunctionPrototype;
                 f.FormalParameterList = formalParameterList;
                 f.Code = code;
                 f.Strict = strict;
                 f.Scope = scope;
-                f.DefineOwnProperty("length", CreateDataDescriptor(CreateNumber(formalParameterList.Count)), false);
-
-                var proto = ObjectConstructor.Op_Construct(EmptyArgs);
-                f.DefineOwnProperty("constructor", CreateDataDescriptor(proto, true, false, true), false);
-                f.DefineOwnProperty("prototype", CreateDataDescriptor(proto, true, false, false), false);
-
-                if (strict)
-                {
-                    var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
-                    f.DefineOwnProperty("caller", desc, false);
-                    f.DefineOwnProperty("argument", desc, false);
-                }
             }
             return f;
         }
@@ -617,6 +584,38 @@ namespace Machete.Runtime
             var args = CreateArgs(CreateString(message));
             var error = UriErrorConstructor.Op_Construct(args);
             return new MacheteRuntimeException(error);
+        }
+
+
+        public bool Instanceof(IDynamic left, IDynamic right)
+        {
+            // 15.3.5.3 [[HasInstance]] (V)
+
+            var lObj = left as IObject;
+            var rObj = right as IObject;
+
+            if (lObj == null)
+            {
+                return false;
+            }
+
+            var oPrototype = rObj.Get("prototype") as IObject;
+            if (oPrototype == null)
+            {
+                throw CreateTypeError("");
+            }
+
+            do
+            {
+                lObj = lObj.Prototype;
+                if (lObj == oPrototype)
+                {
+                    return true;
+                }
+            }
+            while (lObj.Prototype != null);
+
+            return false;
         }
     }
 }

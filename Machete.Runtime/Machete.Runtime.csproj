@@ -138,10 +138,15 @@
     <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">
       <Project>{F4056A29-8845-4DFA-B551-35D7B27D5954}</Project>
       <Name>Machete.Compiler</Name>
+      <Aliases>global</Aliases>
     </ProjectReference>
     <ProjectReference Include="..\Machete.Interfaces\Machete.Interfaces.csproj">
       <Project>{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}</Project>
       <Name>Machete.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Machete.Json\Machete.Json.fsproj">
+      <Project>{014029A0-36AD-4049-94D2-C0A5D107A2C1}</Project>
+      <Name>Machete.Json</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -14,12 +14,35 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         public BGlobal(IEnvironment environment)
             : base(environment)
         {
+
+        }
+
+        public override void Initialize()
+        {
             Class = "Global";
             Prototype = null;
             Extensible = true;
-            DefineOwnProperty("NaN", environment.CreateDataDescriptor(environment.CreateNumber(double.NaN), false, false, false), false);
-            DefineOwnProperty("Infinity", environment.CreateDataDescriptor(environment.CreateNumber(double.PositiveInfinity), false, false, false), false);
-            DefineOwnProperty("undefined", environment.CreateDataDescriptor(environment.Undefined, false, false, false), false);
+            DefineOwnProperty("NaN", Environment.CreateDataDescriptor(Environment.CreateNumber(double.NaN), false, false, false), false);
+            DefineOwnProperty("Infinity", Environment.CreateDataDescriptor(Environment.CreateNumber(double.PositiveInfinity), false, false, false), false);
+            DefineOwnProperty("undefined", Environment.CreateDataDescriptor(Environment.Undefined, false, false, false), false);
+            DefineOwnProperty("Object", Environment.CreateDataDescriptor(Environment.ObjectConstructor, true, false, true), false);
+            DefineOwnProperty("Function", Environment.CreateDataDescriptor(Environment.FunctionConstructor, true, false, true), false);
+            DefineOwnProperty("Array", Environment.CreateDataDescriptor(Environment.ArrayConstructor, true, false, true), false);
+            DefineOwnProperty("String", Environment.CreateDataDescriptor(Environment.StringConstructor, true, false, true), false);
+            DefineOwnProperty("Boolean", Environment.CreateDataDescriptor(Environment.BooleanConstructor, true, false, true), false);
+            DefineOwnProperty("Number", Environment.CreateDataDescriptor(Environment.NumberConstructor, true, false, true), false);
+            DefineOwnProperty("Date", Environment.CreateDataDescriptor(Environment.DateConstructor, true, false, true), false);
+            DefineOwnProperty("RegExp", Environment.CreateDataDescriptor(Environment.RegExpConstructor, true, false, true), false);
+            DefineOwnProperty("Error", Environment.CreateDataDescriptor(Environment.ErrorConstructor, true, false, true), false);
+            DefineOwnProperty("EvalError", Environment.CreateDataDescriptor(Environment.EvalErrorConstructor, true, false, true), false);
+            DefineOwnProperty("RangeError", Environment.CreateDataDescriptor(Environment.RangeErrorConstructor, true, false, true), false);
+            DefineOwnProperty("ReferenceError", Environment.CreateDataDescriptor(Environment.ReferenceErrorConstructor, true, false, true), false);
+            DefineOwnProperty("SyntaxError", Environment.CreateDataDescriptor(Environment.SyntaxErrorConstructor, true, false, true), false);
+            DefineOwnProperty("TypeError", Environment.CreateDataDescriptor(Environment.TypeErrorConstructor, true, false, true), false);
+            DefineOwnProperty("URIError", Environment.CreateDataDescriptor(Environment.UriErrorConstructor, true, false, true), false);
+            DefineOwnProperty("Math", Environment.CreateDataDescriptor(Environment.MathObject, true, false, true), false);
+            DefineOwnProperty("JSON", Environment.CreateDataDescriptor(Environment.JsonObject, true, false, true), false);
+            base.Initialize();
         }
 
         public override IDynamic DefaultValue(string hint)
@@ -27,33 +50,16 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             return Environment.CreateString("Global");
         }
 
-        //internal BGlobal()
-        //{
-        //    Class = "Global";
-        //    Prototype = null;
-        //    Extensible = true;
-        //    //DefineOwnProperty("NaN", new SPropertyDescriptor(LNumber.NaN), false);
-        //    //DefineOwnProperty("Infinity", new SPropertyDescriptor(LNumber.PositiveInfinity), false);
-        //    //DefineOwnProperty("undefined", new SPropertyDescriptor(LUndefined.Instance), false);
-        //    //DefineOwnProperty("eval", new SPropertyDescriptor(new NFunction(new[] { "x" }, () => Eval)), false);
-        //    //DefineOwnProperty("parseInt", new SPropertyDescriptor(new NFunction(new[] { "string", "radix" }, () => ParseInt)), false);
-        //    //DefineOwnProperty("parseFloat", new SPropertyDescriptor(new NFunction(new[] { "string" }, () => ParseFloat)), false);
-        //    //DefineOwnProperty("isNaN", new SPropertyDescriptor(new NFunction(new[] { "number" }, () => IsNan)), false);
-        //    //DefineOwnProperty("isFinite", new SPropertyDescriptor(new NFunction(new[] { "number" }, () => IsFinite)), false);
-        //    //DefineOwnProperty("decodeURI", new SPropertyDescriptor(new NFunction(new[] { "encodedURI" }, () => DecodeUri)), false);
-        //    //DefineOwnProperty("decodeURIComponent", new SPropertyDescriptor(new NFunction(new[] { "encodedURIComponent" }, () => DecodeUriComponent)), false);
-        //    //DefineOwnProperty("encodeURI", new SPropertyDescriptor(new NFunction(new[] { "uri" }, () => EncodeUri)), false);
-        //    //DefineOwnProperty("encodeURIComponent", new SPropertyDescriptor(new NFunction(new[] { "uriComponent" }, () => EncodeUriComponent)), false);
-        //}
+        [NativeFunction("eval", "x"), DataDescriptor(true, false, true)]
+        internal static IDynamic Eval(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
+        }
 
-        //private IDynamic Eval(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //private IDynamic ParseInt(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        [NativeFunction("parseInt", "string", "radix"), DataDescriptor(true, false, true)]
+        internal static IDynamic ParseInt(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var inputString = (args[0].ConvertToString().Value ?? string.Empty).Trim().ToLowerInvariant();
         //    //var sign = 1;
 
@@ -131,10 +137,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         //    //}
 
         //    //return (LNumber)(sign * result);
-        //}
+        }
 
-        //private IDynamic ParseFloat(ExecutionContext context, SList args)
-        //{
+        [NativeFunction("parseFloat", "string"), DataDescriptor(true, false, true)]
+        internal static IDynamic ParseFloat(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    throw new NotImplementedException();
         //    //var inputString = (args[0].ToStringPrimitive().ToString() ?? string.Empty).Trim().ToLowerInvariant();
         //    //if (string.IsNullOrEmpty(inputString))
@@ -182,17 +190,20 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         //    //    }
         //    //}
         //    //return new NumberPrimitive(sign * result);
-        //}
+        }
 
-        //private IDynamic IsNan(ExecutionContext context, SList args)
-        //{
+        [NativeFunction("isNaN", "number"), DataDescriptor(true, false, true)]
+        internal static IDynamic IsNan(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    throw new NotImplementedException();
         //    //return new BooleanPrimitive(double.IsNaN(args[0].ToNumberPrimitive()));
-        //}
+        }
 
-        //private IDynamic IsFinite(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        [NativeFunction("isFinite", "number"), DataDescriptor(true, false, true)]
+        internal static IDynamic IsFinite(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var num = args[0].ToNumberPrimitive();
         //    //if (double.IsNaN(num))
         //    //{
@@ -210,26 +221,30 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         //    //{
         //    //    return new BooleanPrimitive(false);
         //    //}
-        //}
+        }
 
-        //private IDynamic DecodeUri(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        [NativeFunction("decodeURI", "encodedURI"), DataDescriptor(true, false, true)]
+        internal static IDynamic DecodeUri(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
+        }
 
-        //private IDynamic DecodeUriComponent(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        [NativeFunction("decodeURIComponent", "encodedURIComponent"), DataDescriptor(true, false, true)]
+        internal static IDynamic DecodeUriComponent(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
+        }
 
-        //private IDynamic EncodeUri(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        [NativeFunction("encodeURI", "uri"), DataDescriptor(true, false, true)]
+        internal static IDynamic EncodeUri(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
+        }
 
-        //private IDynamic EncodeUriComponent(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        [NativeFunction("encodeURIComponent", "uriComponent"), DataDescriptor(true, false, true)]
+        internal static IDynamic EncodeUriComponent(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

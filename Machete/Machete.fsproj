@@ -45,8 +45,13 @@
     <Compile Include="Engine.fs" />
     <Compile Include="NumericLiteralTests.fs" />
     <Compile Include="StringLiteralTests.fs" />
+    <Compile Include="StringNumericLiteralTests.fs" />
+    <Compile Include="ArrayLiteralTests.fs" />
+    <Compile Include="ObjectLiteralTests.fs" />
+    <Compile Include="TypeConversionTests.fs" />
     <Compile Include="ExpressionTests.fs" />
     <Compile Include="StatementTests.fs" />
+    <Compile Include="JsonTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">

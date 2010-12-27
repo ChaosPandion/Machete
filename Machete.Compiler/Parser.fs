@@ -247,7 +247,7 @@ module Parser =
 
 
     let expectUnaryOperator =
-        expectOperatorsWithTransform unaryOperatorMap <|> result UnaryOperator.Nil 
+        expectOperatorsWithTransform unaryOperatorMap
 
     let expression, expressionRef = createParserRef<InputElement, State, SourceElement>()
     let expressionNoIn, expressionNoInRef = createParserRef<InputElement, State, SourceElement>()
@@ -403,11 +403,17 @@ module Parser =
         } 
            
     and unaryExpression = 
-        parse {
-            let! e1 = expectUnaryOperator
-            let! e2 = postfixExpression
-            return UnaryExpression (e1, e2)
-        }
+        choice [
+            parse {
+                let! e1 = expectUnaryOperator
+                let! e2 = unaryExpression
+                return UnaryExpression (e1, e2)
+            }
+            parse {
+                let! e1 = postfixExpression
+                return UnaryExpression (UnaryOperator.Nil, e1)
+            } 
+        ]
 
     and multiplicativeExpression =
         manyWithSepFold unaryExpression expectMultiplicativeOperator MultiplicativeExpression SourceElement.Nil MultiplicativeOperator.Nil 

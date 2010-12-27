@@ -281,3 +281,29 @@ module StatementTests =
         "      
         Assert.Equal<string>("ABC", engine.ExecuteScript s :?> string)
 
+    [<Fact(DisplayName = "LabelledStatement: BreakStatement")>]
+    let test28 () =
+        let s = "
+            var i = 0, b = true;
+            Test: while (b) {
+                while (++i < 10) {
+                    break Test;
+                }
+                b = false;
+            }
+            return i + b;
+        "        
+        Assert.Equal<double>(2.0, engine.ExecuteScript s :?> double)
+
+    [<Fact(DisplayName = "LabelledStatement: ContinueStatement")>]
+    let test29 () =
+        let s = "
+            var i = 0;
+            Test: while (++i < 10) {
+                while (true) {
+                    continue Test;
+                }
+            }
+            return i;
+        "        
+        Assert.Equal<double>(10.0, engine.ExecuteScript s :?> double)

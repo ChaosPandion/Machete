@@ -1,5 +1,8 @@
 ﻿using Machete.Interfaces;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
+using System;
+using System.Text;
+using System.Globalization;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -10,223 +13,244 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         {
 
         }
-        //internal PArray()
-        //{
-        //    Class = "Array";
-        //    Extensible = true;
-        //    //DefineOwnProperty("length", SPropertyDescriptor.Create(LNumber.Zero), false);
-        //    //DefineOwnProperty("toString", SPropertyDescriptor.Create(new NFunction(null, ToString)), false);
-        //    //DefineOwnProperty("toLocaleString", SPropertyDescriptor.Create(new NFunction(null, ToLocaleString)), false);
-        //    //DefineOwnProperty("concat", SPropertyDescriptor.Create(new NFunction(new[] { "item1" }, Concat)), false);
-        //    //DefineOwnProperty("join", SPropertyDescriptor.Create(new NFunction(new[] { "separator" }, Join)), false);
-        //    //DefineOwnProperty("pop", SPropertyDescriptor.Create(new NFunction(null, Pop)), false);
-        //    //DefineOwnProperty("push", SPropertyDescriptor.Create(new NFunction(new[] { "item1" }, Push)), false);
-        //    //DefineOwnProperty("reverse", SPropertyDescriptor.Create(new NFunction(null, Reverse)), false);
-        //    //DefineOwnProperty("shift", SPropertyDescriptor.Create(new NFunction(null, Shift)), false);
-        //    //DefineOwnProperty("slice", SPropertyDescriptor.Create(new FunctionObject("slice", new[] { "start", "end" }, Slice)), false);
-        //    //DefineOwnProperty("sort", SPropertyDescriptor.Create(new FunctionObject("sort", new[] { "comparefn" }, Sort)), false);
-        //    //DefineOwnProperty("splice", SPropertyDescriptor.Create(new FunctionObject("splice", new[] { "start", "deleteCount" }, Splice)), false);
-        //    //DefineOwnProperty("unshift", SPropertyDescriptor.Create(new FunctionObject("unshift", new[] { "item1" }, Unshift)), false);
-        //    //DefineOwnProperty("indexOf", SPropertyDescriptor.Create(new FunctionObject("indexOf", new[] { "searchElement" }, IndexOf)), false);
-        //    //DefineOwnProperty("lastIndexOf", SPropertyDescriptor.Create(new FunctionObject("lastIndexOf", new[] { "searchElement" }, LastIndexOf)), false);
-        //    //DefineOwnProperty("every", SPropertyDescriptor.Create(new FunctionObject("every", new[] { "callbackfn" }, Every)), false);
-        //    //DefineOwnProperty("some", SPropertyDescriptor.Create(new FunctionObject("some", new[] { "callbackfn" }, Some)), false);
-        //    //DefineOwnProperty("forEach", SPropertyDescriptor.Create(new FunctionObject("forEach", new[] { "callbackfn" }, ForEach)), false);
-        //    //DefineOwnProperty("map", SPropertyDescriptor.Create(new FunctionObject("map", new[] { "callbackfn" }, Map)), false);
-        //    //DefineOwnProperty("filter", SPropertyDescriptor.Create(new FunctionObject("filter", new[] { "callbackfn" }, Filter)), false);
-        //    //DefineOwnProperty("reduce", SPropertyDescriptor.Create(new FunctionObject("reduce", new[] { "callbackfn" }, Reduce)), false);
-        //    //DefineOwnProperty("reduceRight", SPropertyDescriptor.Create(new FunctionObject("filter", new[] { "reduceRight" }, ReduceRight)), false);
-        //    //DefineOwnProperty("toString", SPropertyDescriptor.Create(new NFunction(null, () => ToString)), false);
-        //    //DefineOwnProperty("valueOf", SPropertyDescriptor.Create(new NFunction(null, () => ValueOf)), false);
-        //}
 
-        //private IDynamic ToString(ExecutionContext context, SList args)
-        //{
-        //    var obj = context.ThisBinding.ConvertToObject();
-        //    var func = obj.Get("join") as ICallable;
-        //    if (func == null) return new LString(string.Format("[object, {0}]", obj.Class));
-        //    return func.Call(obj, SList.Empty);  
-        //}
+        public override void Initialize()
+        {
+            Class = "Array";
+            Extensible = true;
+            Prototype = Environment.ObjectPrototype;
+            DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(0.0), false, false, false), false);
+            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.ArrayConstructor, true, false, true), false);
+            base.Initialize();
+        }
 
-        //private IDynamic ToLocaleString(ExecutionContext context, SList args)
-        //{
-        //    var obj = context.ThisBinding.ConvertToObject();
-        //    var func = obj.Get("toString") as ICallable;
-        //    if (func == null) Environment.ThrowTypeError(); 
-        //    return func.Call(obj, SList.Empty);
-        //}
+        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        internal static IDynamic ToString(IEnvironment environment, IArgs args)
+        {
+            var array = environment.Context.ThisBinding.ConvertToObject();
+            var func = array.Get("join") as ICallable;
+            if (func == null)
+            {
+                func = environment.ObjectPrototype.Get("toString") as ICallable;
+            }
+            return func.Call(environment, array, args);
+        }
 
-        //private IDynamic Concat(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //    //var obj = context.ThisBinding.ConvertToObject();
-        //    //var array = Engine.ConstructArray();
-        //    //var current = default(LType);
-        //    //var count = 0;
+        [NativeFunction("toLocaleString"), DataDescriptor(true, false, true)]
+        internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
+        {
+            var o = environment.Context.ThisBinding.ConvertToObject();
+            var arrayLen = o.Get("length");
+            var len = (uint)arrayLen.ConvertToUInt32().BaseValue;
+            var separator = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
-        //    //for (int i = -1; i < args.Count; i++)
-        //    //{
-        //    //    current = i < 0 ? obj : args[i];
-        //    //    if (!(current is LObject))
-        //    //    {
-        //    //        var desc = new SPropertyDescriptor(current, true, true, true);
-        //    //        array.DefineOwnProperty((count++).ToString(), desc, false);
-        //    //    }
-        //    //    else
-        //    //    {
-        //    //        var inner = current as NArray;
-        //    //        if (inner != null)
-        //    //        {
-        //    //            var length = (uint)inner.Get("length").ConvertToUInt32().Value;
-        //    //            for (int j = 0; j < length; j++)
-        //    //            {
-        //    //                var key = j.ToString();
-        //    //                if (inner.HasProperty(key))
-        //    //                {
-        //    //                    var desc = new SPropertyDescriptor(inner.Get(key), true, true, true);
-        //    //                    array.DefineOwnProperty((count++).ToString(), desc, false);
-        //    //                }
-        //    //            }
-        //    //        }
-        //    //    }
-        //    //}
-        //    //return array;
-        //}
+            if (len == 0)
+            {
+                return environment.CreateString(string.Empty);
+            }
 
-        //private IDynamic Join(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //    //var obj = context.ThisBinding.ConvertToObject();
-        //    //var length = (uint)obj.Get("length").ConvertToUInt32().Value;
-        //    //var separator = ", ";
+            var sb = new StringBuilder();
+            {
+                for (uint i = 0; i < len; i++)
+                {
+                    if (i > 0)
+                    {
+                        sb.Append(separator);
+                    }
 
-        //    //if (length == 0)
-        //    //{
-        //    //    return LString.Empty;
-        //    //}
+                    var nextElement = o.Get(i.ToString());
+                    switch (nextElement.TypeCode)
+                    {
+                        case LanguageTypeCode.Boolean:
+                        case LanguageTypeCode.String:
+                        case LanguageTypeCode.Number:
+                        case LanguageTypeCode.Object:
+                            var elementObj = nextElement.ConvertToObject();
+                            var func = elementObj.Get("toLocaleString") as ICallable;
+                            if (func == null)
+                            {
+                                throw environment.CreateTypeError("");
+                            }
+                            sb.Append(func.Call(environment, elementObj, environment.EmptyArgs).ConvertToString().BaseValue);
+                            break;
+                    }
+                }
+            }
+            return environment.CreateString(sb.ToString());
+        }
 
-        //    //if (args.Count > 0)
-        //    //{
-        //    //    separator = args[0].ConvertToString().Value;
-        //    //}
+        [NativeFunction("concat", "item1"), DataDescriptor(true, false, true)]
+        internal static IDynamic Concat(IEnvironment environment, IArgs args)
+        {
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var array = environment.ArrayConstructor.Op_Construct(environment.EmptyArgs);
+            var current = default(IDynamic);
+            var count = 0;
 
-        //    //var sb = new StringBuilder();
-        //    //for (int i = 0; i < length; i++)
-        //    //{
-        //    //    if (sb.Length > 0)
-        //    //    {
-        //    //        sb.Append(separator);
-        //    //    }
-        //    //    sb.Append(obj.Get(i.ToString()).Value.ConvertToString().Value);
-        //    //}
-        //    //return new LString(sb.ToString());
-        //}
-                
-        //private IDynamic Pop(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //    //var obj = context.ThisBinding.ConvertToObject();
-        //    //var length = obj.Get("length").ConvertToUInt32();
-        //    //if (length.Value == 0.0) return LUndefined.Instance;
-        //    //var index = (length.Value - 1).ToString();
-        //    //var element = obj.Get(index);
-        //    //obj.Delete(index, true);
-        //    //obj.Put("length", new LNumber(length.Value - 1.0), true);
-        //    //return element;
-        //}
+            for (int i = -1; i < args.Count; i++)
+            {
+                current = i < 0 ? obj : args[i];
+                if (current.TypeCode != LanguageTypeCode.Object)
+                {
+                    var desc = environment.CreateDataDescriptor(current, true, true, true);
+                    array.DefineOwnProperty((count++).ToString(), desc, false);
+                }
+                else
+                {
+                    var inner = current as NArray;
+                    if (inner != null)
+                    {
+                        var length = (uint)inner.Get("length").ConvertToUInt32().BaseValue;
+                        for (int j = 0; j < length; j++)
+                        {
+                            var key = j.ToString();
+                            if (inner.HasProperty(key))
+                            {
+                                var desc = environment.CreateDataDescriptor(inner.Get(key), true, true, true);
+                                array.DefineOwnProperty((count++).ToString(), desc, false);
+                            }
+                        }
+                    }
+                }
+            }
+            return array;
+        }
 
-        //private IDynamic Push(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //if (args.Count > 0)
-        //    //{
-        //    //    for (int i = 0; i < args.Count; i++, length++)
-        //    //    {
-        //    //        obj.Put(length.ToString(), args[i], true);
-        //    //    }
-        //    //    obj.Put("length", new NumberPrimitive(length), true);
-        //    //}
-        //    //return new NumberPrimitive(length);
-        //}
+        [NativeFunction("join", "separator"), DataDescriptor(true, false, true)]
+        internal static IDynamic Join(IEnvironment environment, IArgs args)
+        {
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var separator = ", ";
 
-        //private IDynamic Reverse(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var middle = Math.Floor(length / 2D);
-        //    //var lowerValue = default(IDynamic);
-        //    //var lowerExists = default(bool);
-        //    //var lowerKey = default(string);
-        //    //var lower = 0D;
-        //    //var upperValue = default(IDynamic);
-        //    //var upperExists = default(bool);
-        //    //var upperKey = default(string);
-        //    //var upper = 0D;
+            if (length == 0)
+            {
+                return environment.CreateString(string.Empty);
+            }
 
-        //    //while (lower != middle)
-        //    //{
-        //    //    upper = length - lower - 1D;
-        //    //    lowerKey = lower.ToString();
-        //    //    upperKey = upper.ToString();
-        //    //    lowerValue = obj.Get(lowerKey);
-        //    //    upperValue = obj.Get(upperKey);
-        //    //    lowerExists = obj.HasProperty(lowerKey);
-        //    //    upperExists = obj.HasProperty(upperKey);
-        //    //    if (lowerExists && upperExists)
-        //    //    {
-        //    //        obj.Put(lowerKey, upperValue, true);
-        //    //        obj.Put(upperKey, lowerValue, true);
-        //    //    }
-        //    //    else if (!lowerExists && upperExists)
-        //    //    {
-        //    //        obj.Put(lowerKey, upperValue, true);
-        //    //        obj.Delete(upperKey, true);
-        //    //    }
-        //    //    else if (lowerExists && !upperExists)
-        //    //    {
-        //    //        obj.Delete(lowerKey, true);
-        //    //        obj.Put(upperKey, lowerValue, true);
-        //    //    }
-        //    //    lower++;
-        //    //}
-        //    //return obj;
-        //}
+            if (args.Count > 0)
+            {
+                separator = args[0].ConvertToString().BaseValue;
+            }
 
-        //private IDynamic Shift(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //if (length == 0)
-        //    //{
-        //    //    return new UndefinedPrimitive();
-        //    //}
-        //    //var first = obj.Get("0");
-        //    //var from = "";
-        //    //var to = "";
-        //    //for (int i = 1; i < length; i++)
-        //    //{
-        //    //    from = i.ToString();
-        //    //    to = (i - 1).ToString();
-        //    //    if (obj.HasProperty(from))
-        //    //    {
-        //    //        obj.Put(to, obj.Get(from), true);
-        //    //    }
-        //    //    else
-        //    //    {
-        //    //        obj.Delete(to, true);
-        //    //    }
-        //    //}
-        //    //obj.Delete((length - 1).ToString(), true);
-        //    //obj.Put("length", new NumberPrimitive(length - 1D), true);
-        //    //return first;
-        //}
+            var sb = new StringBuilder();
+            for (int i = 0; i < length; i++)
+            {
+                if (sb.Length > 0)
+                {
+                    sb.Append(separator);
+                }
+                sb.Append(obj.Get(i.ToString()).Value.ConvertToString().Value);
+            }
+            return environment.CreateString(sb.ToString());
+        }
 
-        //private IDynamic Slice(ExecutionContext context, SList args)
-        //{
+        [NativeFunction("pop"), DataDescriptor(true, false, true)]
+        internal static IDynamic Pop(IEnvironment environment, IArgs args)
+        {
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = obj.Get("length").ConvertToUInt32().BaseValue;
+            if (length == 0.0) return environment.Undefined;
+            var index = (length - 1).ToString();
+            var element = obj.Get(index);
+            obj.Delete(index, true);
+            obj.Put("length", environment.CreateNumber(length - 1.0), true);
+            return element;
+        }
+
+        [NativeFunction("push", "item1"), DataDescriptor(true, false, true)]
+        internal static IDynamic Push(IEnvironment environment, IArgs args)
+        {
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = obj.Get("length").ConvertToUInt32().BaseValue;
+            if (args.Count > 0)
+            {
+                for (int i = 0; i < args.Count; i++, length++)
+                {
+                    obj.Put(length.ToString(), args[i], true);
+                }
+                obj.Put("length", environment.CreateNumber(length), true);
+            }
+            return environment.CreateNumber(length);
+        }
+
+        [NativeFunction("reverse"), DataDescriptor(true, false, true)]
+        internal static IDynamic Reverse(IEnvironment environment, IArgs args)
+        {
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var middle = Math.Floor(length / 2D);
+            var lowerValue = default(IDynamic);
+            var lowerExists = default(bool);
+            var lowerKey = default(string);
+            var lower = 0D;
+            var upperValue = default(IDynamic);
+            var upperExists = default(bool);
+            var upperKey = default(string);
+            var upper = 0D;
+
+            while (lower != middle)
+            {
+                upper = length - lower - 1D;
+                lowerKey = lower.ToString();
+                upperKey = upper.ToString();
+                lowerValue = obj.Get(lowerKey);
+                upperValue = obj.Get(upperKey);
+                lowerExists = obj.HasProperty(lowerKey);
+                upperExists = obj.HasProperty(upperKey);
+                if (lowerExists && upperExists)
+                {
+                    obj.Put(lowerKey, upperValue, true);
+                    obj.Put(upperKey, lowerValue, true);
+                }
+                else if (!lowerExists && upperExists)
+                {
+                    obj.Put(lowerKey, upperValue, true);
+                    obj.Delete(upperKey, true);
+                }
+                else if (lowerExists && !upperExists)
+                {
+                    obj.Delete(lowerKey, true);
+                    obj.Put(upperKey, lowerValue, true);
+                }
+                lower++;
+            }
+            return obj;
+        }
+
+        [NativeFunction("shift"), DataDescriptor(true, false, true)]
+        internal static IDynamic Shift(IEnvironment environment, IArgs args)
+        {
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = obj.Get("length").ConvertToUInt32().BaseValue;
+            if (length == 0)
+            {
+                return environment.Undefined;
+            }
+            var first = obj.Get("0");
+            var from = "";
+            var to = "";
+            for (int i = 1; i < length; i++)
+            {
+                from = i.ToString();
+                to = (i - 1).ToString();
+                if (obj.HasProperty(from))
+                {
+                    obj.Put(to, obj.Get(from), true);
+                }
+                else
+                {
+                    obj.Delete(to, true);
+                }
+            }
+            obj.Delete((length - 1).ToString(), true);
+            obj.Put("length", environment.CreateNumber(length - 1D), true);
+            return first;
+        }
+
+        internal static IDynamic Slice(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    throw new NotImplementedException();
         //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
         //    //var obj = engine.Context.ThisBinding.ToObject();
@@ -246,12 +270,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //}
 
         //    //return result;
-        //}
+        }
 
-        //private IDynamic Sort(ExecutionContext context, SList args)
-        //{
-
-        //    throw new NotImplementedException();
+        internal static IDynamic Sort(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
 
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
@@ -306,21 +329,21 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //}
 
         //    //defined = (isSparse && (hasNonConfigurable || hasNonWritable || hasAccessor || protoHasProp));
-        //}
+        }
 
-        //private IDynamic Splice(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        internal static IDynamic Splice(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
+        }
 
-        //private IDynamic Unshift(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        internal static IDynamic Unshift(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
+        }
 
-        //private IDynamic IndexOf(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic IndexOf(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
 
@@ -349,11 +372,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //}
 
         //    //return new NumberPrimitive(-1D);
-        //}
+        }
 
-        //private IDynamic LastIndexOf(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic LastIndexOf(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
 
@@ -390,11 +413,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //}
 
         //    //return new NumberPrimitive(-1D);
-        //}
+        }
 
-        //private IDynamic Every(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic Every(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var callback = args.Get<ICallable>(0);
         //    //var thisArg = args[1];
@@ -419,11 +442,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //    }
         //    //}
         //    //return new BooleanPrimitive(true);
-        //}
+        }
 
-        //private IDynamic Some(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic Some(IEnvironment environment, IArgs args)
+        {
+           throw new NotImplementedException();
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var callback = args.Get<ICallable>(0);
         //    //var thisArg = args[1];
@@ -450,11 +473,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //    }
         //    //}
         //    //return new BooleanPrimitive(false);
-        //}
+        }
 
-        //private IDynamic ForEach(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic ForEach(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var callback = args.Get<ICallable>(0);
         //    //var thisArg = args[1];
@@ -478,11 +501,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //    }
         //    //}
         //    //return new UndefinedPrimitive();
-        //}
+        }
 
-        //private IDynamic Map(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic Map(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var callback = args.Get<ICallable>(0);
@@ -507,11 +530,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //    }
         //    //}
         //    //return result;
-        //}
+        }
 
-        //private IDynamic Filter(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic Filter(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var callback = args.Get<ICallable>(0);
@@ -541,11 +564,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //    }
         //    //}
         //    //return result;
-        //}
+        }
 
-        //private IDynamic Reduce(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic Reduce(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
         //    //var callback = args.Get<ICallable>(0);
@@ -592,11 +615,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //}
 
         //    //return accumulator;
-        //}
+        }
 
-        //private IDynamic ReduceRight(ExecutionContext context, SList args)
-        //{
-        //    throw new NotImplementedException();
+        internal static IDynamic ReduceRight(IEnvironment environment, IArgs args)
+        {
+            throw new NotImplementedException();
         //    //var obj = engine.Context.ThisBinding.ToObject();
         //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
         //    //var callback = args.Get<ICallable>(0);
@@ -643,11 +666,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //}
 
         //    //return accumulator;
-        //}
+        }
 
-        //private bool IsSparse(LObject obj, int length)
-        //{
-        //    throw new NotImplementedException();
+        internal static bool IsSparse(LObject obj, int length)
+        {
+            throw new NotImplementedException();
         //    //for (int i = 0; i < length; i++)
         //    //{
         //    //    if (obj.GetOwnProperty(i.ToString()).IsUndefined)
@@ -656,6 +679,19 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //    }
         //    //}
         //    //return false;
+        }
+        
+        //private static bool IsSparse(IObject o)
+        //{
+        //    uint len = (uint)o.Get("length").ConvertToUInt32().BaseValue;
+        //    for (uint i = 0; i < len; i++)
+        //    {
+        //        if (o.GetOwnProperty(i.ToString()) == null)
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //    return false;
         //}
     }
 }

@@ -60,11 +60,17 @@
     <Compile Include="Lexer.fs" />
     <Compile Include="Node.fs" />
     <Compile Include="Parser.fs" />
+    <Compile Include="Evaluator.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">
       <Name>Machete.Compiler</Name>
       <Project>{f4056a29-8845-4dfa-b551-35d7b27d5954}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Machete.Interfaces\Machete.Interfaces.csproj">
+      <Name>Machete.Interfaces</Name>
+      <Project>{eb3133fc-6fd5-4056-a11b-e5dead22a0a3}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

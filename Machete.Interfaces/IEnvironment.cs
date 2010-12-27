@@ -92,5 +92,7 @@ namespace Machete.Interfaces
         IExecutionContext EnterContext();
 
         void ThrowRuntimeException(IDynamic thrown);
+
+        bool Instanceof(IDynamic left, IDynamic right);
     }
 }

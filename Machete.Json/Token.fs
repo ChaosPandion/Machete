@@ -16,8 +16,8 @@ type Token =
 | JsonEscapeCharacter of char
 | JsonNumber of char option * InputElement * Token * InputElement
 | JsonFraction of InputElement
-| JsonNullLiteral of InputElement
-| JsonBooleanLiteral of InputElement
+| JsonNullLiteral of string
+| JsonBooleanLiteral of string
 | JsonInputElement of InputElement
 | BeginArray
 | EndArray

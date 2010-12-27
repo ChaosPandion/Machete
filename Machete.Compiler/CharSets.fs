@@ -76,14 +76,26 @@ module CharSets =
         | '9' -> true
         | _ -> false
 
-    let isNonDecimalDigit c = 
+    let inline isNonDecimalDigit c = 
         not (isDecimalDigit c)
 
-    let nonZeroDigitCharSet = 
-        set ['1'..'9']
+    let inline isNonZeroDigit c =  
+        match c with
+        | '1' | '2' | '3' 
+        | '4' | '5' | '6' 
+        | '7' | '8' | '9' -> true
+        | _ -> false
 
-    let hexDigitCharSet = 
-        set (['0'..'9'] @ ['a'..'f'] @ ['A'..'F'])
+    let inline isHexDigit c = 
+        match c with
+        | '0' | '1' | '2' | '3' 
+        | '4' | '5' | '6' 
+        | '7' | '8' | '9' 
+        | 'a' | 'b' | 'c'
+        | 'd' | 'e' | 'f'
+        | 'A' | 'B' | 'C'
+        | 'D' | 'E' | 'F' -> true
+        | _ -> false   
 
     let keyWordSet =
         set [|

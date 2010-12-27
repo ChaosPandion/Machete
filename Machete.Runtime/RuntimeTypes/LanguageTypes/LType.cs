@@ -93,7 +93,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public static IDynamic Op_Instanceof(IEnvironment environment, IDynamic left, IDynamic right)
         {
-            var func = right as NFunction;
+            var func = right.Value as IHasInstance;
             if (func == null)
             {
                 throw environment.CreateTypeError("");

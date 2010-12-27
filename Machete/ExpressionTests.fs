@@ -206,26 +206,5 @@ module ExpressionTests =
         Assert.Equal<double>(1.0, engine.ExecuteScript "var x = 1; x--;" :?> double)
         Assert.Equal<double>(0.0, engine.ExecuteScript "x" :?> double)
 
-    [<Fact(DisplayName = "Expression: Empty ObjectLiteral")>]
-    let objectLiteral1 () =
-        engine.ExecuteScript "var o = {};" |> ignore
-        Assert.True(engine.ExecuteScript "typeof o === 'object'" :?> bool)
-        
-    [<Fact(DisplayName = "Expression: ObjectLiteral with only data properties.")>]
-    let objectLiteral2 () =
-        engine.ExecuteScript "var o = { age : 10, name : 'Billy', active : true };" |> ignore
-        Assert.True(engine.ExecuteScript "typeof o === 'object'" :?> bool)
-        Assert.True(engine.ExecuteScript "o.age === 10" :?> bool)
-        Assert.True(engine.ExecuteScript "o.name === 'Billy'" :?> bool)
-        Assert.True(engine.ExecuteScript "o.active" :?> bool)
-        
-    [<Fact(DisplayName = "Expression: ObjectLiteral with getter and setter.")>]
-    let objectLiteral3 () =
-        engine.ExecuteScript "var n = 'Susan', o = { get age () { return 2; }, get name () { return n; }, set name (v) { n = v; } };" |> ignore         
-        Assert.True(engine.ExecuteScript "typeof o === 'object'" :?> bool)
-        Assert.True(engine.ExecuteScript "o.age === 2" :?> bool)
-        Assert.True(engine.ExecuteScript "o.name === 'Susan'" :?> bool)
-        engine.ExecuteScript "o.name = 'Timmy'" |> ignore
-        Assert.True(engine.ExecuteScript "o.name === 'Timmy'" :?> bool)
 
 

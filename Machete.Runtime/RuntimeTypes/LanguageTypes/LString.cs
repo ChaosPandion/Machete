@@ -262,8 +262,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public INumber ConvertToNumber()
         {
-            return _environment.CreateNumber(0);
-            //return (LNumber)Machete.Compiler.StringNumericLiteral.eval(_value);
+            return _environment.CreateNumber(Machete.Compiler.StringNumericLiteral.eval(BaseValue));
         }
 
         public IString ConvertToString()
