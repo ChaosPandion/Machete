@@ -310,7 +310,7 @@ module Evaluator =
         sb.ToString ()
 
     and private str (state:StringifyState) (key:string) (holder:IObject) : IDynamic =
-        let inline fourth (value:IDynamic) =
+        let fourth (value:IDynamic) =
             match value.TypeCode with
             | LanguageTypeCode.Null -> 
                 state.environment.CreateString "null" :> IDynamic
@@ -331,7 +331,7 @@ module Evaluator =
                 state.environment.CreateString v :> IDynamic
             | _ -> 
                 state.environment.Undefined :> IDynamic
-        let inline third (value:IDynamic) =
+        let third (value:IDynamic) =
             match value.TypeCode with
             | LanguageTypeCode.Object ->
                 let v = value :?> IObject
@@ -346,7 +346,7 @@ module Evaluator =
                     fourth value
             | _ -> 
                 fourth value
-        let inline second (value:IDynamic) =
+        let second (value:IDynamic) =
             match state.replacerFunction with
             | :? ICallable as f ->
                 let args = state.environment.CreateArgs ([| state.environment.CreateString key :> IDynamic; value |])
@@ -354,7 +354,7 @@ module Evaluator =
                 third value
             | _ -> 
                 third value 
-        let inline first (value:IDynamic) =
+        let first (value:IDynamic) =
             match value with
             | :? IObject as v ->
                 let toJSON = v.Get "toJSON"
