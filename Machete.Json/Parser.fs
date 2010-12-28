@@ -48,7 +48,7 @@ module Parser =
         parse {
             let! v = item
             match v with
-            | JsonNullLiteral _ -> return JsonToken v
+            | JsonBooleanLiteral _ -> return JsonToken v
             | _ -> return! zero
         }
 

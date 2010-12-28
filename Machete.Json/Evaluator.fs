@@ -1,6 +1,8 @@
 ﻿namespace Machete.Json
 
 open System
+open System.Globalization
+open System.Text
 open Machete.Interfaces
 open Machete.Compiler
 
@@ -217,24 +219,156 @@ module Evaluator =
         let args = environment.CreateArgs ([| name; value |])
         reviver.Call (environment, holder, args)
 
-    /// <summary>
-    /// 15.12.2 parse ( text [ , reviver ] ) 
-    /// The parse function parses a JSON text (a JSON-formatted String) and produces an ECMAScript value. The 
-    /// JSON format is a restricted form of ECMAScript literal. JSON objects are realized as ECMAScript objects. 
-    /// JSON arrays are realized as ECMAScript arrays. JSON strings, numbers, booleans, and null are realized as 
-    /// ECMAScript Strings, Numbers, Booleans, and null. JSON uses a more limited set of white space characters 
-    /// than WhiteSpace and allows Unicode code points U+2028 and U+2029 to directly appear in JSONString literals 
-    /// without using an escape sequence. The process of parsing is similar to 11.1.4 and 11.1.5 as constrained by 
-    /// the JSON grammar. 
-    /// </summary>
-    /// <param name="environment">The environment that this object will reside in.</param>
-    /// <param name="text">The text that will be parse as JSON.</param>
-    /// <param name="reviver">
-    /// The optional  reviver parameter is a function that takes two parameters, (key and  value). It can filter and 
-    /// transform the results. It is called with each of the key/value pairs produced by the parse, and its return value is 
-    /// used instead of the original value. If it returns what  it received, the structure is not modified. If it returns 
-    /// undefined then the property is deleted from the result. 
-    /// </param>
+
+    type private StringifyState = {
+        environment:IEnvironment
+        stack:list<IDynamic>
+        indent:string
+        gap:string
+        propertyList:list<string>
+        replacerFunction:IDynamic
+        space:string
+    }
+
+    let rec private ja (state:StringifyState) (value:IObject) : string =
+        if not state.stack.IsEmpty && (state.stack.Head = (value :> IDynamic)) then 
+            raise (state.environment.CreateTypeError("Cyclical objects cannot be serialized."))
+        let stepback = state.indent
+        let state = { state with stack = value:>IDynamic::state.stack; indent = state.indent + state.gap }
+        let partial = [
+            let len = (value.Get "length" :?> INumber).BaseValue |> uint32
+            if len > 0u then
+                for index in 0u..len - 1u do
+                    let p = index.ToString()
+                    let strP = str state p value
+                    if strP.TypeCode <> LanguageTypeCode.Undefined 
+                    then yield (strP :?> IString).BaseValue
+                    else yield "null"
+        ]
+        if partial.IsEmpty 
+        then "[]" 
+        else 
+            let head, separator, tail = 
+                if state.gap <> ""
+                then "[\n" + state.indent, ",\n" + state.indent, "\n" + stepback + "]"
+                else "[", ",", "]"
+            let sb = StringBuilder()
+            sb.Append head |> ignore
+            for s in partial do
+                if sb.Length > head.Length then
+                    sb.Append separator |> ignore
+                sb.Append s |> ignore
+            sb.Append tail |> ignore
+            sb.ToString ()
+
+    and private jo (state:StringifyState) (value:IObject) : string =
+        if not state.stack.IsEmpty && (state.stack.Head = (value :> IDynamic)) then 
+            raise (state.environment.CreateTypeError("Cyclical objects cannot be serialized."))
+        let stepback = state.indent
+        let state = { state with stack = value:>IDynamic::state.stack; indent = state.indent + state.gap }
+        let k = match state.propertyList with | [] -> value |> Seq.toList | _ -> state.propertyList
+        let partial = [
+            for p in k do
+                let strP = str state p value
+                if strP.TypeCode <> LanguageTypeCode.Undefined then
+                    yield quote p + ":" + (if state.gap <> "" then " "  else "") + (strP :?> IString).BaseValue                    
+        ]
+        if partial.IsEmpty 
+        then "{}" 
+        else 
+            let head, separator, tail = 
+                if state.gap <> ""
+                then "{\n" + state.indent, ",\n" + state.indent, "\n" + stepback + "}"
+                else "{", ",", "}"
+            let sb = StringBuilder()
+            sb.Append head |> ignore
+            for s in partial do
+                if sb.Length > head.Length then
+                    sb.Append separator |> ignore
+                sb.Append s |> ignore
+            sb.Append tail |> ignore
+            sb.ToString ()
+
+    and private quote (value:string) : string =
+        let sb = StringBuilder()
+        sb.Append ('\"') |> ignore
+        for c in value do
+            match c with
+            | '\"' -> sb.Append ("\\\"") |> ignore
+            | '\b' -> sb.Append ("\\b") |> ignore
+            | '\f' -> sb.Append ("\\f") |> ignore
+            | '\n' -> sb.Append ("\\n") |> ignore
+            | '\r' -> sb.Append ("\\r") |> ignore
+            | '\t' -> sb.Append ("\\t") |> ignore
+            | _ ->
+                match Char.GetUnicodeCategory c with
+                | UnicodeCategory.Control when c < ' ' ->
+                     sb.Append ("\\u") |> ignore
+                     sb.Append ((c |> int).ToString("x4")) |> ignore
+                | _ -> sb.Append (c) |> ignore             
+        sb.Append ('\"') |> ignore
+        sb.ToString ()
+
+    and private str (state:StringifyState) (key:string) (holder:IObject) : IDynamic =
+        let inline fourth (value:IDynamic) =
+            match value.TypeCode with
+            | LanguageTypeCode.Null -> 
+                state.environment.CreateString "null" :> IDynamic
+            | LanguageTypeCode.Boolean -> 
+                let v = value :?> IBoolean
+                state.environment.CreateString (if v.BaseValue then "true" else "false") :> IDynamic
+            | LanguageTypeCode.String -> 
+                let v = value :?> IString
+                state.environment.CreateString (quote v.BaseValue) :> IDynamic
+            | LanguageTypeCode.Number -> 
+                let v = value :?> INumber
+                if not (Double.IsInfinity(v.BaseValue)) 
+                then v.ConvertToString() :> IDynamic 
+                else state.environment.CreateString "null" :> IDynamic
+            | LanguageTypeCode.Object -> 
+                let v = value :?> IObject
+                let v = if v.Class = "Array" then ja state v else jo state v 
+                state.environment.CreateString v :> IDynamic
+            | _ -> 
+                state.environment.Undefined :> IDynamic
+        let inline third (value:IDynamic) =
+            match value.TypeCode with
+            | LanguageTypeCode.Object ->
+                let v = value :?> IObject
+                match v.Class with
+                | "Number" -> 
+                    fourth (v.ConvertToNumber())
+                | "String" ->
+                    fourth (v.ConvertToString())
+                | "Boolean" ->
+                    fourth (v.ConvertToBoolean())
+                | _ -> 
+                    fourth value
+            | _ -> 
+                fourth value
+        let inline second (value:IDynamic) =
+            match state.replacerFunction with
+            | :? ICallable as f ->
+                let args = state.environment.CreateArgs ([| state.environment.CreateString key :> IDynamic; value |])
+                let value = f.Call (state.environment, holder :> IDynamic, args)
+                third value
+            | _ -> 
+                third value 
+        let inline first (value:IDynamic) =
+            match value with
+            | :? IObject as v ->
+                let toJSON = v.Get "toJSON"
+                match toJSON with
+                | :? ICallable as f ->
+                    let args = state.environment.CreateArgs ([| state.environment.CreateString key :> IDynamic |])
+                    let value = f.Call (state.environment, value, args) 
+                    second value
+                | _ -> 
+                    second value
+            | _ -> 
+                second value
+        first (holder.Get key)
+
     let ParseForEnvironment (environment:IEnvironment, text:IDynamic, reviver:IDynamic) : IDynamic =
         let jText = text.ConvertToString().BaseValue
         let jsonText = Machete.Json.Parser.parse jText 
@@ -251,22 +385,51 @@ module Evaluator =
             | _ -> unfiltered  
         | _ -> raise (environment.CreateSyntaxError "The text supplied could not be parsed as JSON.")
 
-    /// <summary>
-    /// 15.12.3 stringify ( value [ , replacer [ , space ] ] ) 
-    /// The stringify function returns a String in JSON format representing an ECMAScript value. It can take three 
-    /// parameters. The first parameter is required. 
-    /// </summary>
-    /// <param name="environment">The environment that the value resides in.</param>
-    /// <param name="value">The value to be converted</param>
-    /// <param name="replacer">
-    /// The optional replacer parameter is 
-    /// either a function that alters the way objects and arrays are stringified, or an array of Strings and Numbers that 
-    /// acts as a white list for selecting the object properties that will be stringified. 
-    /// </param>
-    /// <param name="space">
-    /// The optional space parameter is a 
-    /// String or Number that allows the result to have white space injected into it to improve human readability. 
-    /// </param>
-    let StringifyForEnvironment (environment:IEnvironment, value:IDynamic, replacer:IDynamic, space:IDynamic) : IDynamic =     
-        null
+    let StringifyForEnvironment (environment:IEnvironment, value:IDynamic, replacer:IDynamic, space:IDynamic) : IDynamic =
+        let space =            
+            match space with
+            | :? INumber as v ->
+                String.replicate (min 10 ((v.ConvertToNumber ()).BaseValue |> int)) " "
+            | :? IString as v -> 
+                let s = v.BaseValue
+                if s.Length > 10 then s.Substring (0, 10) else s
+            | :? IObject as v when v.Class = "Number" -> 
+                String.replicate (min 10 ((v.ConvertToNumber ()).BaseValue |> int)) " "
+            | :? IObject as v when v.Class = "String" -> 
+                let s = (v.ConvertToString ()).BaseValue
+                if s.Length > 10 then s.Substring (0, 10) else s
+            | _ -> ""
+        let state = {
+            environment = environment
+            stack = []
+            indent = ""
+            space = space 
+            gap = space
 
+            replacerFunction =                 
+                match replacer with
+                | :? ICallable -> replacer
+                | _ -> environment.Undefined :> IDynamic
+
+
+            propertyList =
+                match replacer with
+                | :? IObject as o when o.Class = "Array" ->
+                    [ 
+                        let n = ref 0u
+                        for name in o do
+                            if UInt32.TryParse(name, n) then
+                                let v = o.Get name
+                                match v with
+                                | :? IString as v -> yield v.BaseValue
+                                | :? INumber as v -> yield (v.ConvertToString ()).BaseValue
+                                | :? IObject as v when v.Class = "String" || v.Class = "Number" -> 
+                                    yield (v.ConvertToString ()).BaseValue
+                    ] 
+                | _ -> List.empty<string> 
+        }   
+        let wrapper = environment.ObjectConstructor.Op_Construct(environment.EmptyArgs)
+        let nTrue = Nullable<bool>(true)
+        let desc = environment.CreateDataDescriptor (value, nTrue, nTrue, nTrue)
+        wrapper.DefineOwnProperty ("", desc, false) |> ignore               
+        str state "" wrapper  

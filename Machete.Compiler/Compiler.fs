@@ -386,10 +386,12 @@ type Compiler(environment:IEnvironment) as this =
         match state.element with
         | ArgumentList (Nil, e) -> 
             let arg = evalAssignmentExpression { state with element = e }
+            let arg = call arg Reflection.IDynamic.get_Value Array.empty
             arg::result
         | ArgumentList (e1, e2) ->
             let result = evalArgumentList result { state with element = e1 } 
             let arg = evalAssignmentExpression { state with element = e2 }
+            let arg = call arg Reflection.IDynamic.get_Value Array.empty
             arg::result
 
     and evalCallExpression (state:State) =    

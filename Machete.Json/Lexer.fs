@@ -56,8 +56,12 @@ module Lexer =
         | JsonStringCharacter ('\\', e) -> evalJsonEscapeSequence e
         | JsonStringCharacter (c, JsonNil) -> c
 
-    let jsonStringCharacters =
-        manyFold JsonNil (fun a b -> JsonStringCharacters (a, b)) jsonStringCharacter
+    let rec jsonStringCharacters =
+        parse {
+            let! x = jsonStringCharacter
+            let! y = jsonStringCharacters <|> preturn JsonNil
+            return JsonStringCharacters (x, y)        
+        }
 
     let rec evalJsonStringCharacters v =
         match v with

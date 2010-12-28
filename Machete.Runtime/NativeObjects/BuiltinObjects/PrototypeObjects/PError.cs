@@ -8,14 +8,20 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         public PError(IEnvironment environment)
             : base(environment)
         {
+
+        }
+
+        public override void Initialize()
+        {
             Class = "Error";
             Extensible = true;
-            DefineOwnProperty("name", environment.CreateDataDescriptor(environment.CreateString("Error"), true, false, true), false);
-            DefineOwnProperty("message", environment.CreateDataDescriptor(environment.CreateString(""), true, false, true), false);
+            DefineOwnProperty("name", Environment.CreateDataDescriptor(Environment.CreateString("Error"), true, false, true), false);
+            DefineOwnProperty("message", Environment.CreateDataDescriptor(Environment.CreateString(""), true, false, true), false);
+            base.Initialize();
         }
 
 
-        [NativeFunction("toString")]
+        [NativeFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
