@@ -24,6 +24,7 @@ module Reflection =
         let createArray = t.GetMethod "CreateArray"
         let createObject = t.GetMethod "CreateObject"
         let createArguments = t.GetMethod "CreateArguments"
+        let createRegExp = t.GetMethod "CreateRegExp"
 
         let createReference = t.GetMethod "CreateReference"
 

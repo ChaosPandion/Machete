@@ -297,7 +297,8 @@ module Parser =
                 | "this" -> return PrimaryExpression (InputElement v)
                 | _ -> ()
             | StringLiteral _
-            | NumericLiteral _ -> return PrimaryExpression (InputElement (Literal v))
+            | NumericLiteral _
+            | RegularExpressionLiteral (_, _) -> return PrimaryExpression (InputElement (Literal v))
             | _ -> ()
         }
 //        choice [

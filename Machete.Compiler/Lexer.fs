@@ -57,14 +57,14 @@ module Lexer =
     | EscapeCharacter of InputElement
     | HexEscapeSequence of InputElement * InputElement
     | UnicodeEscapeSequence of InputElement * InputElement * InputElement * InputElement
-    | RegularExpressionLiteral of InputElement * InputElement * InputElement * InputElement
+    | RegularExpressionLiteral of InputElement * InputElement
     | RegularExpressionBody of InputElement * InputElement
     | RegularExpressionChars of InputElement * InputElement
     | RegularExpressionFirstChar of InputElement
     | RegularExpressionChar of InputElement
-    | RegularExpressionBackslashSequence of InputElement * InputElement
-    | RegularExpressionNonTerminator of InputElement
-    | RegularExpressionClass of InputElement * InputElement * InputElement
+    | RegularExpressionBackslashSequence of InputElement
+    | RegularExpressionNonTerminator of char
+    | RegularExpressionClass of InputElement
     | RegularExpressionClassChars of InputElement * InputElement
     | RegularExpressionClassChar of InputElement
     | RegularExpressionFlags of InputElement * InputElement
@@ -620,26 +620,41 @@ module Lexer =
         let parseDivPunctuator<'a> : Parser<InputElement, 'a> =
             (str "/=" <|> str "/") |>> DivPunctuator
 
-    module RegularExpressionLiteral =
+    module RegularExpressionLiteralParser =
         let parseRegularExpressionFlags<'a> : Parser<InputElement, 'a> =
             manyFold (RegularExpressionFlags (Nil, Nil)) (fun x y -> RegularExpressionFlags (x, y)) IdentifierNameParser.identifierPart
+
         let parseRegularExpressionNonTerminator<'a> : Parser<InputElement, 'a> =
-            satisfy (fun c -> not (CharSets.isLineTerminator c)) |>> Chr |>> RegularExpressionNonTerminator
+            satisfy (fun c -> not (CharSets.isLineTerminator c)) |>> RegularExpressionNonTerminator
+
         let parseRegularExpressionBackslashSequence<'a> : Parser<InputElement, 'a> =
-            tuple2 (chr '\\') parseRegularExpressionNonTerminator |>> RegularExpressionBackslashSequence
+            parse {
+                do! skipChar '\\'
+                let! e = parseRegularExpressionNonTerminator
+                return RegularExpressionBackslashSequence (e)
+            }
+
         let parseRegularExpressionClassChar<'a> : Parser<InputElement, 'a> =
             choice [
                 parseRegularExpressionBackslashSequence                
                 attempt (parseRegularExpressionNonTerminator 
                             >>= fun r ->
                                 match r with
-                                | RegularExpressionNonTerminator (Chr ']') -> pzero
+                                | RegularExpressionNonTerminator (']') -> pzero
                                 | _ -> preturn r)
             ] |>> RegularExpressionClassChar
+
         let parseRegularExpressionClassChars<'a> : Parser<InputElement, 'a> =
             manyFold (RegularExpressionClassChars (Nil, Nil)) (fun x y -> RegularExpressionClassChars (x, y)) parseRegularExpressionClassChar
+
         let parseRegularExpressionClass<'a> : Parser<InputElement, 'a> =
-            tuple3 (chr '[') parseRegularExpressionClassChars (chr ']') |>> RegularExpressionClass
+            parse {
+                do! skipChar '['
+                let! e = parseRegularExpressionClassChars
+                do! skipChar ']'
+                return RegularExpressionClass (e)
+            }
+
         let parseRegularExpressionChar<'a> : Parser<InputElement, 'a> =
             choice [
                 parseRegularExpressionBackslashSequence
@@ -647,9 +662,10 @@ module Lexer =
                 attempt (parseRegularExpressionNonTerminator 
                             >>= fun r ->
                                 match r with
-                                | RegularExpressionNonTerminator (Chr '/') -> pzero
+                                | RegularExpressionNonTerminator ('/') -> pzero
                                 | _ -> preturn r)
-            ] |>> RegularExpressionClassChar
+            ] |>> RegularExpressionChar
+
         let parseRegularExpressionFirstChar<'a> : Parser<InputElement, 'a> =
             choice [
                 parseRegularExpressionBackslashSequence
@@ -657,16 +673,113 @@ module Lexer =
                 attempt (parseRegularExpressionNonTerminator 
                             >>= fun r ->
                                 match r with
-                                | RegularExpressionNonTerminator (Chr '*')
-                                | RegularExpressionNonTerminator (Chr '/') -> pzero
+                                | RegularExpressionNonTerminator ('*')
+                                | RegularExpressionNonTerminator ('/') -> pzero
                                 | _ -> preturn r)
-            ] |>> RegularExpressionClassChar
+            ] |>> RegularExpressionFirstChar
+
         let parseRegularExpressionChars<'a> : Parser<InputElement, 'a> =
             manyFold (RegularExpressionChars (Nil, Nil)) (fun x y -> RegularExpressionChars (x, y)) parseRegularExpressionChar
+
         let parseRegularExpressionBody<'a> : Parser<InputElement, 'a> =
-            tuple2 parseRegularExpressionFirstChar parseRegularExpressionChars |>> RegularExpressionBody
+            parse {
+                let! first = parseRegularExpressionFirstChar
+                let! chars = parseRegularExpressionChars
+                return RegularExpressionBody (first, chars)
+            }
+
         let parseRegularExpressionLiteral<'a> : Parser<InputElement, 'a> =
-            attempt <| tuple4 (chr '/') parseRegularExpressionBody (chr '/') parseRegularExpressionFlags |>> RegularExpressionLiteral
+            parse {
+                do! skipChar '/'
+                let! body = parseRegularExpressionBody
+                do! skipChar '/'
+                let! flags = parseRegularExpressionFlags
+                return RegularExpressionLiteral (body, flags)
+            }
+            
+        let rec evalRegularExpressionFlags v =
+            match v with
+            | RegularExpressionFlags (Nil, Nil) -> ""
+            | RegularExpressionFlags (flags, flag) ->
+                let flags = evalRegularExpressionFlags flags
+                let flag = IdentifierNameParser.evalIdentifierPart flag
+                flags + flag.ToString() 
+        
+        let evalRegularExpressionNonTerminator v =
+            match v with
+            | RegularExpressionNonTerminator v ->
+                v |> string
+
+        let evalRegularExpressionBackslashSequence v =
+            match v with
+            | RegularExpressionBackslashSequence v ->
+                evalRegularExpressionNonTerminator v
+
+        let evalRegularExpressionClassChar v =
+            match v with
+            | RegularExpressionChar v ->
+                match v with
+                | RegularExpressionNonTerminator (_) ->
+                    evalRegularExpressionNonTerminator v    
+                | RegularExpressionBackslashSequence (_) ->
+                    evalRegularExpressionBackslashSequence v
+
+        let rec evalRegularExpressionClassChars v =
+            match v with
+            | RegularExpressionClassChars (Nil, Nil) -> ""
+            | RegularExpressionClassChars (classChars, classChar) ->
+                let classChars = evalRegularExpressionClassChars classChars
+                let classChar = evalRegularExpressionClassChar classChar
+                classChars + classChar 
+        
+        let evalRegularExpressionClass v =
+            match v with
+            | RegularExpressionClass classChars ->
+                evalRegularExpressionClassChars classChars     
+
+        let evalRegularExpressionChar v =
+            match v with
+            | RegularExpressionChar v ->
+                match v with
+                | RegularExpressionNonTerminator (_) ->
+                    evalRegularExpressionNonTerminator v    
+                | RegularExpressionBackslashSequence (_) ->
+                    evalRegularExpressionBackslashSequence v
+                | RegularExpressionClass (_) ->
+                    evalRegularExpressionClass v
+
+        let rec evalRegularExpressionChars v =
+            match v with
+            | RegularExpressionChars (Nil, Nil) -> ""
+            | RegularExpressionChars (chars, char) ->
+                let chars = evalRegularExpressionChars chars
+                let char = evalRegularExpressionChar char
+                chars + char 
+
+        let evalRegularExpressionFirstChar v =
+            match v with
+            | RegularExpressionFirstChar v ->
+                match v with
+                | RegularExpressionNonTerminator (_) ->
+                    evalRegularExpressionNonTerminator v    
+                | RegularExpressionBackslashSequence (_) ->
+                    evalRegularExpressionBackslashSequence v
+                | RegularExpressionClass (_) ->
+                    evalRegularExpressionClass v
+
+        let evalRegularExpressionBody v =
+            match v with
+            | RegularExpressionBody (first, chars) ->
+                let first = evalRegularExpressionFirstChar first
+                let chars = evalRegularExpressionChars chars
+                first + chars
+
+        let evalRegularExpressionLiteral v =
+            match v with
+            | RegularExpressionLiteral (body, flags) ->
+                let body = evalRegularExpressionBody body
+                let flags = evalRegularExpressionFlags flags
+                body, flags
             
     let private divChoice : Parser<InputElement, LexerState> =
         getUserState >>=
@@ -676,14 +789,14 @@ module Lexer =
                     match element with
                     | IdentifierName (_, _) ->
                         match IdentifierNameParser.evalIdentifierName element with
-                        | "true" | "false" | "null" | "this" -> DivPunctuator.parseDivPunctuator <|> RegularExpressionLiteral.parseRegularExpressionLiteral
-                        | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator   
+                        | "true" | "false" | "null" | "this" -> DivPunctuator.parseDivPunctuator <|> RegularExpressionLiteralParser.parseRegularExpressionLiteral
+                        | _ -> RegularExpressionLiteralParser.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator   
                     | Punctuator (Str "]")
                     | Punctuator (Str ")")
                     | NumericLiteral _ 
-                    | StringLiteral _ -> DivPunctuator.parseDivPunctuator <|> RegularExpressionLiteral.parseRegularExpressionLiteral
-                    | _ -> RegularExpressionLiteral.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
-                | None -> RegularExpressionLiteral.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
+                    | StringLiteral _ -> DivPunctuator.parseDivPunctuator <|> RegularExpressionLiteralParser.parseRegularExpressionLiteral
+                    | _ -> RegularExpressionLiteralParser.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
+                | None -> RegularExpressionLiteralParser.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
 
     let private exec =
         choice [

@@ -15,9 +15,6 @@ namespace Machete.Runtime.NativeObjects
 
         }
 
-        public bool Match(string input, int index)
-        {
-            throw new NotImplementedException();
-        }
+        public RegExp.RegExp RegExp { get; set; }
     }
 }

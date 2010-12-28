@@ -148,6 +148,10 @@
       <Project>{014029A0-36AD-4049-94D2-C0A5D107A2C1}</Project>
       <Name>Machete.Json</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Machete.RegExp\Machete.RegExp.fsproj">
+      <Project>{1EA61ADA-ED82-4268-96FC-A5DF92F85964}</Project>
+      <Name>Machete.RegExp</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

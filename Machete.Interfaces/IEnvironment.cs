@@ -61,6 +61,7 @@ namespace Machete.Interfaces
 
         IObject CreateArray();
         IObject CreateObject();
+        IObject CreateRegExp(string pattern, string flags);
 
         MacheteRuntimeException CreateError(string message);
         MacheteRuntimeException CreateEvalError(string message);

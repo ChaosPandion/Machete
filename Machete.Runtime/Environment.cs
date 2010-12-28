@@ -113,7 +113,6 @@ namespace Machete.Runtime
             BooleanConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(BooleanPrototype), false);
             NumberConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(NumberPrototype), false);
             DateConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(DatePrototype), false);
-            RegExpConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(RegExpPrototype), false);
             ErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ErrorPrototype), false);
             EvalErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(EvalErrorPrototype), false);
             RangeErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(RangeErrorPrototype), false);
@@ -256,6 +255,12 @@ namespace Machete.Runtime
         public IObject CreateObject()
         {
             return ObjectConstructor.Op_Construct(EmptyArgs);
+        }
+
+        public IObject CreateRegExp(string pattern, string flags)
+        {
+            var args = CreateArgs(new IDynamic[] { CreateString(pattern), CreateString(flags) });
+            return ((IConstructable)RegExpConstructor).Construct(this, args);
         }
         
         public IReference CreateReference(string name, IReferenceBase @base, bool strict)

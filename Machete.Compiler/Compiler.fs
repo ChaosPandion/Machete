@@ -467,8 +467,9 @@ type Compiler(environment:IEnvironment) as this =
                         call environmentParam Reflection.IEnvironment.createNumber [| constant (Lexer.NumericLiteralParser.evalNumericLiteral e) |]
                     | Lexer.StringLiteral _ ->
                         call environmentParam Reflection.IEnvironment.createString [| constant (Lexer.StringLiteralParser.evalStringLiteral e) |]
-                    | Lexer.RegularExpressionLiteral (_, _, _, _) ->
-                        constant 1
+                    | Lexer.RegularExpressionLiteral (_, _) ->
+                        let body, flags = Lexer.RegularExpressionLiteralParser.evalRegularExpressionLiteral e
+                        call environmentParam Reflection.IEnvironment.createRegExp [| constant body; constant flags  |]
             | ArrayLiteral (_, _) ->
                 evalArrayLiteral { state with element = e }    
             | ObjectLiteral _ ->

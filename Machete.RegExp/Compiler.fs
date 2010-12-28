@@ -48,7 +48,7 @@ module internal Compiler =
         else
             let cc = s.input.[s.endIndex] |> string
             let comp = if s.ignoreCase then System.StringComparison.InvariantCultureIgnoreCase else System.StringComparison.InvariantCulture
-            let found = a.IndexOf (cc, comp) > 0            
+            let found = a.IndexOf (cc, comp) > -1            
             let success = invert || (found && not (invert && found))
             if success then 
                 c { s with endIndex = s.endIndex + 1; captures = Array.copy s.captures } 
