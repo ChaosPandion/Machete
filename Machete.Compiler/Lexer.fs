@@ -618,7 +618,7 @@ module Lexer =
             
     module DivPunctuator =
         let parseDivPunctuator<'a> : Parser<InputElement, 'a> =
-            (str "/=" <|> str "/") |>> DivPunctuator
+            (str "/=" <|> str "/") |>> DivPunctuator |> attempt
 
     module RegularExpressionLiteralParser =
         let parseRegularExpressionFlags<'a> : Parser<InputElement, 'a> =
@@ -695,7 +695,7 @@ module Lexer =
                 do! skipChar '/'
                 let! flags = parseRegularExpressionFlags
                 return RegularExpressionLiteral (body, flags)
-            }
+            } |> attempt
             
         let rec evalRegularExpressionFlags v =
             match v with
