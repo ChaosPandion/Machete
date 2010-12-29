@@ -3,13 +3,22 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CObject : LObject, ICallable, IConstructable
+    public sealed class CObject : LObject, IBuiltinFunction
     {
         public CObject(IEnvironment environment)
             : base(environment)
         {
+
+        }
+
+        public override void Initialize()
+        {
             Class = "Function";
             Extensible = true;
+            Prototype = Environment.FunctionPrototype;
+            DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(1.0), false, false, false), false);
+            DefineOwnProperty("prototype", Environment.CreateDataDescriptor(Environment.ObjectPrototype, false, false, false), false);
+            base.Initialize();
         }
 
         IDynamic ICallable.Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
@@ -34,7 +43,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("getPrototypeOf", "O")]
+        public bool HasInstance(IDynamic value)
+        {
+            return Environment.Instanceof(value, this);
+        }
+
+        [NativeFunction("getPrototypeOf", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic GetPrototypeOf(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -45,7 +59,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj.Prototype;
         }
 
-        [NativeFunction("getOwnPropertyDescriptor", "O", "P")]
+        [NativeFunction("getOwnPropertyDescriptor", "O", "P"), DataDescriptor(true, false, true)]
         internal static IDynamic GetOwnPropertyDescriptor(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -58,7 +72,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.FromPropertyDescriptor(desc);
         }
 
-        [NativeFunction("getOwnPropertyNames", "O")]
+        [NativeFunction("getOwnPropertyNames", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic GetOwnPropertyNames(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -80,7 +94,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return array;
         }
 
-        [NativeFunction("create", "O", "Properties")]
+        [NativeFunction("create", "O", "Properties"), DataDescriptor(true, false, true)]
         internal static IDynamic Create(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -102,7 +116,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return newObj;
         }
 
-        [NativeFunction("defineProperty", "O", "P", "Attributes")]
+        [NativeFunction("defineProperty", "O", "P", "Attributes"), DataDescriptor(true, false, true)]
         internal static IDynamic DefineProperty(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -132,7 +146,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("defineProperties", "O", "Properties")]
+        [NativeFunction("defineProperties", "O", "Properties"), DataDescriptor(true, false, true)]
         internal static IDynamic DefineProperties(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -150,7 +164,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("seal", "O")]
+        [NativeFunction("seal", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Seal(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -170,7 +184,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("freeze", "O")]
+        [NativeFunction("freeze", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Freeze(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -194,7 +208,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("preventExtensions", "O")]
+        [NativeFunction("preventExtensions", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic PreventExtensions(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -206,7 +220,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("isSealed", "O")]
+        [NativeFunction("isSealed", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsSealed(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -227,7 +241,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.CreateBoolean(!obj.Extensible);
         }
 
-        [NativeFunction("isFrozen", "O")]
+        [NativeFunction("isFrozen", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsFrozen(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -256,7 +270,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.CreateBoolean(!obj.Extensible);
         }
 
-        [NativeFunction("isExtensible", "O")]
+        [NativeFunction("isExtensible", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsExtensible(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;
@@ -267,7 +281,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.CreateBoolean(obj.Extensible);
         }
 
-        [NativeFunction("keys", "O")]
+        [NativeFunction("keys", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Keys(IEnvironment environment, IArgs args)
         {
             var obj = args[0] as IObject;

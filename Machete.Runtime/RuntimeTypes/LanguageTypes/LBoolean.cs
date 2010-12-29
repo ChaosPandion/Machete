@@ -272,7 +272,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IObject ConvertToObject()
         {
-            return _environment.BooleanConstructor.Op_Construct(_environment.CreateArgs(this));
+            return ((IConstructable)_environment.BooleanConstructor).Construct(_environment, _environment.CreateArgs(new IDynamic[] { this }));
         }
 
         public INumber ConvertToInteger()

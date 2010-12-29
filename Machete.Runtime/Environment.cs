@@ -284,6 +284,7 @@ namespace Machete.Runtime
                 f.Code = code;
                 f.Strict = strict;
                 f.Scope = scope;
+                f.Initialize();
             }
             return f;
         }

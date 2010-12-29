@@ -3,14 +3,22 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CUriError : LObject, ICallable, IConstructable
+    public sealed class CUriError : LObject, IBuiltinFunction
     {
         public CUriError(IEnvironment environment)
             : base(environment)
         {
-            Class = "Error";
+
+        }
+
+        public override void Initialize()
+        {
+            Class = "Function";
             Extensible = true;
-            DefineOwnProperty("length", environment.CreateDataDescriptor(environment.CreateNumber(1.0), true, false, true), false);
+            Prototype = Environment.FunctionPrototype;
+            DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(1.0), false, false, false), false);
+            DefineOwnProperty("prototype", Environment.CreateDataDescriptor(Environment.UriErrorPrototype, false, false, false), false);
+            base.Initialize();
         }
 
         IDynamic ICallable.Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
@@ -31,6 +39,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             error.Prototype = environment.UriErrorPrototype;
             error.Put("message", message, false);
             return error;
+        }
+
+        public bool HasInstance(IDynamic value)
+        {
+            return Environment.Instanceof(value, this);
         }
     }
 }
