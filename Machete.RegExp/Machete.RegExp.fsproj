@@ -58,6 +58,7 @@
     <Compile Include="Parser.fs" />
     <Compile Include="Compiler.fs" />
     <Compile Include="Match.fs" />
+    <Compile Include="Replacer.fs" />
     <Compile Include="RegExp.fs" />
   </ItemGroup>
   <ItemGroup>

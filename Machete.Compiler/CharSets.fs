@@ -5,6 +5,40 @@ module CharSets =
     open System
     open System.Globalization
 
+    let private whiteSpaceChars = [
+        '\u0009'
+        '\u000b'
+        '\u000c'
+        '\u0020'
+        '\u00a0'
+        '\u1680'
+        '\u180e'
+        '\u2000'
+        '\u2001'
+        '\u2002'
+        '\u2003'
+        '\u2004'
+        '\u2005'
+        '\u2006'
+        '\u2007'
+        '\u2008'
+        '\u2009'
+        '\u200a'
+        '\u202f'
+        '\u205f'
+        '\u3000'
+        '\ufeff'
+    ]
+
+    let private lineTerminatorChars = [
+        '\u000a'
+        '\u000d'
+        '\u2028'
+        '\u2029'
+    ]
+
+    let trimCharacters = whiteSpaceChars @ lineTerminatorChars |> List.toArray
+
     let inline isWhiteSpace c =  
         match c with
         | '\u0009'

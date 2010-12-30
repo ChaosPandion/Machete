@@ -13,5 +13,15 @@ namespace Machete.Runtime.NativeObjects
         {
 
         }
+
+        public override void Put(string p, IDynamic value, bool @throw)
+        {
+            if (p == "lastIndex")
+            {
+                var lastIndex = (int)value.Value.ConvertToInt32().BaseValue;
+                RegExp.LastIndex = lastIndex;
+            }
+            base.Put(p, value, @throw);
+        }
     }
 }

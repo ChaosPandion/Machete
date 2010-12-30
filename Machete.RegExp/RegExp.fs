@@ -1,8 +1,8 @@
 ﻿namespace Machete.RegExp
 
 open System
-//open FParsec.Primitives
-//open FParsec.CharParsers
+open FParsec.Primitives
+open FParsec.CharParsers
 
 [<Flags>]
 type RegExpOptions =
@@ -32,7 +32,7 @@ type RegExp(source:string, options:RegExpOptions) =
 
     member this.LastIndex
         with get() = lastIndex
-        and set value = lastIndex <- min value 0
+        and set value = lastIndex <- max value 0
 
  
     member this.Exec (input:string) =
@@ -57,9 +57,18 @@ type RegExp(source:string, options:RegExpOptions) =
 
     member this.Test (input:string) = 
         (this.Exec input).Succeeded 
+        
+    member this.Match (input:string, index:int) =
+        match procedure.Value input index this.IgnoreCase this.Multiline with
+        | Compiler.Success r ->
+            Match (true, input, r.endIndex, r.captures)
+        | Compiler.Failure -> 
+            Match (false, input, -1, [||])
 
     override this.ToString() = 
         "/" + source + "/" + 
         (if this.Global then "g" else "") + 
         (if this.IgnoreCase then "i" else "")  + 
         (if this.Multiline then "m" else "") 
+
+

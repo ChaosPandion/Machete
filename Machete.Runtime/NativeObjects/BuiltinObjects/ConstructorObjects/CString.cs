@@ -34,16 +34,16 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         public IObject Construct(IEnvironment environment, IArgs args)
         {
             var obj = new NString(environment);
-            obj.Class = "String";
-            obj.Extensible = true;
-            obj.Prototype = environment.StringPrototype;
-            if (args.Count > 0)
             {
-                obj.PrimitiveValue = args[0].ConvertToString();
-            }
-            else
-            {
-                obj.PrimitiveValue = environment.CreateString("");
+                var str = args.Count > 0 ? args[0].ConvertToString() : environment.CreateString("");
+                var len = environment.CreateNumber(str.BaseValue.Length);
+                var lenDesc = environment.CreateDataDescriptor(len, false, false, false);
+
+                obj.Class = "String";
+                obj.Extensible = true;
+                obj.Prototype = environment.StringPrototype;
+                obj.PrimitiveValue = str;
+                obj.DefineOwnProperty("length", lenDesc, false);
             }
             return obj;
         }

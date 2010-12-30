@@ -417,7 +417,7 @@ type Compiler(environment:IEnvironment) as this =
                 let args = [| name; baseValue; constant state.strict |]
                 call environmentParam Reflection.IEnvironment.createReference args 
             | CallExpression (_, _), InputElement (e3) ->            
-                let baseValue = evalMemberExpression { state with element = e1 }
+                let baseValue = evalCallExpression { state with element = e1 }
                 let baseValue = call baseValue Reflection.IDynamic.get_Value Array.empty
                 let baseValue = exp.Convert(baseValue, Reflection.IReferenceBase.t) :> exp
                 let name = constant (Lexer.IdentifierNameParser.evalIdentifierName e3)

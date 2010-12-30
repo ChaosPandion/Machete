@@ -51,7 +51,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         }
         
 
-        public IPropertyDescriptor GetOwnProperty(string p)
+        public virtual IPropertyDescriptor GetOwnProperty(string p)
         {
             IPropertyDescriptor value;
             if (_map.TryGetValue(p, out value))
@@ -392,7 +392,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             switch (other.TypeCode)
             {
                 case LanguageTypeCode.Object:
-                    return _environment.CreateBoolean(this == other);
+                    return _environment.CreateBoolean(this == other.Value);
                 default:
                     return _environment.CreateBoolean(false);
             }

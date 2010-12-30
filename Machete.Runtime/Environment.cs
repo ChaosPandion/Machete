@@ -623,5 +623,16 @@ namespace Machete.Runtime
 
             return false;
         }
+
+
+        public void CheckObjectCoercible(IDynamic value)
+        {
+            switch (value.TypeCode)
+            {
+                case LanguageTypeCode.Undefined:
+                case LanguageTypeCode.Null:
+                    throw CreateTypeError("'" + value + "' cannot be coerced into an object.");
+            }
+        }
     }
 }

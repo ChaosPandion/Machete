@@ -30,6 +30,10 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             {
                 regExpObj.Put("lastIndex", environment.CreateNumber(regExpObj.RegExp.LastIndex), true);
             }
+            if (!result.Succeeded)
+            {
+                return environment.Null;
+            }
             var array = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
             array.DefineOwnProperty("index", environment.CreateDataDescriptor(environment.CreateNumber(result.Index), true, true, true), true);
             array.DefineOwnProperty("input", environment.CreateDataDescriptor(environment.CreateString(result.Input), true, true, true), true);

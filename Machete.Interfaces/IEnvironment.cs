@@ -93,6 +93,7 @@ namespace Machete.Interfaces
         IExecutionContext EnterContext();
 
         void ThrowRuntimeException(IDynamic thrown);
+        void CheckObjectCoercible(IDynamic value);
 
         bool Instanceof(IDynamic left, IDynamic right);
     }

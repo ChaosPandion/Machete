@@ -15,6 +15,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.Interactive", "Mach
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Interfaces", "Machete.Interfaces\Machete.Interfaces.csproj", "{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Tests", "Machete.Tests\Machete.Tests.csproj", "{D80B35C0-A5AE-4221-9CBE-950F918002C7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +95,16 @@ Global
 		{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}.Release|x86.ActiveCfg = Release|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{D80B35C0-A5AE-4221-9CBE-950F918002C7}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
