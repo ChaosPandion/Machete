@@ -24,16 +24,14 @@ module CommandParser =
         |>> SetTimeout
 
     let private parseEcho : Parser<Command, unit> =
-//        do! skipString "echo"
-//    do! spaces
-//    let! msg = parseString "The 'echo' command requires one string argument."
-//    return Echo msg
         skipString "echo" .>> spaces
         >>. parseString "The echo command requires one quoted string argument."
         |>> Echo
 
+    let private choices = [| parseGetTimeout <|> parseSetTimeout <|> parseEcho |]
+
+    let private choose reply = choice choices reply
+
     let parse : Parser<Command, unit> =
-        spaces .>> skipChar '#' .>> spaces >>. (
-            parseGetTimeout <|> parseSetTimeout <|> parseEcho
-        )     
+        (spaces .>> skipChar '#' .>> spaces >>. choose)    
 

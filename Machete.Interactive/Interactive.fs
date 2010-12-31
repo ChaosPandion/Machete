@@ -1,6 +1,8 @@
 ﻿namespace Machete.Interactive
 
 open System
+open System.Text.RegularExpressions
+open FParsec.CharParsers
 
 module Interactive =
 
@@ -10,15 +12,15 @@ module Interactive =
         lineLength : int   
     }
 
-    type private ReadState = {
+    type private State = {
         history:list<list<Text>>
         historyUp:list<list<Text>> 
         historyDown:list<list<Text>>
-        current:list<Text>
         currentLeft:list<Text>
         currentRight:list<Text>
     }
     
+    let private commandStartRegex = new Regex ("^\\s*#", RegexOptions.Compiled)
     let private sw = System.Diagnostics.Stopwatch()
     let private engine = lazy(new Machete.Engine())
     let private newLine = "\n"  
@@ -60,48 +62,76 @@ module Interactive =
             write ts.Head
             writeMany ts.Tail
 
-    let rec private read (tss:list<list<Text>>) (tssUp:list<list<Text>>) (tssDown:list<list<Text>>) (ts:list<Text>) =
+    let rec private read (state:State) =
         let c = Console.ReadKey (true)
         match c.Modifiers, c.Key with
         | _, ConsoleKey.F5 ->
-            ts::tss, ts
-        | _, ConsoleKey.Backspace when not ts.IsEmpty ->
-            delete ts
-            read tss tssUp tssDown ts.Tail
+            { state with history = (state.currentRight @ state.currentLeft)::state.history }
+        | _, ConsoleKey.Backspace when not state.currentLeft.IsEmpty ->
+            delete state.currentLeft
+            read { state with currentLeft = state.currentLeft.Tail }
         | _, ConsoleKey.Backspace ->
-            read tss tssUp tssDown ts
+            read state
         | _, ConsoleKey.Enter ->
             Console.Write newLine
-            read tss tssUp tssDown ({ value = newLine; color = defaultColor; lineLength = 0 }::ts)
+            let text = { value = newLine; color = defaultColor; lineLength = 0 }
+            let state = { state with currentLeft = text::state.currentLeft }
+            read state
         | _, ConsoleKey.Tab ->
             Console.Write tab
-            read tss tssUp tssDown ({ value = tab; color = defaultColor; lineLength = ts.Head.lineLength + tab.Length }::ts)
-        | _, ConsoleKey.UpArrow when not tssUp.IsEmpty ->
-            deleteMany ts
-            writeMany (tssUp.Head |> List.rev)
-            read tss tssUp.Tail (ts::tssDown) tssUp.Head
+            let text = { value = tab; color = defaultColor; lineLength = state.currentLeft.Head.lineLength + tab.Length }
+            let state = { state with currentLeft = text::state.currentLeft }
+            read state
+        | _, ConsoleKey.UpArrow when not state.historyUp.IsEmpty ->
+            deleteMany state.currentLeft
+            writeMany (state.historyUp.Head |> List.rev)
+            let state = { state with currentLeft = state.historyUp.Head; historyUp = state.historyUp.Tail; historyDown = state.currentLeft::state.historyDown }
+            read state
         | _, ConsoleKey.UpArrow ->
-            read tss tssUp tssDown ts
-        | _, ConsoleKey.DownArrow when not tssDown.IsEmpty ->
-            deleteMany ts
-            writeMany (tssDown.Head |> List.rev)
-            read tss (ts::tssUp) tssDown.Tail tssDown.Head
+            read state
+        | _, ConsoleKey.DownArrow when not state.historyDown.IsEmpty ->
+            deleteMany state.currentLeft
+            writeMany (state.historyDown.Head |> List.rev)
+            let state = { state with currentLeft = state.historyDown.Head; historyUp = state.currentLeft::state.historyUp; historyDown = state.historyDown.Tail }
+            read state
         | _, ConsoleKey.DownArrow ->
-            read tss tssUp tssDown ts
+            read state
+        | _, ConsoleKey.LeftArrow when not state.currentLeft.IsEmpty -> 
+            Console.CursorLeft <- Console.CursorLeft - state.currentLeft.Head.value.Length 
+            let state = { state with currentLeft = state.currentLeft.Tail; currentRight = state.currentLeft.Head::state.currentRight }
+            read state
+        | _, ConsoleKey.RightArrow when not state.currentRight.IsEmpty -> 
+            Console.CursorLeft <- Console.CursorLeft + state.currentRight.Head.value.Length 
+            let state = { state with currentLeft = state.currentRight.Head::state.currentLeft; currentRight = state.currentRight.Tail }
+            read state
         | _, ConsoleKey.LeftArrow 
         | _, ConsoleKey.RightArrow ->
-            read tss tssUp tssDown ts
+            read state
+        | _, _ when not state.currentRight.IsEmpty ->
+            let pos = Console.CursorLeft
+            for t in state.currentRight do
+                Console.Write (" " |> String.replicate t.value.Length)
+            Console.CursorLeft <- pos
+            Console.Write c.KeyChar
+            let lineLength = if state.currentLeft.IsEmpty then 1 else state.currentLeft.Head.lineLength + 1
+            let text = { value = c.KeyChar.ToString(); color = defaultColor; lineLength = lineLength }
+            writeMany state.currentRight
+            Console.CursorLeft <- pos + 1
+            let state = { state with currentLeft = text::state.currentLeft }
+            read state
         | _, _ ->
             Console.Write c.KeyChar
-            let lineLength = if ts.IsEmpty then 1 else ts.Head.lineLength + 1
-            read tss tssUp tssDown ({ value = c.KeyChar.ToString(); color = defaultColor; lineLength = lineLength }::ts)
+            let lineLength = if state.currentLeft.IsEmpty then 1 else state.currentLeft.Head.lineLength + 1
+            let text = { value = c.KeyChar.ToString(); color = defaultColor; lineLength = lineLength }
+            let state = { state with currentLeft = text::state.currentLeft }
+            read state
 
     let private isExn (o:obj) =
         match o with
         | :? Exception -> true
         | _ -> false
 
-    let private eval text =
+    let private evalScript text =
         sw.Restart()
         let r = engine.Value.ExecuteScript text
         sw.Stop() 
@@ -110,15 +140,30 @@ module Interactive =
         write { value = r |> string; color = color; lineLength = 0 }
         write lineStart
         write { value = sw.Elapsed |> string; color = statusColor; lineLength = 0 } 
+        
+    let private evalCommand (cmd:Command) = ()
 
-    let rec private loop (tss:list<list<Text>>) = 
+    let rec private loop (state:State) = 
         write lineStart
-        let tss, ts =  read tss tss [] []
-        if not ts.IsEmpty then
-            let text = ts |> List.fold (fun r t -> t.value + r) ""
-            eval text
-        loop tss
+        let state =  read { state with historyUp = state.history; historyDown = []; currentLeft = []; currentRight = []  }
+        if not state.history.Head.IsEmpty then
+            let text = state.history.Head |> List.fold (fun r t -> t.value + r) ""
+            try 
+                if not (commandStartRegex.IsMatch text) 
+                then evalScript text
+                else 
+                    let result = run CommandParser.parse text
+                    match result with
+                    | Success (cmd, _, _) ->
+                        evalCommand cmd
+                    | Failure (msg, a, b) ->
+                        write { value = msg |> string; color = errorColor; lineLength = 0 }
+            with 
+            | e ->
+                write { value = e.Message |> string; color = errorColor; lineLength = 0 }
+        loop state
 
     let initialize () =
         write message
-        loop [] |> ignore
+        let state = { history = []; historyUp = []; historyDown = []; currentLeft = []; currentRight = [] }
+        loop state |> ignore
