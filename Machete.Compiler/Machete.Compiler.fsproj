@@ -70,6 +70,8 @@
     <Compile Include="Parser.fs" />
     <Compile Include="Reflection.fs" />
     <Compile Include="Compiler.fs" />
+    <Compile Include="IntParser.fs" />
+    <Compile Include="FloatParser.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Machete.Interfaces\Machete.Interfaces.csproj">

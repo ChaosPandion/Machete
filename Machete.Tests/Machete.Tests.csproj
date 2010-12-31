@@ -43,6 +43,31 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Expressions\AdditiveOperators.cs" />
+    <Compile Include="Expressions\AssignmentOperators.cs" />
+    <Compile Include="Expressions\BinaryBitwiseOperators.cs" />
+    <Compile Include="Expressions\BinaryLogicalOperators.cs" />
+    <Compile Include="Expressions\BitwiseShiftOperators.cs" />
+    <Compile Include="Expressions\CommaOperator.cs" />
+    <Compile Include="Expressions\ConditionalOperator.cs" />
+    <Compile Include="Expressions\EqualityOperators.cs" />
+    <Compile Include="Expressions\LeftHandSideExpressions.cs" />
+    <Compile Include="Expressions\MultiplicativeOperators.cs" />
+    <Compile Include="Expressions\PostfixExpressions.cs" />
+    <Compile Include="Expressions\PrimaryExpressions.cs" />
+    <Compile Include="Expressions\RelationalOperators.cs" />
+    <Compile Include="Expressions\UnaryOperators.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\ArrayObjects.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\BooleanObjects.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\DateObjects.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\ErrorObjects.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\FunctionObjects.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\GlobalObject.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\JsonObject.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\MathObject.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\NumberObjects.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\ObjectObjects.cs" />
+    <Compile Include="Standard Built-in ECMAScript Objects\RegExpObjects.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\StringObjects.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestBase.cs" />

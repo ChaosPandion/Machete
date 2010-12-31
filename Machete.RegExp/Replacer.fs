@@ -50,11 +50,21 @@ module Replacer =
             let caps = state.m
             return if n < 1 || n > caps.Length then "" else caps.[n]
         }) reply
+
+    let private choices =
+        [| 
+            escapeDollarSign
+            replaceMatchedSubString
+            replacePrecedingSubString
+            replaceFollowingSubString
+            replaceCapture
+            preturn "$" 
+        |]
         
     let private collect reply =
         (parse {
             let! preceding = manyCharsTill anyChar (pchar '$')
-            let! replace = choice [| escapeDollarSign; replaceMatchedSubString; replacePrecedingSubString; replaceFollowingSubString; replaceCapture; preturn "$" |]
+            let! replace = choice choices
             return preceding + replace
         }) reply
         

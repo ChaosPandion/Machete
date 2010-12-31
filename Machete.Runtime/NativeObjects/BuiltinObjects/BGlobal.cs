@@ -59,168 +59,40 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         [NativeFunction("parseInt", "string", "radix"), DataDescriptor(true, false, true)]
         internal static IDynamic ParseInt(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var inputString = (args[0].ConvertToString().Value ?? string.Empty).Trim().ToLowerInvariant();
-        //    //var sign = 1;
+            var text = args[0].ConvertToString().BaseValue;
+            var radix = 0.0;
 
-        //    //if (inputString.Length > 0)
-        //    //{
-        //    //    var isNegative = inputString[0] == '-';
-        //    //    if (isNegative)
-        //    //    {
-        //    //        sign = -1;
-        //    //    }
-        //    //    if (isNegative || inputString[0] == '+')
-        //    //    {
-        //    //        inputString = inputString.Substring(1);
-        //    //    }
-        //    //}
+            if (args.Count > 1)
+            {
+                radix = args[1].ConvertToNumber().BaseValue;
+                if (double.IsNaN(radix) || double.IsInfinity(radix) || radix < 2.0 || radix > 36.0)
+                {
+                    radix = 0.0;
+                }
+            }
 
-        //    //var radix = (int)args[1].ConvertToInt32().Value;
-        //    //var stripPrefix = true;
-
-        //    //if (radix == 0)
-        //    //{
-        //    //    radix = 10;
-        //    //}
-        //    //else
-        //    //{
-        //    //    if (radix < 2 || radix > 36)
-        //    //    {
-        //    //        return LNumber.NaN;
-        //    //    }
-        //    //    if (radix != 16)
-        //    //    {
-        //    //        stripPrefix = false;
-        //    //    }
-        //    //}
-
-        //    //if (stripPrefix && inputString.Length > 2)
-        //    //{
-        //    //    if (inputString.StartsWith("0x"))
-        //    //    {
-        //    //        inputString = inputString.Substring(2);
-        //    //    }
-        //    //}
-
-        //    //var map = RadixMap.GetHashSet(radix);
-        //    //var z = new List<char>();
-        //    //foreach (var c in inputString)
-        //    //{
-        //    //    if (!map.Contains(c))
-        //    //    {
-        //    //        break;
-        //    //    }
-        //    //    z.Add(c);
-        //    //}
-
-        //    //if (z.Count == 0)
-        //    //{
-        //    //    return LNumber.NaN;
-        //    //}
-
-        //    //var result = 0D;
-        //    //var power = 0D;
-
-        //    //z.Reverse();
-        //    //foreach (var c in z)
-        //    //{
-        //    //    if (c < 'a')
-        //    //    {
-        //    //        result += ((c - '0') * (power > 0 ? Math.Pow(radix, power) : 1));
-        //    //    }
-        //    //    else
-        //    //    {
-        //    //        result += ((c - 'a' + 10) * Math.Pow(radix, power));
-        //    //    }
-        //    //    power++;
-        //    //}
-
-        //    //return (LNumber)(sign * result);
+            return environment.CreateNumber(Compiler.IntParser.Parse(text, (int)radix));
         }
 
         [NativeFunction("parseFloat", "string"), DataDescriptor(true, false, true)]
         internal static IDynamic ParseFloat(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    throw new NotImplementedException();
-        //    //var inputString = (args[0].ToStringPrimitive().ToString() ?? string.Empty).Trim().ToLowerInvariant();
-        //    //if (string.IsNullOrEmpty(inputString))
-        //    //{
-        //    //    return new NumberPrimitive(double.NaN);
-        //    //}
-
-        //    //var sign = 1D;
-        //    //if (inputString[0] == '-')
-        //    //{
-        //    //    sign = -1D;
-        //    //    inputString = inputString.Substring(1);
-        //    //}
-        //    //else if (inputString[0] == '+')
-        //    //{
-        //    //    inputString = inputString.Substring(1);
-        //    //}
-
-        //    //var traverser = new StringTraverser(inputString);
-        //    //var sb = new StringBuilder();
-        //    //var c = default(char?);
-
-        //    //while ((c = traverser.Next()) != null)
-        //    //{
-        //    //    if ((c >= '0' && c <= '9') || c == 'e' || c == 'E' || c == '.' || c == '+' || c == '-')
-        //    //    {
-        //    //        sb.Append(c.Value);
-        //    //        continue;
-        //    //    }
-        //    //    break;
-        //    //}
-
-        //    //if (sb.Length == 0)
-        //    //{
-        //    //    return new NumberPrimitive(double.NaN);
-        //    //}
-
-        //    //var result = 0D;
-        //    //while (!double.TryParse(sb.ToString(), out result))
-        //    //{
-        //    //    sb.Remove(sb.Length - 1, 1);
-        //    //    if (sb.Length == 0)
-        //    //    {
-        //    //        return new NumberPrimitive(double.NaN);
-        //    //    }
-        //    //}
-        //    //return new NumberPrimitive(sign * result);
+            var text = args[0].ConvertToString().BaseValue;
+            return environment.CreateNumber(Compiler.FloatParser.Parse(text));
         }
 
         [NativeFunction("isNaN", "number"), DataDescriptor(true, false, true)]
         internal static IDynamic IsNan(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    throw new NotImplementedException();
-        //    //return new BooleanPrimitive(double.IsNaN(args[0].ToNumberPrimitive()));
+            var n = args[0].ConvertToNumber().BaseValue;
+            return environment.CreateBoolean(double.IsNaN(n));
         }
 
         [NativeFunction("isFinite", "number"), DataDescriptor(true, false, true)]
         internal static IDynamic IsFinite(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var num = args[0].ToNumberPrimitive();
-        //    //if (double.IsNaN(num))
-        //    //{
-        //    //    return new BooleanPrimitive(true);
-        //    //}
-        //    //if (double.IsPositiveInfinity(num))
-        //    //{
-        //    //    return new BooleanPrimitive(true);
-        //    //}
-        //    //if (double.IsNegativeInfinity(num))
-        //    //{
-        //    //    return new BooleanPrimitive(true);
-        //    //}
-        //    //else
-        //    //{
-        //    //    return new BooleanPrimitive(false);
-        //    //}
+            var n = args[0].ConvertToNumber().BaseValue;
+            return environment.CreateBoolean(!double.IsNaN(n) && !double.IsInfinity(n));
         }
 
         [NativeFunction("decodeURI", "encodedURI"), DataDescriptor(true, false, true)]
