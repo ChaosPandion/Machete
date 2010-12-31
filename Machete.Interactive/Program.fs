@@ -43,7 +43,7 @@ module Program =
     let private endingWhiteSpace = new Regex ("\\s+$", RegexOptions.Compiled)
     
     let newLine = "\n"
-    let lineStart = ">>> "
+    let lineStart = "> "
     let tab = "    "
     let message = "Machete Interactive 1.0.0.0"
     let bsMap = Map.ofList [for i in 0..100 -> i, String.replicate i "\u0008 \u0008"]
@@ -68,43 +68,45 @@ module Program =
             writeNewLineStart () 
             writeString line      
     
-    let rec read (lines:list<string>) (line:string) =
+    let rec read (upCommands:list<list<string>>) (lines:list<string>) (line:string) =
         let k = readKey ()
         match k.Modifiers, k.Key with
-        | ConsoleModifiers.Control, ConsoleKey.Enter -> 
-            let lines = line::lines |> List.rev 
-            String.Join (newLine, lines)
+        | ConsoleModifiers.Control, ConsoleKey.Enter ->
+            let lines = line::lines
+            let upCommands = lines::upCommands
+            let lines = lines |> List.rev 
+            String.Join (newLine, lines), upCommands 
         | _, ConsoleKey.Backspace when line.Length > 0 -> 
             writeString (bsMap.[1]) 
-            read lines (line.[0..line.Length - 2]) 
+            read upCommands lines (line.[0..line.Length - 2]) 
         | _, ConsoleKey.Backspace when not lines.IsEmpty ->
             writeString (bsMap.[5]) 
             Console.CursorTop <- Console.CursorTop - 1
             Console.CursorLeft <- lines.Head.Length + 4
-            read lines.Tail lines.Head 
+            read upCommands lines.Tail lines.Head 
         | _, ConsoleKey.Backspace ->
-            read lines line     
+            read upCommands lines line     
         | ConsoleModifiers.Shift, ConsoleKey.Tab when line.Length > 0 ->
             let r = (endingWhiteSpace.Match line).Value
             writeString (bsMap.[r.Length])
-            read lines (line.[0..line.Length - r.Length - 1])        
+            read upCommands lines (line.[0..line.Length - r.Length - 1])        
         | ConsoleModifiers.Shift, ConsoleKey.Tab ->
-            read lines line 
+            read upCommands lines line 
         | _, ConsoleKey.LeftArrow ->
             if getCursorLeft () > 4 then
                 setCursorLeft (getCursorLeft () - 1) 
-            read lines line 
+            read upCommands lines line 
         | _, ConsoleKey.Tab ->
             writeString tab
-            read lines (line + tab)                   
+            read upCommands lines (line + tab)                   
         | _, ConsoleKey.Enter ->
             writeNewLineStart ()
             let r = (startingWhiteSpace.Match line).Value
             if r.Length > 0 then writeString r 
-            read (line::lines) r
+            read upCommands (line::lines) r
         | _ -> 
             writeChar k.KeyChar
-            read lines (line + k.KeyChar.ToString()) 
+            read upCommands lines (line + k.KeyChar.ToString()) 
 
     let repl () =
         writeStart ()
@@ -112,14 +114,17 @@ module Program =
         writeNewLineStart ()
         writeNewLineStart ()
         let sw = System.Diagnostics.Stopwatch()
-        while true do
-            let text = read [] ""
+        let engine = engine.Value
+        let rec loop upCommands =
+            let text, upCommands = read upCommands [] ""
             if text.Length > 0 then
                     try
                         if not (commandStart.IsMatch text) then
                             writeNewLineStart ()
                             sw.Restart()
-                            writeColored (engine.Value.ExecuteScript (text, 60000) |> string) ConsoleColor.DarkCyan
+                            let r = engine.ExecuteScript (text, 60000)
+                            sw.Stop()
+                            writeColored (r |> string) ConsoleColor.DarkCyan
                             writeNewLineStart ()
                             writeColored ("Execution Time: " + sw.Elapsed.ToString()) ConsoleColor.DarkGray
                             writeNewLineStart ()
@@ -145,12 +150,13 @@ module Program =
                         writeColored ("Error:") ConsoleColor.Red  
                         writeStrings (e.Message)
                         writeNewLineStart () 
-                    ()
-            ()
+                    loop upCommands
+        loop []
     
     open System.Reflection
 
     let main () =
-        repl ()
+        Interactive.initialize ()
+        //repl ()
 
     main()
