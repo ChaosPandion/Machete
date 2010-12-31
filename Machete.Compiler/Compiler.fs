@@ -887,8 +887,9 @@ type Compiler(environment:IEnvironment) as this =
             | None, Some r2 ->
                 exp.Goto (r2.Target) :> exp
             | None, None ->
-                environment.SyntaxErrorConstructor.Op_Construct(environment.EmptyArgs).Op_Throw()
-                exp.Empty() :> exp
+                let msg = "The continue statement with no identifier requires a surrounding loop or switch statement."
+                let err = environment.CreateSyntaxError msg
+                raise err
         | ContinueStatement (Lexer.Identifier e1) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let r1 = labels.TryFind ("continue" + identifier)
@@ -896,8 +897,9 @@ type Compiler(environment:IEnvironment) as this =
             | Some r1 ->
                 exp.Goto (r1.Target) :> exp
             | None ->
-                environment.SyntaxErrorConstructor.Op_Construct(environment.EmptyArgs).Op_Throw()
-                exp.Empty() :> exp
+                let msg = "The continue statement is invalid because the label '" + identifier + "' does not exist in the surrounding scope."
+                let err = environment.CreateSyntaxError msg
+                raise err
 
     and evalBreakStatement (state:State) =
         let labels = state.labels.Head
@@ -912,8 +914,9 @@ type Compiler(environment:IEnvironment) as this =
             | None, Some r2 ->
                 exp.Goto (r2.Target) :> exp
             | None, None ->
-                environment.SyntaxErrorConstructor.Op_Construct(environment.EmptyArgs).Op_Throw()
-                exp.Empty() :> exp
+                let msg = "The break statement with no identifier requires a surrounding loop or switch statement."
+                let err = environment.CreateSyntaxError msg
+                raise err
         | BreakStatement (Lexer.Identifier e1) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let r1 = labels.TryFind ("break" + identifier)
@@ -921,8 +924,9 @@ type Compiler(environment:IEnvironment) as this =
             | Some r1 ->
                 exp.Goto (r1.Target) :> exp
             | None ->
-                environment.SyntaxErrorConstructor.Op_Construct(environment.EmptyArgs).Op_Throw()
-                exp.Empty() :> exp
+                let msg = "The break statement is invalid because the label '" + identifier + "' does not exist in the surrounding scope."
+                let err = environment.CreateSyntaxError msg
+                raise err
 
     and evalReturnStatement (state:State) =
         let target = state.labels.Head.["return"].Target
@@ -934,21 +938,28 @@ type Compiler(environment:IEnvironment) as this =
             exp.Return (target, r, typeof<dyn>) :> exp, state
 
     and evalWithStatement (state:State) =
-        match state.element with
-        | WithStatement (e1, e2) ->
-            let oldEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "oldEnv")
-            let newEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "newEnv")
-            let variables = [| oldEnvVar; newEnvVar |]
-            let value = evalExpression { state with element = e1 }
-            let obj = call value Reflection.IDynamic.convertToObject Array.empty
-            let assignOldEnvVar = exp.Assign (oldEnvVar, (call getContext Reflection.IExecutionContext.get_LexicalEnviroment Array.empty)) :> exp
-            let assignNewEnvVar = exp.Assign (newEnvVar, (call oldEnvVar Reflection.ILexicalEnvironment.newObjectEnvironment [| obj; constant true |])) :> exp
-            let assignNewEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| newEnvVar |]
-            let assignOldEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| oldEnvVar |]
-            let body, state = evalStatement { state with element = e2 } 
-            let tryBody = block [| assignOldEnvVar; assignNewEnvVar; assignNewEnv; body |]
-            let finallyBody = block [| assignOldEnv |]
-            exp.Block (variables, exp.TryFinally (tryBody, finallyBody)) :> exp
+        if state.strict then
+            let args = [| constant "The with statement is not allowed in strict mode." |]
+            let error = call environmentParam Reflection.IEnvironment.createSyntaxError args  
+            exp.Throw (error) :> exp
+        else
+            match state.element with
+            | WithStatement (e1, e2) ->
+                let oldEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "oldEnv")
+                let newEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "newEnv")
+                let variables = [| oldEnvVar; newEnvVar |]
+                let value = evalExpression { state with element = e1 }
+                let obj = call value Reflection.IDynamic.convertToObject Array.empty
+                let getLexEnv = call getContext Reflection.IExecutionContext.get_LexicalEnviroment Array.empty
+                let assignOldEnvVar = exp.Assign (oldEnvVar, getLexEnv) :> exp
+                let newObjEnv = call oldEnvVar Reflection.ILexicalEnvironment.newObjectEnvironment [| obj; constant true |]
+                let assignNewEnvVar = exp.Assign (newEnvVar, newObjEnv) :> exp
+                let assignNewEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| newEnvVar |]
+                let assignOldEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| oldEnvVar |]
+                let body, state = evalStatement { state with element = e2 } 
+                let tryBody = block [| assignOldEnvVar; assignNewEnvVar; assignNewEnv; body |]
+                let finallyBody = block [| assignOldEnv |]
+                exp.Block (variables, exp.TryFinally (tryBody, finallyBody)) :> exp
 
     and evalSwitchStatement (state:State) = 
         match state.element with

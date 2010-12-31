@@ -70,6 +70,20 @@
     <Compile Include="Standard Built-in ECMAScript Objects\RegExpObjects.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\StringObjects.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Statements\Block.cs" />
+    <Compile Include="Statements\BreakStatement.cs" />
+    <Compile Include="Statements\ContinueStatement.cs" />
+    <Compile Include="Statements\DebuggerStatement.cs" />
+    <Compile Include="Statements\EmptyStatement.cs" />
+    <Compile Include="Statements\IfStatement.cs" />
+    <Compile Include="Statements\IterationStatements.cs" />
+    <Compile Include="Statements\LabelledStatement.cs" />
+    <Compile Include="Statements\ReturnStatement.cs" />
+    <Compile Include="Statements\SwitchStatement.cs" />
+    <Compile Include="Statements\ThrowStatement.cs" />
+    <Compile Include="Statements\TryStatement.cs" />
+    <Compile Include="Statements\VariableStatement.cs" />
+    <Compile Include="Statements\WithStatement.cs" />
     <Compile Include="TestBase.cs" />
   </ItemGroup>
   <ItemGroup>

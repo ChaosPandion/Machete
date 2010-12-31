@@ -42,6 +42,8 @@ module Reflection =
         
         let throwRuntimeException = t.GetMethod "ThrowRuntimeException"
 
+        let createSyntaxError = t.GetMethod "CreateSyntaxError"
+
     module MacheteRuntimeException =
         let t = typeof<MacheteRuntimeException>
         let get_Thrown = t.GetMethod "get_Thrown"
