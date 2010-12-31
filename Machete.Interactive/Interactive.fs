@@ -66,7 +66,7 @@ module Interactive =
         let c = Console.ReadKey (true)
         match c.Modifiers, c.Key with
         | _, ConsoleKey.F5 ->
-            { state with history = (state.currentRight @ state.currentLeft)::state.history }
+            { state with history = ((state.currentRight |> List.rev) @ state.currentLeft)::state.history }
         | _, ConsoleKey.Backspace when not state.currentLeft.IsEmpty ->
             delete state.currentLeft
             read { state with currentLeft = state.currentLeft.Tail }
@@ -109,8 +109,7 @@ module Interactive =
             read state
         | _, _ when not state.currentRight.IsEmpty ->
             let pos = Console.CursorLeft
-            for t in state.currentRight do
-                Console.Write (" " |> String.replicate t.value.Length)
+            Console.Write (state.currentRight |> List.fold (fun s t -> s + " " |> String.replicate t.value.Length) "")
             Console.CursorLeft <- pos
             Console.Write c.KeyChar
             let lineLength = if state.currentLeft.IsEmpty then 1 else state.currentLeft.Head.lineLength + 1
@@ -139,7 +138,7 @@ module Interactive =
         let color = if isExn r then errorColor else outputColor
         write { value = r |> string; color = color; lineLength = 0 }
         write lineStart
-        write { value = sw.Elapsed |> string; color = statusColor; lineLength = 0 } 
+        write { value = "Execution Time: " + sw.Elapsed.ToString(); color = statusColor; lineLength = 0 } 
         
     let private evalCommand (cmd:Command) = ()
 
