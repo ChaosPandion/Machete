@@ -938,7 +938,7 @@ type Compiler(environment:IEnvironment) as this =
             exp.Return (target, r, typeof<dyn>) :> exp, state
 
     and evalWithStatement (state:State) =
-        if state.strict then
+        if state.strict then // runtime error
             let args = [| constant "The with statement is not allowed in strict mode." |]
             let error = call environmentParam Reflection.IEnvironment.createSyntaxError args  
             exp.Throw (error) :> exp
@@ -1084,13 +1084,14 @@ type Compiler(environment:IEnvironment) as this =
         match state.element with
         | FunctionDeclaration (Lexer.Identifier e1, e2, e3) ->
             let strict = match e3 with | FunctionBody e -> isStrictCode e
-            let state =  { state with strict = strict }     
+            let state =  { state with strict = strict }  
+            let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1    
             let f = { 
-                identifier = Lexer.IdentifierNameParser.evalIdentifierName e1 
+                identifier = identifier 
                 formalParameterList =
                     match e2 with 
                     | SourceElement.Nil -> ReadOnlyList<string>.Empty 
-                    | _ -> evalFormalParameterList { state with element = e2 }  
+                    | _ -> evalFormalParameterList identifier { state with element = e2 }  
                 strict = strict; 
                 functionBody = e3 
             }
@@ -1101,11 +1102,12 @@ type Compiler(environment:IEnvironment) as this =
         | FunctionExpression (Lexer.Nil, e1, e2) ->
             let strict = match e2 with | FunctionBody e -> isStrictCode e
             let state =  { state with strict = strict }  
-            let formalParameterList = match e1 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e1 }          
+            let formalParameterList = match e1 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList "(No Identifier)" { state with element = e1 }          
             let code = lazy(compileFunctionCode(formalParameterList, e2))
             let args = [| constant formalParameterList; constant state.strict; constant code |]  
             call environmentParam Reflection.IEnvironment.createFunction1 args
         | FunctionExpression (Lexer.Identifier e1, e2, e3) -> 
+            let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let strict = match e3 with | FunctionBody e -> isStrictCode e
             let state =  { state with strict = strict } 
             let scopeVar = exp.Variable(typeof<ILexicalEnvironment>, "scope")
@@ -1115,29 +1117,31 @@ type Compiler(environment:IEnvironment) as this =
             let getEnv = call getEnv Reflection.ILexicalEnvironment.newDeclarativeEnvironment Array.empty
             let assignScope = exp.Assign(scopeVar, getEnv) :> exp
             let getRecord = exp.Convert(call scopeVar Reflection.ILexicalEnvironment.get_Record Array.empty, typeof<IDeclarativeEnvironmentRecord>)
-            let formalParameterList = match e2 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList { state with element = e2 }          
+            let formalParameterList = match e2 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList identifier { state with element = e2 }          
             let code = lazy(compileFunctionCode(formalParameterList, e3))
             let args = [| constant formalParameterList; constant state.strict; constant code; scopeVar:>exp |] 
             let createFunction = call environmentParam Reflection.IEnvironment.createFunction2 args
             let assignFunction = exp.Assign (functionVar, createFunction) :> exp
-            let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let createBinding = call getRecord Reflection.IDeclarativeEnvironmentRecord.createImmutableBinding [| constant identifier |] 
             let initBinding = call getRecord Reflection.IDeclarativeEnvironmentRecord.initializeImmutableBinding [| constant identifier; functionVar :> exp |]
             exp.Block ([| scopeVar; functionVar |], [| assignScope; assignFunction; initBinding; functionVar :> exp |]) :> exp
 
-    and evalFormalParameterList (state:State) =
-        let rec run (result:list<string>) (element:SourceElement) =
+    and evalFormalParameterList (functionIdentifier:string) (state:State) =
+        let errorFormat = "The function '{0}' contains a duplicated parameter named '{1}'."
+        let validate (identifier:string) (set:Set<string>) =            
+            if set.Contains identifier then
+                raise (environment.CreateSyntaxError (String.Format (errorFormat, functionIdentifier, identifier)))
+        let rec run (result:list<string>) (set:Set<string>) (element:SourceElement) =
             match element with
-            | FormalParameterList (SourceElement.Nil, e1) ->
-                match e1 with
-                | InputElement(Lexer.Identifier e1) ->
-                    Lexer.IdentifierNameParser.evalIdentifierName e1::result
-            | FormalParameterList (e1, e2) ->
-                let result = run result e1                
-                match e2 with
-                | InputElement(Lexer.Identifier e2) ->
-                    Lexer.IdentifierNameParser.evalIdentifierName e2::result
-        ReadOnlyList<string>(run [] state.element |> List.rev)
+            | FormalParameterList (SourceElement.Nil, InputElement(Lexer.Identifier e1)) ->
+                let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
+                validate identifier set
+                identifier::result
+            | FormalParameterList (e1, InputElement(Lexer.Identifier e2)) ->
+                let identifier = Lexer.IdentifierNameParser.evalIdentifierName e2
+                validate identifier set
+                identifier::run result (set.Add identifier) e1
+        ReadOnlyList<string>(run [] Set.empty state.element |> List.rev)
 
     and evalFunctionBody (state:State) =
         let target = state.labels.Head.["return"].Target
