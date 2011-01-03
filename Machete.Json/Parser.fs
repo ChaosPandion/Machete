@@ -78,14 +78,18 @@ module Parser =
         jsonValue |>> JsonText
 
     let parse input =
-        seq {
-            for r in run jsonText (Lexer.tokenize input) () do
-                match r with
-                | Success (result, state) -> 
-                    yield result
-                | Failure (message, state) -> 
-                    yield JsonError message
-        } |> Seq.toArray
+        let r = run jsonText (Lexer.tokenize input) ()
+        match r with
+        | Success (v, s) -> v
+        | Failure (ms, s) -> failwith (System.String.Join ("\r\n", ms)) 
+//        seq {
+//            for r in run jsonText (Lexer.tokenize input) () do
+//                match r with
+//                | Success (result, state) -> 
+//                    yield result
+//                | Failure (message, state) -> 
+//                    yield JsonError message
+//        } |> Seq.toArray
 
     
 

@@ -353,25 +353,25 @@ type Compiler(environment:IEnvironment) as this =
             match e1, e2 with
             | MemberExpression (_, _), Expression (_, _) ->
                 let baseValue = evalMemberExpression { state with element = e1 }
-                let baseValue = call baseValue Reflection.IDynamic.get_Value Array.empty
+                let baseValue = exp.Call (baseValue, Reflection.IDynamic.get_Value, Array.empty)
                 let baseValue = exp.Convert(baseValue, Reflection.IReferenceBase.t) :> exp
                 let name = evalExpression { state with element = e2 }
-                let name = call name Reflection.IDynamic.convertToString Array.empty
+                let name = exp.Call (name, Reflection.IDynamic.convertToString, Array.empty)
                 let name = exp.Convert (name, Reflection.IString.t) :> exp
-                let name = call name Reflection.IString.get_BaseValue Array.empty
+                let name = exp.Call (name, Reflection.IString.get_BaseValue, Array.empty) :> exp
                 let args = [| name; baseValue; constant state.strict |]
                 call environmentParam Reflection.IEnvironment.createReference args 
             | MemberExpression (_, _), InputElement (e3) ->
                 let baseValue = evalMemberExpression { state with element = e1 }
-                let baseValue = call baseValue Reflection.IDynamic.get_Value Array.empty
+                let baseValue = exp.Call (baseValue, Reflection.IDynamic.get_Value, Array.empty)
                 let baseValue = exp.Convert(baseValue, Reflection.IReferenceBase.t) :> exp
-                let name = constant (Lexer.IdentifierNameParser.evalIdentifierName e3)
+                let name = exp.Constant (Lexer.IdentifierNameParser.evalIdentifierName e3) :> exp
                 let args = [| name; baseValue; constant state.strict  |]
                 call environmentParam Reflection.IEnvironment.createReference args 
             | MemberExpression (_, _), Arguments (_) ->
                 let left = evalMemberExpression { state with element = e1 }
                 let right = [| evalArguments { state with element = e2 } |]
-                call left Reflection.IDynamic.op_Construct right 
+                exp.Call (left, Reflection.IDynamic.op_Construct, right) :> exp 
 
     and evalArguments (state:State) =
         match state.element with
@@ -480,20 +480,13 @@ type Compiler(environment:IEnvironment) as this =
     and evalObjectLiteral (state:State) =
         let objectVar = exp.Variable(typeof<IObject>, "object")
         let variables = [| objectVar |]
-        let assignObject = assign objectVar (call environmentParam Reflection.IEnvironment.createObject Array.empty)
+        let createObject = exp.Call (environmentParam, Reflection.IEnvironment.createObject, Array.empty)
+        let assignObject = exp.Assign (objectVar, createObject) :> exp
         match state.element with
         | ObjectLiteral Nil ->
             exp.Block(variables, [| assignObject; objectVar:>exp |]) :> exp
         | ObjectLiteral e ->
-            let result = evalPropertyNameAndValueList objectVar [] { state with element = e }
-            let byName = result |> Seq.groupBy (fun (n, t, e) -> n) |> Seq.map (fun (key, values) -> key, values |> Seq.toList) |> Map.ofSeq
-            for kv in byName do
-                let dCount = kv.Value |> List.filter (fun (n, t, e) -> match t with | DataProperty -> true | _ -> false) |> List.length
-                let gCount = kv.Value |> List.filter (fun (n, t, e) -> match t with | GetProperty -> true | _ -> false) |> List.length
-                let sCount = kv.Value |> List.filter (fun (n, t, e) -> match t with | SetProperty -> true | _ -> false) |> List.length
-                match dCount, gCount, sCount with
-                | 1, 0, 0 | 0, 1, 0 | 0, 0, 1 | 0, 1, 1 -> ()
-                | _ -> environment.SyntaxErrorConstructor.Op_Construct(environment.EmptyArgs).Op_Throw()    
+            let result = evalPropertyNameAndValueList objectVar [] { state with element = e } 
             let result = (assignObject::((objectVar:>exp::(result |> List.map (fun (n, t, e) -> e))) |> List.rev)) |> List.toArray     
             exp.Block(variables, result) :> exp
 
@@ -557,12 +550,14 @@ type Compiler(environment:IEnvironment) as this =
         let arrayVar = exp.Variable(typeof<IObject>, "array")
         let lengthVar = exp.Variable(typeof<IPropertyDescriptor>, "length")
         let variables = [| arrayVar; lengthVar |]
-        let assignArray = assign arrayVar (call environmentParam Reflection.IEnvironment.createArray Array.empty)
-        let assignLength = assign lengthVar (call arrayVar Reflection.IObject.getOwnProperty [| constant "length" |]) 
+        let createArray = exp.Call (environmentParam, Reflection.IEnvironment.createArray, Array.empty)
+        let assignArray = exp.Assign (arrayVar, createArray) :> exp
+        let getLength = exp.Call (arrayVar, Reflection.IObject.getOwnProperty, [| constant "length" |])
+        let assignLength = exp.Assign (lengthVar, getLength) :> exp
         match state.element with
         | ArrayLiteral (Nil, e) ->
-            let pad = call environmentParam Reflection.IEnvironment.createNumber [| constant (evalElision { state with element = e }) |]
-            let setValue = call lengthVar Reflection.IPropertyDescriptor.set_Value [| pad |]
+            let pad = exp.Call (environmentParam, Reflection.IEnvironment.createNumber, [| constant (evalElision { state with element = e }) |]) :> exp
+            let setValue = exp.Call (lengthVar, Reflection.IPropertyDescriptor.set_Value, [| pad |]) :> exp
             exp.Block (variables, [|assignArray; assignLength; setValue; arrayVar:>exp|]) :> exp
         | ArrayLiteral (e, Nil) ->
             let result = assignArray::assignLength::(arrayVar:>exp::(evalElementList arrayVar lengthVar [] { state with element = e }) |> List.rev)
@@ -570,10 +565,11 @@ type Compiler(environment:IEnvironment) as this =
             exp.Block(variables, result) :> exp
         | ArrayLiteral (e1, e2) ->
             let result = arrayVar:>exp::evalElementList arrayVar lengthVar []  { state with element = e1 } 
-            let pad = call environmentParam Reflection.IEnvironment.createNumber [| constant (evalElision { state with element = e2 }) |]
-            let len = call lengthVar Reflection.IPropertyDescriptor.get_Value Array.empty
-            let value = call (call len Reflection.IDynamic.op_Addition [| pad |]) Reflection.IDynamic.convertToUInt32 Array.empty
-            let setValue = call lengthVar Reflection.IPropertyDescriptor.set_Value [| value |]
+            let pad = exp.Call (environmentParam, Reflection.IEnvironment.createNumber, [| constant (evalElision { state with element = e2 }) |]) :> exp
+            let len = exp.Call (lengthVar, Reflection.IPropertyDescriptor.get_Value, Array.empty) :> exp
+            let addPad = exp.Call (len, Reflection.IDynamic.op_Addition, [| pad |]) :> exp
+            let value = exp.Call (addPad, Reflection.IDynamic.convertToUInt32, Array.empty) :> exp
+            let setValue = exp.Call (lengthVar, Reflection.IPropertyDescriptor.set_Value, [| value |]) :> exp
             let result = [ assignArray; assignLength ] @ (result |> List.rev) @ [ setValue; arrayVar ]
             exp.Block(variables, result) :> exp
 
@@ -587,26 +583,26 @@ type Compiler(environment:IEnvironment) as this =
         match state.element with
         | ElementList (Nil, e1, e2) ->
             let initResult = evalAssignmentExpression { state with element = e2 }
-            let initValue = call initResult Reflection.IDynamic.get_Value Array.empty
+            let initValue = exp.Call (initResult, Reflection.IDynamic.get_Value, Array.empty) :> exp
             let firstIndex = match e1 with | Nil -> 0.0 | Elision (_) -> evalElision { state with element = e1 }
-            let nullTrue = exp.Convert(constant true, typeof<Nullable<bool>>)
-            let createDesc = call environmentParam Reflection.IEnvironment.createDataDescriptor4 [| initValue; nullTrue; nullTrue; nullTrue  |]
-            let createProp = call arrayVar Reflection.IObject.defineOwnProperty [| constant (firstIndex|>string); createDesc; constant false |]
+            let nullTrue = exp.Convert(constant true, typeof<Nullable<bool>>) :> exp
+            let createDesc = exp.Call (environmentParam, Reflection.IEnvironment.createDataDescriptor4, [| initValue; nullTrue; nullTrue; nullTrue  |]) :> exp
+            let createProp = exp.Call (arrayVar, Reflection.IObject.defineOwnProperty, [| constant (firstIndex|>string); createDesc; constant false |]) :> exp
             createProp::results
         | ElementList (e1, e2, e3) ->
             let results = evalElementList arrayVar lengthVar results { state with element = e1 }
             let initResult = evalAssignmentExpression { state with element = e3 }
-            let initValue = call initResult Reflection.IDynamic.get_Value Array.empty
+            let initValue = exp.Call (initResult, Reflection.IDynamic.get_Value, Array.empty) :> exp
             let pad = match e2 with | Nil -> 0.0 | Elision (_) -> evalElision { state with element = e2 }
-            let createPad = call environmentParam Reflection.IEnvironment.createNumber [| constant pad |]
-            let len = call lengthVar Reflection.IPropertyDescriptor.get_Value Array.empty
-            let add = call len Reflection.IDynamic.op_Addition [| createPad |]
-            let toUInt32 = call add Reflection.IDynamic.convertToUInt32 Array.empty
-            let toString = call toUInt32 Reflection.IDynamic.convertToString Array.empty
-            let name = call (exp.Convert (toString, typeof<IString>)) Reflection.IString.get_BaseValue Array.empty
-            let nullTrue = exp.Convert(constant true, typeof<Nullable<bool>>)
-            let createDesc = call environmentParam Reflection.IEnvironment.createDataDescriptor4 [| initValue; nullTrue; nullTrue; nullTrue  |]
-            let createProp = call arrayVar Reflection.IObject.defineOwnProperty [| name; createDesc; constant false |]
+            let createPad = exp.Call (environmentParam, Reflection.IEnvironment.createNumber, [| constant pad |]) :> exp
+            let len = exp.Call (lengthVar, Reflection.IPropertyDescriptor.get_Value, Array.empty) :> exp
+            let add = exp.Call (len, Reflection.IDynamic.op_Addition, [| createPad |]) :> exp
+            let toUInt32 = exp.Call (add, Reflection.IDynamic.convertToUInt32, Array.empty) :> exp
+            let toString = exp.Call (toUInt32, Reflection.IDynamic.convertToString, Array.empty) :> exp
+            let name = exp.Call ((exp.Convert (toString, typeof<IString>)), Reflection.IString.get_BaseValue, Array.empty) :> exp
+            let nullTrue = exp.Convert(constant true, typeof<Nullable<bool>>) :> exp
+            let createDesc = exp.Call (environmentParam, Reflection.IEnvironment.createDataDescriptor4, [| initValue; nullTrue; nullTrue; nullTrue  |]) :> exp
+            let createProp = exp.Call (arrayVar, Reflection.IObject.defineOwnProperty, [| name; createDesc; constant false |]) :> exp
             createProp::results
 
     and evalStatement (state:State) =
@@ -787,31 +783,31 @@ type Compiler(environment:IEnvironment) as this =
 
             | ExpressionNoIn (_), SourceElement.Nil, SourceElement.Nil, Statement (_) ->             
                 let e1 = evalExpression { state with element = e1 }
-                let e1 = call e1 Reflection.IDynamic.get_Value Array.empty                                
+                let e1 = exp.Call (e1, Reflection.IDynamic.get_Value, Array.empty) :> exp                              
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
                 let loop = exp.Loop (e4, breakLabel.Target, continueLabel.Target) :> exp
-                block [| e1; loop |],  { state with labels = state.labels.Tail }
+                exp.Block ([| e1; loop |]) :> exp,  { state with labels = state.labels.Tail }
 
             | ExpressionNoIn (_), Expression (_, _), SourceElement.Nil, Statement (_) ->             
                 let e1 = evalExpression { state with element = e1 }
-                let e1 = call e1 Reflection.IDynamic.get_Value Array.empty
+                let e1 = exp.Call (e1, Reflection.IDynamic.get_Value, Array.empty) :> exp
                 let e2 = convertToBool (evalExpression { state with element = e2 })                
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 }
                 let body = exp.IfThenElse(e2, block [| e4 |], exp.Break(breakLabel.Target))
                 let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
-                block [| e1; loop |],  { state with labels = state.labels.Tail }
+                exp.Block ([| e1; loop |]) :> exp,  { state with labels = state.labels.Tail }
 
             | ExpressionNoIn (_), Expression (_, _), Expression (_, _), Statement (_) ->
                 let e1 = evalExpression { state with element = e1 }
-                let e1 = call e1 Reflection.IDynamic.get_Value Array.empty
+                let e1 = exp.Call (e1, Reflection.IDynamic.get_Value, Array.empty) :> exp
                 let e2 = evalExpression { state with element = e2 }
                 let e2 = convertToBool e2                 
                 let e3 = evalExpression { state with element = e3 }
-                let e3 = call e2 Reflection.IDynamic.get_Value Array.empty
+                let e3 = exp.Call (e2, Reflection.IDynamic.get_Value, Array.empty)
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 }
                 let body = exp.IfThenElse(e2, block [| e4; e3 |], exp.Break(breakLabel.Target))
                 let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
-                block [| e1; loop |],  { state with labels = state.labels.Tail }
+                exp.Block ([| e1; loop |]) :> exp,  { state with labels = state.labels.Tail }
 
             | VariableDeclarationListNoIn (_), SourceElement.Nil, SourceElement.Nil, Statement (_) -> // for ( var VariableDeclarationListNoIn; ; ) Statement 
                 let e1, state = evalVariableDeclarationList { state with element = e1 }
@@ -836,7 +832,7 @@ type Compiler(environment:IEnvironment) as this =
                 let e3 = evalExpression { state with element = e3 }
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
                 let e2 = convertToBool e2 
-                let e3 = call e3 Reflection.IDynamic.get_Value Array.empty
+                let e3 = exp.Call (e3, Reflection.IDynamic.get_Value, Array.empty)
                 let body = exp.IfThenElse(e2, block [| e4; e3; |], exp.Break(breakLabel.Target))
                 let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
                 let body = exp.Block ([| e1; loop |])
@@ -846,16 +842,21 @@ type Compiler(environment:IEnvironment) as this =
                 let enumeratorVar = exp.Variable(typeof<IEnumerator<string>>, "enumerator")
                 let lhsRef = evalLeftHandSideExpression { state with element = e1 }
                 let experRef = evalExpression { state with element = e2 }
-                let experValue = call experRef Reflection.IDynamic.get_Value Array.empty
-                let obj = call experValue Reflection.IDynamic.convertToObject Array.empty
-                let getEnumerator = call (exp.Convert(obj, typeof<IEnumerable<string>>)) Reflection.IEnumerableString.getEnumerator Array.empty
-                let assignEnumeratorVar = assign enumeratorVar getEnumerator                 
-                let current = call (exp.Convert(enumeratorVar, typeof<IEnumerator<string>>)) Reflection.IEnumeratorString.get_Current Array.empty
-                let moveNext = call (exp.Convert(enumeratorVar, typeof<IEnumerator>)) Reflection.IEnumerator.moveNext Array.empty
-                let dispose = call (exp.Convert(enumeratorVar, typeof<IDisposable>)) Reflection.IDisposable.dispose Array.empty  
+                let experValue = exp.Call (experRef, Reflection.IDynamic.get_Value, Array.empty) :> exp
+                let obj = exp.Call (experValue, Reflection.IDynamic.convertToObject, Array.empty) :> exp
+                let asEnumerableString = exp.Convert(obj, typeof<IEnumerable<string>>)
+                let getEnumerator = exp.Call (asEnumerableString, Reflection.IEnumerableString.getEnumerator, Array.empty) :> exp
+                let assignEnumeratorVar = exp.Assign (enumeratorVar, getEnumerator)
+                let asEnumeratorString = exp.Convert(enumeratorVar, typeof<IEnumerator<string>>)                 
+                let current = exp.Call (asEnumeratorString, Reflection.IEnumeratorString.get_Current, Array.empty) :> exp
+                let asEnumerator = exp.Convert(enumeratorVar, typeof<IEnumerator>)
+                let moveNext = exp.Call (asEnumerator, Reflection.IEnumerator.moveNext, Array.empty)
+                let asDisposable = exp.Convert(enumeratorVar, typeof<IDisposable>)
+                let dispose = exp.Call (asDisposable, Reflection.IDisposable.dispose, Array.empty) :> exp  
                 let eStatement, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
-                let putCurrent = call lhsRef Reflection.IDynamic.set_Value [| call environmentParam Reflection.IEnvironment.createString [| current |] |]
-                let ifTrue = block [| putCurrent; eStatement |]
+                let createString = exp.Call (environmentParam, Reflection.IEnvironment.createString, [| current |]) :> exp
+                let putCurrent = exp.Call (lhsRef, Reflection.IDynamic.set_Value, [| createString |]) :> exp
+                let ifTrue = exp.Block ([| putCurrent; eStatement |]) :> exp
                 let loopCondition = exp.IfThenElse (moveNext, ifTrue, exp.Break(breakLabel.Target))
                 let loop = exp.Loop (loopCondition, breakLabel.Target, continueLabel.Target)
                 let initTest = exp.Not(exp.Or (exp.TypeIs (experValue, typeof<IUndefined>), exp.TypeIs (experValue, typeof<INull>)))
@@ -867,16 +868,20 @@ type Compiler(environment:IEnvironment) as this =
                 let varName, state = evalVariableDeclaration { state with element = e1 }
                 let varRef = evalIdentifier ie state.strict 
                 let experRef = evalExpression { state with element = e2 }
-                let experValue = call experRef Reflection.IDynamic.get_Value Array.empty
-                let obj = call experValue Reflection.IDynamic.convertToObject Array.empty
-                let getEnumerator = call (exp.Convert(obj, typeof<IEnumerable<string>>)) Reflection.IEnumerableString.getEnumerator Array.empty
-                let assignEnumeratorVar = assign enumeratorVar getEnumerator                 
-                let current = call (exp.Convert(enumeratorVar, typeof<IEnumerator<string>>)) Reflection.IEnumeratorString.get_Current Array.empty
-                let moveNext = call (exp.Convert(enumeratorVar, typeof<IEnumerator>)) Reflection.IEnumerator.moveNext Array.empty
-                let dispose = call (exp.Convert(enumeratorVar, typeof<IDisposable>)) Reflection.IDisposable.dispose Array.empty  
+                let experValue = exp.Call (experRef, Reflection.IDynamic.get_Value, Array.empty)
+                let obj = exp.Call (experValue, Reflection.IDynamic.convertToObject, Array.empty)              
+                let asEnumerableString = exp.Convert(obj, typeof<IEnumerable<string>>)
+                let getEnumerator = exp.Call (asEnumerableString, Reflection.IEnumerableString.getEnumerator, Array.empty) :> exp
+                let assignEnumeratorVar = exp.Assign (enumeratorVar, getEnumerator) :> exp       
+                let asEnumeratorString = exp.Convert(enumeratorVar, typeof<IEnumerator<string>>)      
+                let current = exp.Call (asEnumeratorString, Reflection.IEnumeratorString.get_Current, Array.empty) :> exp
+                let asEnumerator = exp.Convert(enumeratorVar, typeof<IEnumerator>)
+                let moveNext = exp.Call (asEnumerator, Reflection.IEnumerator.moveNext, Array.empty)
+                let asDisposable = exp.Convert(enumeratorVar, typeof<IDisposable>)
+                let dispose = exp.Call (asDisposable, Reflection.IDisposable.dispose, Array.empty) :> exp 
                 let eStatement, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
                 let putCurrent = call varRef Reflection.IDynamic.set_Value [| call environmentParam Reflection.IEnvironment.createString [| current |] |]
-                let ifTrue = block [| putCurrent; eStatement |]
+                let ifTrue = exp.Block ([| putCurrent; eStatement |]) :> exp
                 let loopCondition = exp.IfThenElse (moveNext, ifTrue, exp.Break(breakLabel.Target))
                 let loop = exp.Loop (loopCondition, breakLabel.Target, continueLabel.Target)
                 let initTest = exp.Not(exp.Or (exp.TypeIs (experValue, typeof<IUndefined>), exp.TypeIs (experValue, typeof<INull>)))
@@ -948,10 +953,8 @@ type Compiler(environment:IEnvironment) as this =
             exp.Return (target, r, typeof<dyn>) :> exp, state
 
     and evalWithStatement (state:State) =
-        if state.strict then // runtime error
-            let args = [| constant "The with statement is not allowed in strict mode." |]
-            let error = call environmentParam Reflection.IEnvironment.createSyntaxError args  
-            exp.Throw (error) :> exp
+        if state.strict then
+            raise (environment.CreateSyntaxError "The with statement is not allowed in strict mode.")
         else
             match state.element with
             | WithStatement (e1, e2) ->
@@ -959,16 +962,16 @@ type Compiler(environment:IEnvironment) as this =
                 let newEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "newEnv")
                 let variables = [| oldEnvVar; newEnvVar |]
                 let value = evalExpression { state with element = e1 }
-                let obj = call value Reflection.IDynamic.convertToObject Array.empty
-                let getLexEnv = call getContext Reflection.IExecutionContext.get_LexicalEnviroment Array.empty
+                let obj = exp.Call (value, Reflection.IDynamic.convertToObject, Array.empty) :> exp
+                let getLexEnv = exp.Call (getContext, Reflection.IExecutionContext.get_LexicalEnviroment, Array.empty) :> exp
                 let assignOldEnvVar = exp.Assign (oldEnvVar, getLexEnv) :> exp
-                let newObjEnv = call oldEnvVar Reflection.ILexicalEnvironment.newObjectEnvironment [| obj; constant true |]
+                let newObjEnv = exp.Call (oldEnvVar, Reflection.ILexicalEnvironment.newObjectEnvironment, [| obj; constant true |]) :> exp
                 let assignNewEnvVar = exp.Assign (newEnvVar, newObjEnv) :> exp
-                let assignNewEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| newEnvVar |]
-                let assignOldEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| oldEnvVar |]
+                let assignNewEnv = exp.Call (getContext, Reflection.IExecutionContext.set_LexicalEnviroment, [| newEnvVar :> exp |]) :> exp
+                let assignOldEnv = exp.Call (getContext, Reflection.IExecutionContext.set_LexicalEnviroment, [| oldEnvVar :> exp |]) :> exp
                 let body, state = evalStatement { state with element = e2 } 
-                let tryBody = block [| assignOldEnvVar; assignNewEnvVar; assignNewEnv; body |]
-                let finallyBody = block [| assignOldEnv |]
+                let tryBody = exp.Block ([| assignOldEnvVar; assignNewEnvVar; assignNewEnv; body |])
+                let finallyBody = exp.Block ([| assignOldEnv |])
                 exp.Block (variables, exp.TryFinally (tryBody, finallyBody)) :> exp
 
     and evalSwitchStatement (state:State) = 
@@ -1071,12 +1074,14 @@ type Compiler(environment:IEnvironment) as this =
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let execBlock, state = evalBlock { state with element = e2 }
             let assignOldEnv = exp.Assign (oldEnvVar, (call getContext Reflection.IExecutionContext.get_LexicalEnviroment Array.empty)) :> exp
-            let assignCatchEnv = exp.Assign (catchEnvVar, (call oldEnvVar Reflection.ILexicalEnvironment.newDeclarativeEnvironment Array.empty)) :> exp
-            let assignCatchRec = exp.Assign (catchRecVar, exp.Convert((call catchEnvVar Reflection.ILexicalEnvironment.get_Record Array.empty), typeof<IEnvironmentRecord>)) :> exp
-            let createBinding = call catchRecVar Reflection.IEnvironmentRecord.createMutableBinding [| constant identifier; constant false |] 
-            let getThrown = call catchVar Reflection.MacheteRuntimeException.get_Thrown Array.empty
-            let setBinding = call catchRecVar Reflection.IEnvironmentRecord.setMutableBinding [| constant identifier; getThrown; constant false |]
-            let assignEnv = call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| catchEnvVar |]
+            let newEnv = exp.Call (oldEnvVar, Reflection.ILexicalEnvironment.newDeclarativeEnvironment, Array.empty) :> exp 
+            let assignCatchEnv = exp.Assign (catchEnvVar, newEnv) :> exp
+            let getRec = exp.Call (catchEnvVar, Reflection.ILexicalEnvironment.get_Record, Array.empty) :> exp 
+            let assignCatchRec = exp.Assign (catchRecVar, exp.Convert(getRec, typeof<IEnvironmentRecord>)) :> exp
+            let createBinding = exp.Call (catchRecVar, Reflection.IEnvironmentRecord.createMutableBinding, [| constant identifier; constant false |]) :> exp 
+            let getThrown = exp.Call (catchVar, Reflection.MacheteRuntimeException.get_Thrown, Array.empty) :> exp 
+            let setBinding = exp.Call (catchRecVar, Reflection.IEnvironmentRecord.setMutableBinding, [| constant identifier; getThrown; constant false |]) :> exp 
+            let assignEnv = exp.Call (getContext, Reflection.IExecutionContext.set_LexicalEnviroment, [| catchEnvVar :> exp  |]) :> exp 
             let tryBody = exp.Block ([| assignOldEnv; assignCatchEnv; assignCatchRec; createBinding; setBinding; assignEnv; execBlock |]) :> exp
             let finallyBody = exp.Block ([| call getContext Reflection.IExecutionContext.set_LexicalEnviroment [| oldEnvVar |] |]) :> exp      
             let body = exp.Block ([| oldEnvVar; catchEnvVar; catchRecVar |], exp.TryFinally (tryBody, finallyBody)) :> exp      

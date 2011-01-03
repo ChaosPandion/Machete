@@ -373,8 +373,8 @@ module Evaluator =
         let jText = text.ConvertToString().BaseValue
         let jsonText = Machete.Json.Parser.parse jText 
         match jsonText with
-        | [| JsonText _ |] ->
-            let unfiltered = evalJSONText environment (jsonText.[0])    
+        |  JsonText _ ->
+            let unfiltered = evalJSONText environment jsonText//(jsonText.[0])    
             match reviver with
             | :? IFunction as reviver ->
                 let root = environment.ObjectConstructor.Op_Construct(environment.EmptyArgs)

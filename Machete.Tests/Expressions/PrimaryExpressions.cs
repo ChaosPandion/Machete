@@ -33,8 +33,8 @@ namespace Machete.Tests
         [Fact(DisplayName = "11.1.5 Object Initialiser")]
         public void Test1115()
         {
-            Assert.Equal("object", (string)Engine.ExecuteScript("typeof {}"));
-            Assert.True((bool)Engine.ExecuteScript("{} instanceof Object"));
+            Assert.Equal("object", (string)Engine.ExecuteScript("typeof ({})"));
+            Assert.True((bool)Engine.ExecuteScript("({}) instanceof Object"));
         }
 
         [Fact(DisplayName = "11.1.6 The Grouping Operator")]
