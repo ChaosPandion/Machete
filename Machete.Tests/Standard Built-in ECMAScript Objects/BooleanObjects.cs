@@ -35,15 +35,15 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.6.4.2 Boolean.prototype.toString ( )")]
         public void Test15642()
         {
-            Assert.Equal("true", (string)Engine.ExecuteScript("new Boolean(true).toString()"));
-            Assert.Equal("false", (string)Engine.ExecuteScript("new Boolean(false).toString()"));
+            Assert.Equal("true", (string)Engine.ExecuteScript("(new Boolean(true)).toString()"));
+            Assert.Equal("false", (string)Engine.ExecuteScript("(new Boolean(false)).toString()"));
         }
 
         [Fact(DisplayName = "15.6.4.3 Boolean.prototype.valueOf ( )")]
         public void Test15643()
         {
-            Assert.True((bool)Engine.ExecuteScript("new Boolean(true).valueOf()"));
-            Assert.False((bool)Engine.ExecuteScript("new Boolean(false).valueOf()"));
+            Assert.True((bool)Engine.ExecuteScript("(new Boolean(true)).valueOf()"));
+            Assert.False((bool)Engine.ExecuteScript("(new Boolean(false)).valueOf()"));
         }
     }
 }

@@ -8,17 +8,15 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.7.1.1 Number ( [ value ] )")]
         public void Test15711()
         {
-            Assert.Equal("number", (string)Engine.ExecuteScript("typeof Number(true)"));
+            Assert.Equal(100.0, (double)Engine.ExecuteScript("Number(100)"));
             Assert.Equal(0.0, (double)Engine.ExecuteScript("Number()"));
         }
 
         [Fact(DisplayName = "15.7.2.1 new Number ( [ value ] )")]
         public void Test15721()
         {
-            Assert.IsNotType<Exception>(Engine.ExecuteScript("var o = new Number(1);"));
-            Assert.Equal("object", (string)Engine.ExecuteScript("typeof o"));
-            Assert.Equal(1.0, (double)Engine.ExecuteScript("+o"));
-            Assert.True((bool)Engine.ExecuteScript("delete o"));
+            Assert.Equal("object", (string)Engine.ExecuteScript("typeof (new Number(1))"));
+            Assert.Equal(1.0, (double)Engine.ExecuteScript("+(new Number(1))"));
         }
 
         [Fact(DisplayName = "15.7.3.1 Number.prototype")]

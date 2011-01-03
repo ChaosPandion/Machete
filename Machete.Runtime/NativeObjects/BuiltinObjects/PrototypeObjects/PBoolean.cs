@@ -10,24 +10,53 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         {
 
         }
-        //internal PBoolean()
-        //{
-        //    Class = "Boolean";
-        //    Extensible = true;
-        //    //DefineOwnProperty("toString", SPropertyDescriptor.Create(new NFunction(null, () => ToString)), false);
-        //    //DefineOwnProperty("valueOf", SPropertyDescriptor.Create(new NFunction(null, () => ValueOf)), false);
-        //}
 
+        public override void Initialize()
+        {
+            Class = "Boolean"; 
+            Extensible = true;
+            Prototype = Environment.ObjectPrototype;
+            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.BooleanConstructor, true, false, true), false);
+            base.Initialize();
+        }
 
-        //private IDynamic ToString(ExecutionContext context, SList args)
-        //{
-        //    return context.ThisBinding.ConvertToBoolean().ConvertToString();
-        //}
+        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        internal static IDynamic ToString(IEnvironment environment, IArgs args)
+        {
+            var v = environment.Context.ThisBinding;
+            switch (v.TypeCode)
+            {
+                case LanguageTypeCode.Boolean:
+                    return environment.CreateString(((IBoolean)v).BaseValue ? "true" : "false");
+                case LanguageTypeCode.Object:
+                    var o = (IObject)v;
+                    if (o.Class == "Boolean")
+                    {
+                        return environment.CreateString(((IBoolean)((IPrimitiveWrapper)o).PrimitiveValue).BaseValue ? "true" : "false");
+                    }
+                    break;
+            }
+            throw environment.CreateTypeError("");
+        }
 
-        //private IDynamic ValueOf(ExecutionContext context, SList args)
-        //{
-        //    return context.ThisBinding.ConvertToBoolean();
-        //}
+        [NativeFunction("valueOf"), DataDescriptor(true, false, true)]
+        internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
+        {
+            var v = environment.Context.ThisBinding;
+            switch (v.TypeCode)
+            {
+                case LanguageTypeCode.Boolean:
+                    return v;
+                case LanguageTypeCode.Object:
+                    var o = (IObject)v;
+                    if (o.Class == "Boolean")
+                    {
+                        return ((IPrimitiveWrapper)o).PrimitiveValue;
+                    }
+                    break;
+            }
+            throw environment.CreateTypeError("");
+        }
     }
 }
 
