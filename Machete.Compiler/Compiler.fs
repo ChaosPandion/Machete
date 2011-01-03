@@ -680,15 +680,25 @@ type Compiler(environment:IEnvironment) as this =
             block [| first; second |], state
 
     and evalVariableDeclaration (state:State) =
+        let strictValidation identifier =
+            if state.strict then                
+                let msg = "The identifier '{0}' is not allowed in strict mode."
+                match identifier with 
+                | "eval" 
+                | "arguments" -> 
+                    raise (environment.CreateSyntaxError (String.Format (msg, identifier)))
+                | _ -> ()
         match state.element with
         | VariableDeclaration (Lexer.Identifier e, Nil) | VariableDeclarationNoIn (Lexer.Identifier e, Nil) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e
+            strictValidation identifier
             exp.Empty() :> exp, { state with variables = identifier::state.variables }
         | VariableDeclaration (e1, e2) | VariableDeclarationNoIn (e1, e2) ->
             let identifier = 
                 match e1 with
                 | Lexer.Identifier e ->
                     Lexer.IdentifierNameParser.evalIdentifierName e
+            strictValidation identifier
             let left = evalIdentifier e1 state.strict 
             let right = evalInitialiser { state with element = e2 }
             let right = call right Reflection.IDynamic.get_Value Array.empty

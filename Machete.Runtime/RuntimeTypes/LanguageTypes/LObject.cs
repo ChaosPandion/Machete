@@ -108,7 +108,14 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             IPropertyDescriptor desc;
             if (_map.TryGetValue(p, out desc))
             {
-                return desc.IsAccessorDescriptor ? !(desc.Set is IUndefined) : true; 
+                if (desc.IsAccessorDescriptor)
+                {
+                    return !(desc.Set is IUndefined);
+                }
+                else
+                {
+                    return desc.Writable ?? false;
+                }
             }
             else if (Prototype == null)
             {

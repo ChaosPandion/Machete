@@ -19,7 +19,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
 
         public override void Initialize()
         {
-            Class = "Global";
+            Class = "Environment";
             Prototype = null;
             Extensible = true;
             DefineOwnProperty("NaN", Environment.CreateDataDescriptor(Environment.CreateNumber(double.NaN), false, false, false), false);
@@ -42,12 +42,13 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             DefineOwnProperty("URIError", Environment.CreateDataDescriptor(Environment.UriErrorConstructor, true, false, true), false);
             DefineOwnProperty("Math", Environment.CreateDataDescriptor(Environment.MathObject, true, false, true), false);
             DefineOwnProperty("JSON", Environment.CreateDataDescriptor(Environment.JsonObject, true, false, true), false);
+            DefineOwnProperty("environment", Environment.CreateDataDescriptor(this, false, false, false), false);
             base.Initialize();
         }
 
         public override IDynamic DefaultValue(string hint)
         {
-            return Environment.CreateString("Global");
+            return Environment.CreateString("[object, Environment]");
         }
 
         [NativeFunction("eval", "x"), DataDescriptor(true, false, true)]
