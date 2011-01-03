@@ -39,7 +39,7 @@ module CharSets =
 
     let trimCharacters = whiteSpaceChars @ lineTerminatorChars |> List.toArray
 
-    let inline isWhiteSpace c =  
+    let isWhiteSpace c =  
         match c with
         | '\u0009'
         | '\u000b'
@@ -65,7 +65,7 @@ module CharSets =
         | '\ufeff' -> true
         | _ -> false
 
-    let inline isLineTerminator c = 
+    let isLineTerminator c = 
         match c with
         | '\u000a'
         | '\u000d'
@@ -73,7 +73,7 @@ module CharSets =
         | '\u2029' -> true
         | _ -> false
 
-    let inline isUnicodeLetter c =
+    let isUnicodeLetter c =
         match Char.GetUnicodeCategory(c) with
         | UnicodeCategory.UppercaseLetter
         | UnicodeCategory.LowercaseLetter 
@@ -83,26 +83,26 @@ module CharSets =
         | UnicodeCategory.LetterNumber -> true
         | _ -> false
 
-    let inline isUnicodeCombiningMark c =
+    let isUnicodeCombiningMark c =
         match Char.GetUnicodeCategory c with
         | UnicodeCategory.NonSpacingMark
         | UnicodeCategory.SpacingCombiningMark -> true
         | _ -> false  
 
-    let inline isUnicodeDigit c =
+    let isUnicodeDigit c =
         match Char.GetUnicodeCategory c with
         | UnicodeCategory.DecimalDigitNumber -> true
         | _ -> false 
 
-    let inline isUnicodeConnectorPunctuation c =
+    let isUnicodeConnectorPunctuation c =
         match Char.GetUnicodeCategory c with
         | UnicodeCategory.ConnectorPunctuation -> true
         | _ -> false 
 
-    let inline isNonLineTerminator c = 
+    let isNonLineTerminator c = 
         not (isLineTerminator c)
 
-    let inline isDecimalDigit c = 
+    let isDecimalDigit c = 
         match c with
         | '0' | '1' | '2'
         | '3' | '4' | '5'
@@ -110,17 +110,17 @@ module CharSets =
         | '9' -> true
         | _ -> false
 
-    let inline isNonDecimalDigit c = 
+    let isNonDecimalDigit c = 
         not (isDecimalDigit c)
 
-    let inline isNonZeroDigit c =  
+    let isNonZeroDigit c =  
         match c with
         | '1' | '2' | '3' 
         | '4' | '5' | '6' 
         | '7' | '8' | '9' -> true
         | _ -> false
 
-    let inline isHexDigit c = 
+    let isHexDigit c = 
         match c with
         | '0' | '1' | '2' | '3' 
         | '4' | '5' | '6' 

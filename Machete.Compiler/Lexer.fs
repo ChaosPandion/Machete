@@ -42,78 +42,89 @@ module Lexer =
         open FParsec.CharParsers
         open FParsec.Primitives
 
- 
-        let decimalPoint<'a> : Parser<InputElement, 'a> =
-            pchar '.' |>> fun c -> DecimalPoint
 
-        let hexDigit<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.isHexDigit |>> Chr |>> HexDigit
+        let hexDigit reply =
+            (parse {
+                let! c = satisfy CharSets.isHexDigit
+                return HexDigit (Chr (c))
+            }) reply
     
-        let hexIntegerLiteral<'a> : Parser<InputElement, 'a> =
-            parse {
+        let hexIntegerLiteral reply =
+            (parse {
                 do! skipChar '0'
                 do! skipAnyOf "xX"
                 let! r = many1Fold Nil (fun x y -> HexIntegerLiteral (x, y)) hexDigit <?> "A hex integer literal was found to be incomplete."
                 return r
-            }
+            }) reply
 
-        let nonZeroDigit<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.isNonZeroDigit |>> Chr |>> NonZeroDigit
+        let nonZeroDigit reply =
+            (satisfy CharSets.isNonZeroDigit |>> Chr |>> NonZeroDigit) reply
 
-        let decimalDigit<'a> : Parser<InputElement, 'a> =
-            satisfy CharSets.isDecimalDigit |>> Chr |>> DecimalDigit
+        let decimalDigit reply =
+            (satisfy CharSets.isDecimalDigit |>> Chr |>> DecimalDigit) reply
 
-        let decimalDigits<'a> : Parser<InputElement, 'a> =
-            many1Fold Nil (fun x y -> DecimalDigits (x, y)) decimalDigit         
+        let decimalDigits reply =
+            many1Fold Nil (fun x y -> DecimalDigits (x, y)) decimalDigit reply         
         
-        let signedInteger<'a> : Parser<InputElement, 'a> =
-            parse {
-                let! a = (anyOf "+-" |>> Chr) <|> nil
+        let sign reply =
+            ((skipChar '+' |>> fun () -> Plus) <|> (skipChar '-' |>> fun () -> Minus) <|> preturn Sign.Missing) reply
+
+        let signedInteger reply =
+            (parse {
+                let! a = sign
                 let! b = decimalDigits
                 return SignedInteger (a, b) 
-            }   
+            }) reply   
          
-        let exponentIndicator<'a> : Parser<InputElement, 'a> =
-            anyOf "eE" |>> Chr |>> ExponentIndicator
+        let exponentIndicator reply =
+            (anyOf "eE" |>> Chr |>> ExponentIndicator) reply
          
-        let exponentPart<'a> : Parser<InputElement, 'a> =
-            pipe2 exponentIndicator signedInteger (fun a b -> ExponentPart(a, b))
+        let exponentPart reply =
+            pipe2 exponentIndicator signedInteger (fun a b -> ExponentPart(a, b)) reply
         
-        let decimalIntegerLiteral<'a> : Parser<InputElement, 'a> =
-            (pchar '0' |>> Chr |>> (fun a -> a, Nil)) 
-            <|> (pipe2 nonZeroDigit (decimalDigits <|> preturn Nil) (fun a b -> a, b )) 
-            |>> (fun a -> DecimalIntegerLiteral a)
+        let decimalIntegerLiteral reply =
+            (parse {
+                do! skipChar '0'
+                return DecimalIntegerLiteral (Chr '0', Nil)
+             } <|> parse {
+                let! first = nonZeroDigit
+                let! rest = decimalDigits <|> preturn Nil    
+                return DecimalIntegerLiteral (first, rest)
+            }) reply
         
-        let decimalLiteral<'a> : Parser<InputElement, 'a> =
-            attempt (parse {
+        let decimalLiteral reply =
+            (parse {
                 let! i = decimalIntegerLiteral
-                do! skipChar '.'
-                let! f = decimalDigits <|> nil
-                let! e = exponentPart <|> nil
-                return DecimalLiteral (i, DecimalPoint, f, e)
-            }) <|> parse {
+                let! e1, e2, e3 =
+                    parse {
+                        do! skipChar '.'
+                        let! f = decimalDigits <|> nil
+                        let! e = exponentPart <|> nil
+                        return DecimalPoint, f, e
+                    } <|> parse {
+                        let! e = exponentPart <|> nil
+                        return Nil, Nil, e
+                    }
+                return DecimalLiteral (i, e1, e2, e3)
+             } <|> parse {
                 do! skipChar '.'
                 let! f = decimalDigits
                 let! e = exponentPart <|> nil
                 return DecimalLiteral (Nil, DecimalPoint, f, e)
-            } <|> attempt (parse {
-                let! i = decimalIntegerLiteral
-                let! e = exponentPart <|> nil
-                return DecimalLiteral (i, Nil, Nil, e)
-            })
+            }) reply 
 
-        let numericLiteral =
-            attempt (parse {
+        let numericLiteral reply =
+            (attempt (parse {
                 let! r = decimalLiteral
                 do! notFollowedBy identifierStart
                 do! notFollowedBy decimalDigit
                 return NumericLiteral r
-            }) <|> parse {
+             }) <|> parse {
                 let! r = hexIntegerLiteral
                 do! notFollowedBy identifierStart
                 do! notFollowedBy decimalDigit
                 return NumericLiteral r
-            }
+            }) reply
 
         let evalHexDigit v =
             match v with
@@ -197,15 +208,11 @@ module Lexer =
             match v with
             | SignedInteger (l, r) -> 
                 match l, r with
-                | Nil, DecimalDigits (_, _) ->
+                | Missing, DecimalDigits (_, _)
+                | Plus, DecimalDigits (_, _) ->
                     evalDecimalDigits r
-                | Chr c, DecimalDigits (_, _) ->
-                    match c with
-                    | '+' -> evalDecimalDigits r
-                    | '-' -> -evalDecimalDigits r
-                    | _ -> invalidOp ("Unexpected value '" + c.ToString() + "' found while evaluating SignedInteger.")
-                | _ -> invalidOp "Invalid SignedInteger pattern found."                  
-            | _ -> invalidArg "v" "Expected SignedInteger."
+                | Minus, DecimalDigits (_, _) ->
+                    -evalDecimalDigits r
         
         let evalExponentPart v =
             match v with

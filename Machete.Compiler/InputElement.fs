@@ -1,5 +1,10 @@
 ﻿namespace Machete.Compiler
-    
+ 
+type Sign =
+| Missing
+| Plus
+| Minus
+   
 type InputElement =
 | Nil
 | Chr of char
@@ -35,7 +40,7 @@ type InputElement =
 | NonZeroDigit of InputElement
 | ExponentPart of InputElement * InputElement
 | ExponentIndicator of InputElement
-| SignedInteger of InputElement * InputElement
+| SignedInteger of Sign * InputElement
 | HexIntegerLiteral of InputElement * InputElement
 | HexDigit of InputElement
 | DecimalPoint
@@ -63,4 +68,5 @@ type InputElement =
 | RegularExpressionClassChars of InputElement * InputElement
 | RegularExpressionClassChar of InputElement
 | RegularExpressionFlags of InputElement * InputElement
+
 

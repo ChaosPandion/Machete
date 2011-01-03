@@ -58,7 +58,7 @@ type Compiler(environment:IEnvironment) as this =
 
     let equalityTestMethod = this.GetType().GetMethod ("equalityTest", BindingFlags.Static ||| BindingFlags.NonPublic)
 
-
+    
     let isStrictCode e =
         let isStrictCode = traverse {
             do! function | SourceElement e -> Some e | _ -> None
@@ -131,25 +131,19 @@ type Compiler(environment:IEnvironment) as this =
     and evalAssignmentExpression (state:State) =
         let simpleAssignment left right =
             let left = evalLeftHandSideExpression { state with element = left }
+            let left = exp.Convert (left, typeof<IDynamic>)
             let right = evalAssignmentExpression { state with element = right }
-            let valueVar = exp.Variable(Reflection.IDynamic.t, "value") 
-            let assign = exp.Assign(valueVar, call right Reflection.IDynamic.get_Value [| |]) :>exp
-            let setLeft = call left Reflection.IDynamic.set_Value [| valueVar |]
-            let variables = [| valueVar |]
-            let body = [| assign; setLeft; valueVar:>exp |]
-            exp.Block (variables, body) :> exp
+            let right = exp.Convert (right, typeof<IDynamic>)
+            exp.Assign (exp.Property (left, "Value"), exp.Property (right, "Value")) :> exp
         let compoundAssignment left right op =
             let left = evalLeftHandSideExpression { state with element = left }
+            let left = exp.Convert (left, typeof<IDynamic>)
+            let left = exp.Property (left, "Value") :> exp
             let right = evalAssignmentExpression { state with element = right }
-            let getLeft = call left Reflection.IDynamic.get_Value Array.empty
-            let getRight = call right Reflection.IDynamic.get_Value Array.empty
-            let performOp = call left op [| right |]
-            let valueVar = exp.Variable(Reflection.IDynamic.t, "value") 
-            let assign = exp.Assign(valueVar, performOp) :> exp
-            let setLeft = call left Reflection.IDynamic.set_Value [| assign |]
-            let variables = [| valueVar |]
-            let body = [| setLeft; valueVar:>exp |]
-            exp.Block (variables, body) :> exp
+            let right = exp.Convert (right, typeof<IDynamic>)
+            let right = exp.Property (right, "Value") :> exp
+            let performOp = exp.Call (left, op, [| right |]) :> exp
+            exp.Assign (left, performOp) :> exp
         match state.element with
         | AssignmentExpression (left, AssignmentOperator.Nil, Nil) 
         | AssignmentExpressionNoIn (left, AssignmentOperator.Nil, Nil) ->

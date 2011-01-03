@@ -153,27 +153,34 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Addition(IDynamic other)
         {
-            return LType.Op_Addition(_environment, this, other);
+            var otherPrim = other.ConvertToPrimitive(null);
+            switch (otherPrim.TypeCode)
+            {
+                case LanguageTypeCode.String:
+                    return _environment.CreateString(ConvertToString().BaseValue + otherPrim.ConvertToString().BaseValue);
+                default:
+                    return _environment.CreateNumber(_value + otherPrim.ConvertToNumber().BaseValue);
+            }
         }
 
         public IDynamic Op_Subtraction(IDynamic other)
         {
-            return LType.Op_Subtraction(_environment, this, other);
+            return _environment.CreateNumber(_value - other.ConvertToNumber().BaseValue);
         }
 
         public IDynamic Op_Multiplication(IDynamic other)
         {
-            return LType.Op_Multiplication(_environment, this, other);
+            return _environment.CreateNumber(_value * other.ConvertToNumber().BaseValue);
         }
 
         public IDynamic Op_Division(IDynamic other)
         {
-            return LType.Op_Division(_environment, this, other);
+            return _environment.CreateNumber(_value / other.ConvertToNumber().BaseValue);
         }
 
         public IDynamic Op_Modulus(IDynamic other)
         {
-            return LType.Op_Modulus(_environment, this, other);
+            return _environment.CreateNumber(_value % other.ConvertToNumber().BaseValue);
         }
 
         public IDynamic Op_Delete()
@@ -404,6 +411,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             return _value.ToString();
         }
+
 
         public static bool operator ==(LNumber left, LNumber right)
         {
