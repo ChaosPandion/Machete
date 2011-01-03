@@ -9,7 +9,7 @@ module Lexer =
     open Machete.Compiler.Lexer
     open Machete.Compiler.Lexer.StringLiteralParser
     open Machete.Compiler.Lexer.NumericLiteralParser
-    open Machete.Compiler.Parsers
+    //open Machete.Compiler.Parsers
     
 
 //    let complete value (state:State<unit>) =
@@ -40,7 +40,7 @@ module Lexer =
         | JsonEscapeCharacter c -> c
 
     let jsonEscapeSequence =
-        (jsonEscapeCharacter <|> (unicodeEscapeSequence |>> JsonInputElement)) |>> JsonEscapeSequence
+        (jsonEscapeCharacter <|> (StringLiteralParser.unicodeEscapeSequence<unit> |>> JsonInputElement)) |>> JsonEscapeSequence
         
     let evalJsonEscapeSequence v =
         match v with
@@ -85,7 +85,7 @@ module Lexer =
         let a = opt (pchar '-')
         let b = decimalIntegerLiteral
         let c = jsonFraction <|> preturn JsonNil
-        let d = exponentPart <|> preturn Nil
+        let d = exponentPart <|> preturn InputElement.Nil
         pipe4 a b c d (fun a b c d -> JsonNumber (a, b, c, d))
 
     let beginArray = 

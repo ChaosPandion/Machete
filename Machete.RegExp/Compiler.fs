@@ -5,7 +5,6 @@ module internal Compiler =
     open System
     open Machete.Compiler
     open Machete.Compiler.Lexer
-    open Machete.Compiler.Parsers
     open Machete.Compiler.Lexer.NumericLiteralParser
     open Machete.Compiler.Lexer.StringLiteralParser
     open Machete.Compiler.Lexer.IdentifierNameParser
@@ -147,7 +146,7 @@ module internal Compiler =
                             let max = evalDecimalDigits b
                             if max < min then failwith ""
                             Bounded max
-                        | Nil -> Unbounded
+                        | InputElement.Nil -> Unbounded
                         | _ -> failwith ""
                     min, max
             | _ -> failwith ""

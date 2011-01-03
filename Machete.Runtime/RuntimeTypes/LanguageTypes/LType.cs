@@ -103,12 +103,13 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public static IDynamic Op_In(IEnvironment environment, IDynamic left, IDynamic right)
         {
-            var obj = right as LObject;
-            if (obj == null)
+            if (right.TypeCode != LanguageTypeCode.Object)
             {
                 throw environment.CreateTypeError("");
             }
-            return environment.CreateBoolean(obj.HasProperty(left.ConvertToString().BaseValue));
+            var obj = right.ConvertToObject();
+            var prop = left.ConvertToString().BaseValue;
+            return environment.CreateBoolean(obj.HasProperty(prop));
         }
 
         public static IDynamic Op_LeftShift(IEnvironment environment, IDynamic left, IDynamic right)

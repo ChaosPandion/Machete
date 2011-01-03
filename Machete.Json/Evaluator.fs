@@ -59,17 +59,17 @@ module Evaluator =
 
     and evalJSONNumber (environment:IEnvironment) value =
         match value with
-        | JsonNumber (None, e, Token.JsonNil, Lexer.Nil)
-        | JsonNumber (Some '+', e, Token.JsonNil, Lexer.Nil) ->
+        | JsonNumber (None, e, Token.JsonNil, InputElement.Nil)
+        | JsonNumber (Some '+', e, Token.JsonNil, InputElement.Nil) ->
             environment.CreateNumber (Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e |> double)
-        | JsonNumber (Some '-', e, Token.JsonNil, Lexer.Nil) ->
+        | JsonNumber (Some '-', e, Token.JsonNil, InputElement.Nil) ->
             environment.CreateNumber (-Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e |> double)
-        | JsonNumber (None, e1, e2, Lexer.Nil) 
-        | JsonNumber (Some '+', e1, e2, Lexer.Nil) ->
+        | JsonNumber (None, e1, e2, InputElement.Nil) 
+        | JsonNumber (Some '+', e1, e2, InputElement.Nil) ->
             let integral = Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e1 |> double
             let fractional = evalJSONFraction environment e2
             environment.CreateNumber (integral + fractional)
-        | JsonNumber (Some '-', e1, e2, Lexer.Nil) ->
+        | JsonNumber (Some '-', e1, e2, InputElement.Nil) ->
             let integral = Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e1 |> double
             let fractional = evalJSONFraction environment e2
             environment.CreateNumber (-(integral + fractional))        

@@ -92,44 +92,40 @@ namespace Machete.Tests
         public void Test126G()
         {
             var script = @"
-                var n = 1, b = 0;
+                var b = 0;
                 for ( b = 1; ; ) {
-                    n *= 2;
-                    if (n === 256) {
-                        break;
-                    }
+                    return b;
                 }
-                return n - b;
             ";
-            Assert.Equal(255.0, (double)Engine.ExecuteScript(script));
+            Assert.Equal(1.0, (double)Engine.ExecuteScript(script));
         }
 
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( ExpressionNoIn ; Expression ; ) Statement")]
         public void Test126H()
         {
             var script = @"
-                var n = 1, b = 0;
-                for (b = 1; n !== 256;) {
-                    n *= 2;
+                var b = 0, n = 0;
+                for (b = 1; n !== 3;) {
+                    n++;
                 }
                 return n - b;
             ";
-            Assert.Equal(255.0, (double)Engine.ExecuteScript(script));
+            Assert.Equal(2.0, (double)Engine.ExecuteScript(script));
         }
 
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( ExpressionNoIn ; ; Expression ) Statement")]
         public void Test126I()
         {
             var script = @"
-                var n = 1, b = 0;
-                for (b = 1; ; n *= 2) {
-                    if (n === 256) {
+                var b = 0, n = 0;
+                for (b = 1; ; n++) {
+                    if (n === 3) {
                         break;
                     }
                 }
                 return n - b;
             ";
-            Assert.Equal(255.0, (double)Engine.ExecuteScript(script));
+            Assert.Equal(2.0, (double)Engine.ExecuteScript(script));
         }
 
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( ExpressionNoIn ; Expression ; Expression ) Statement")]
@@ -149,15 +145,14 @@ namespace Machete.Tests
         public void Test126K()
         {
             var script = @"
-                for (var n = 1;;) {
-                    n *= 2;
-                    if (n === 256) {
-                        break;
-                    }
+                var r = 1;
+                for (var b = 2;;) {
+                    r += b;
+                    break;
                 }
-                return n;
+                return r;
             ";
-            Assert.Equal(255.0, (double)Engine.ExecuteScript(script));
+            Assert.Equal(3.0, (double)Engine.ExecuteScript(script));
         }
 
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( var VariableDeclarationListNoIn ; Expression ; ) Statement")]
@@ -167,7 +162,7 @@ namespace Machete.Tests
                 for (var n = 1; n !== 256;) {
                     n *= 2
                 }
-                return n - b;
+                return n;
             ";
             Assert.Equal(256.0, (double)Engine.ExecuteScript(script));
         }

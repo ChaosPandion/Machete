@@ -3,14 +3,7 @@
 type internal Element =
 | Nil
 | Char of char
-//| HexDigit of char
-//| DecimalDigit of char
-//| NonZeroDigit of char
-//| DecimalDigits of Element * Element
-//| DecimalIntegerLiteral of Element * Element 
-//| UnicodeEscapeSequence of Element * Element * Element * Element
-//| HexEscapeSequence of Element * Element
-| InputElement of Machete.Compiler.Lexer.InputElement
+| InputElement of Machete.Compiler.InputElement
 | Pattern of int * Element
 | Disjunction of Element * Element
 | Alternative of Element * Element
@@ -48,17 +41,6 @@ type internal Element =
 | ClassAtomNoDash of Element
 | ClassEscape of Element
 | BackSpaceEscape
-
-//| IdentifierStart of Element
-//| IdentifierPart of Element
-//| UnicodeLetter of char
-//| UnicodeCombiningMark of char
-//| UnicodeDigit of char
-//| UnicodeConnectorPunctuation of char
-//| DollarSign
-//| Underscore
-//| ZeroWidthNonJoiner 
-//| ZeroWidthJoiner
 
 and internal CharacterClassEscape =
 | Digit

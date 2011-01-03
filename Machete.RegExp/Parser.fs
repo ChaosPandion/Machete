@@ -5,7 +5,6 @@ module internal Parser =
     open Machete.RegExp
     open FParsec.Primitives
     open FParsec.CharParsers
-    open Machete.Compiler.Parsers
     open Machete.Compiler.Lexer.NumericLiteralParser
     open Machete.Compiler.Lexer.StringLiteralParser
     open Machete.Compiler.Lexer.IdentifierNameParser

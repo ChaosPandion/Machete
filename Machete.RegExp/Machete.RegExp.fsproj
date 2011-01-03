@@ -39,6 +39,27 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\Machete.Parsers.RegExp.XML</DocumentationFile>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Machete.Parsers.RegExp.XML</DocumentationFile>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Machete.Parsers.RegExp.XML</DocumentationFile>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="FParsec">
       <HintPath>..\References\FParsec.dll</HintPath>
@@ -65,6 +86,11 @@
     <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">
       <Name>Machete.Compiler</Name>
       <Project>{f4056a29-8845-4dfa-b551-35d7b27d5954}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Machete.Interfaces\Machete.Interfaces.csproj">
+      <Name>Machete.Interfaces</Name>
+      <Project>{eb3133fc-6fd5-4056-a11b-e5dead22a0a3}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

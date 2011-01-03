@@ -28,7 +28,7 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.1.2.1 eval (x)")]
         public void Test15121()
         {
-            Assert.True(false);
+            Assert.Equal(999e2, (double)Engine.ExecuteScript("eval('999e2')"));
         }
 
         [Fact(DisplayName = "15.1.2.2 parseInt (string , radix)")]

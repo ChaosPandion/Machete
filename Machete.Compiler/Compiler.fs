@@ -84,12 +84,12 @@ type Compiler(environment:IEnvironment) as this =
             do! function | MemberExpression (Nil, e) -> Some e | _ -> None
             do! function | PrimaryExpression (e) -> Some e | _ -> None
             do! function | InputElement (e) -> Some e | _ -> None
-            do! function | Lexer.Literal (e) -> Some e | _ -> None
+            do! function | InputElement.Literal (e) -> Some e | _ -> None
             return! fun e ->
                         match e with 
-                        | Lexer.StringLiteral _ 
+                        | InputElement.StringLiteral _ 
                             when Lexer.StringLiteralParser.evalStringLiteral e = "use strict" -> Some true 
-                        | Lexer.StringLiteral _ -> Some false
+                        | InputElement.StringLiteral _ -> Some false
                         | _ -> None
         }
 
@@ -109,7 +109,7 @@ type Compiler(environment:IEnvironment) as this =
 
     let evalIdentifier e (strict:bool) =
         match e with
-        | Lexer.Identifier e ->
+        | InputElement.Identifier e ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e
             let context = call environmentParam Reflection.IEnvironment.get_Context [||]
             let lex = call context Reflection.IExecutionContext.get_LexicalEnviroment [||]
@@ -450,24 +450,26 @@ type Compiler(environment:IEnvironment) as this =
             match e with
             | InputElement e ->
                 match e with
-                | Lexer.IdentifierName (_, _) ->
+                | InputElement.IdentifierName (_, _) ->
                     let context = call environmentParam Reflection.IEnvironment.get_Context [||]
                     call context Reflection.IExecutionContext.get_ThisBinding [||]
-                | Lexer.Identifier _ ->
+                | InputElement.Identifier _ ->
                     evalIdentifier e state.strict 
-                | Lexer.Literal e ->
+                | InputElement.Literal e ->
                     match e with
-                    | Lexer.NullLiteral "null" ->
+                    | InputElement.NullLiteral "null" ->
                         call environmentParam Reflection.IEnvironment.get_Null Array.empty
-                    | Lexer.BooleanLiteral "true" ->
+                    | InputElement.BooleanLiteral "true" ->
                         call environmentParam Reflection.IEnvironment.createBoolean [| constant true |]
-                    | Lexer.BooleanLiteral "false" ->
+                    | InputElement.BooleanLiteral "false" ->
                         call environmentParam Reflection.IEnvironment.createBoolean [| constant false |]
-                    | Lexer.NumericLiteral _ ->
-                        call environmentParam Reflection.IEnvironment.createNumber [| constant (Lexer.NumericLiteralParser.evalNumericLiteral e) |]
-                    | Lexer.StringLiteral _ ->
+                    | InputElement.NumericLiteral _ ->
+                        //let num = Lexer.evalNumericLiteral e
+                        let num = Lexer.NumericLiteralParser.evalNumericLiteral e
+                        call environmentParam Reflection.IEnvironment.createNumber [| constant num |]
+                    | InputElement.StringLiteral _ ->
                         call environmentParam Reflection.IEnvironment.createString [| constant (Lexer.StringLiteralParser.evalStringLiteral e) |]
-                    | Lexer.RegularExpressionLiteral (_, _) ->
+                    | InputElement.RegularExpressionLiteral (_, _) ->
                         let body, flags = Lexer.RegularExpressionLiteralParser.evalRegularExpressionLiteral e
                         call environmentParam Reflection.IEnvironment.createRegExp [| constant body; constant flags  |]
             | ArrayLiteral (_, _) ->
@@ -534,16 +536,16 @@ type Compiler(environment:IEnvironment) as this =
         match state.element with
         | PropertyName e ->
             match e with
-            | Lexer.IdentifierName (_, _) ->
+            | InputElement.IdentifierName (_, _) ->
                 Lexer.IdentifierNameParser.evalIdentifierName e
-            | Lexer.StringLiteral _ ->
+            | InputElement.StringLiteral _ ->
                 Lexer.StringLiteralParser.evalStringLiteral e
-            | Lexer.NumericLiteral _ ->
+            | InputElement.NumericLiteral _ ->
                 Lexer.NumericLiteralParser.evalNumericLiteral e |> string
 
     and evalPropertySetParameterList (state:State) =
         match state.element with
-        | PropertySetParameterList (Lexer.Identifier e) ->
+        | PropertySetParameterList (InputElement.Identifier e) ->
             ReadOnlyList<string>([| Lexer.IdentifierNameParser.evalIdentifierName e |])
 
     and evalArrayLiteral (state:State) =
@@ -685,14 +687,14 @@ type Compiler(environment:IEnvironment) as this =
                     raise (environment.CreateSyntaxError (String.Format (msg, identifier)))
                 | _ -> ()
         match state.element with
-        | VariableDeclaration (Lexer.Identifier e, Nil) | VariableDeclarationNoIn (Lexer.Identifier e, Nil) ->
+        | VariableDeclaration (InputElement.Identifier e, Nil) | VariableDeclarationNoIn (InputElement.Identifier e, Nil) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e
             strictValidation identifier
             exp.Empty() :> exp, { state with variables = identifier::state.variables }
         | VariableDeclaration (e1, e2) | VariableDeclarationNoIn (e1, e2) ->
             let identifier = 
                 match e1 with
-                | Lexer.Identifier e ->
+                | InputElement.Identifier e ->
                     Lexer.IdentifierNameParser.evalIdentifierName e
             strictValidation identifier
             let left = evalIdentifier e1 state.strict 
@@ -796,6 +798,16 @@ type Compiler(environment:IEnvironment) as this =
                 let body = exp.IfThenElse(e2, block [| e4 |], exp.Break(breakLabel.Target))
                 let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
                 exp.Block ([| e1; loop |]) :> exp,  { state with labels = state.labels.Tail }
+                
+            | ExpressionNoIn (_), SourceElement.Nil, Expression (_, _), Statement (_) ->
+                let e1 = evalExpression { state with element = e1 }
+                let e1 = exp.Call (e1, Reflection.IDynamic.get_Value, Array.empty) :> exp               
+                let e3 = evalExpression { state with element = e3 }
+                let e3 = exp.Call (e3, Reflection.IDynamic.get_Value, Array.empty) :> exp  
+                let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 }
+                let body = exp.Block ([|e1;e4;e3|])
+                let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
+                exp.Block ([| e1; loop |]) :> exp,  { state with labels = state.labels.Tail }
 
             | ExpressionNoIn (_), Expression (_, _), Expression (_, _), Statement (_) ->
                 let e1 = evalExpression { state with element = e1 }
@@ -803,7 +815,7 @@ type Compiler(environment:IEnvironment) as this =
                 let e2 = evalExpression { state with element = e2 }
                 let e2 = convertToBool e2                 
                 let e3 = evalExpression { state with element = e3 }
-                let e3 = exp.Call (e2, Reflection.IDynamic.get_Value, Array.empty)
+                let e3 = exp.Call (e3, Reflection.IDynamic.get_Value, Array.empty)
                 let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 }
                 let body = exp.IfThenElse(e2, block [| e4; e3 |], exp.Break(breakLabel.Target))
                 let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
@@ -825,6 +837,16 @@ type Compiler(environment:IEnvironment) as this =
                 let body = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
                 let body = exp.Block([| e1; body; |]) :> exp
                 body,  { state with labels = state.labels.Tail }
+                
+            | VariableDeclarationListNoIn (_), SourceElement.Nil, Expression (_, _), Statement (_) ->
+                let e1, state = evalVariableDeclarationList { state with element = e1 }
+                let e3 = evalExpression { state with element = e3 }
+                let e4, state = evalStatement { state with labels = labels::state.labels; element = e4 } 
+                let e3 = exp.Call (e3, Reflection.IDynamic.get_Value, Array.empty) :> exp
+                let body = exp.Block ([| e4; e3; |]) :> exp
+                let loop = exp.Loop (body, breakLabel.Target, continueLabel.Target) :> exp
+                let body = exp.Block ([| e1; loop |])
+                body :> exp,  { state with labels = state.labels.Tail }
 
             | VariableDeclarationListNoIn (_), Expression (_, _), Expression (_, _), Statement (_) ->
                 let e1, state = evalVariableDeclarationList { state with element = e1 }
@@ -892,7 +914,7 @@ type Compiler(environment:IEnvironment) as this =
     and evalContinueStatement (state:State) =
         let labels = state.labels.Head
         match state.element with
-        | ContinueStatement (Lexer.Nil) ->
+        | ContinueStatement (InputElement.Nil) ->
             let r1 = labels.TryFind "continueSwitch"
             let r2 = labels.TryFind "continueLoop"
             match r1, r2 with
@@ -905,7 +927,7 @@ type Compiler(environment:IEnvironment) as this =
                 let msg = "The continue statement with no identifier requires a surrounding loop or switch statement."
                 let err = environment.CreateSyntaxError msg
                 raise err
-        | ContinueStatement (Lexer.Identifier e1) ->
+        | ContinueStatement (InputElement.Identifier e1) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let r1 = labels.TryFind ("continue" + identifier)
             match r1 with
@@ -919,7 +941,7 @@ type Compiler(environment:IEnvironment) as this =
     and evalBreakStatement (state:State) =
         let labels = state.labels.Head
         match state.element with
-        | BreakStatement (Lexer.Nil) ->
+        | BreakStatement (InputElement.Nil) ->
             let r1 = labels.TryFind "breakSwitch"
             let r2 = labels.TryFind "breakLoop"
             match r1, r2 with
@@ -932,7 +954,7 @@ type Compiler(environment:IEnvironment) as this =
                 let msg = "The break statement with no identifier requires a surrounding loop or switch statement."
                 let err = environment.CreateSyntaxError msg
                 raise err
-        | BreakStatement (Lexer.Identifier e1) ->
+        | BreakStatement (InputElement.Identifier e1) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let r1 = labels.TryFind ("break" + identifier)
             match r1 with
@@ -1031,7 +1053,7 @@ type Compiler(environment:IEnvironment) as this =
 
     and evalLabelledStatement (state:State) =
         match state.element with
-        | LabelledStatement (Lexer.Identifier e1, e2) ->
+        | LabelledStatement (InputElement.Identifier e1, e2) ->
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let breakName = "break" + identifier
             let continueName = "continue" + identifier 
@@ -1066,7 +1088,7 @@ type Compiler(environment:IEnvironment) as this =
 
     and evalCatch (state:State) =
         match state.element with
-        | Catch (Lexer.Identifier e1, e2) ->
+        | Catch (InputElement.Identifier e1, e2) ->
             let catchVar = exp.Variable(typeof<MacheteRuntimeException>, "catch")
             let oldEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "oldEnv")
             let catchEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "catchEnv")
@@ -1097,7 +1119,7 @@ type Compiler(environment:IEnvironment) as this =
 
     and evalFunctionDeclaration (state:State) =
         match state.element with
-        | FunctionDeclaration (Lexer.Identifier e1, e2, e3) ->
+        | FunctionDeclaration (InputElement.Identifier e1, e2, e3) ->
             let strict = match e3 with | FunctionBody e -> isStrictCode e
             let state =  { state with strict = strict }  
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1    
@@ -1114,14 +1136,14 @@ type Compiler(environment:IEnvironment) as this =
 
     and evalFunctionExpression (state:State) =
         match state.element with
-        | FunctionExpression (Lexer.Nil, e1, e2) ->
+        | FunctionExpression (InputElement.Nil, e1, e2) ->
             let strict = match e2 with | FunctionBody e -> isStrictCode e
             let state =  { state with strict = strict }  
             let formalParameterList = match e1 with | SourceElement.Nil -> ReadOnlyList<string>.Empty | _ -> evalFormalParameterList "(No Identifier)" { state with element = e1 }          
             let code = lazy(compileFunctionCode(formalParameterList, e2))
             let args = [| constant formalParameterList; constant state.strict; constant code |]  
             call environmentParam Reflection.IEnvironment.createFunction1 args
-        | FunctionExpression (Lexer.Identifier e1, e2, e3) -> 
+        | FunctionExpression (InputElement.Identifier e1, e2, e3) -> 
             let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
             let strict = match e3 with | FunctionBody e -> isStrictCode e
             let state =  { state with strict = strict } 
@@ -1148,11 +1170,11 @@ type Compiler(environment:IEnvironment) as this =
                 raise (environment.CreateSyntaxError (String.Format (errorFormat, functionIdentifier, identifier)))
         let rec run (result:list<string>) (set:Set<string>) (element:SourceElement) =
             match element with
-            | FormalParameterList (SourceElement.Nil, InputElement(Lexer.Identifier e1)) ->
+            | FormalParameterList (SourceElement.Nil, InputElement(InputElement.Identifier e1)) ->
                 let identifier = Lexer.IdentifierNameParser.evalIdentifierName e1
                 validate identifier set
                 identifier::result
-            | FormalParameterList (e1, InputElement(Lexer.Identifier e2)) ->
+            | FormalParameterList (e1, InputElement(InputElement.Identifier e2)) ->
                 let identifier = Lexer.IdentifierNameParser.evalIdentifierName e2
                 validate identifier set
                 identifier::run result (set.Add identifier) e1
@@ -1213,6 +1235,10 @@ type Compiler(environment:IEnvironment) as this =
                 evalSourceElements { state with element = e }
                         
     and performDeclarationBinding (configurableBindings:bool) (state:State) (continuation:Code) (environment:IEnvironment) (args:IArgs) =
+        if state.strict then
+            let strictEnv = environment.Context.LexicalEnviroment.NewDeclarativeEnvironment ()
+            environment.Context.LexicalEnviroment <- strictEnv
+            environment.Context.VariableEnviroment <- strictEnv    
         let env = environment.Context.VariableEnviroment.Record
         for name in state.variables |> List.rev do
             if not (env.HasBinding name) then
@@ -1255,7 +1281,7 @@ type Compiler(environment:IEnvironment) as this =
         let input = Parser.parse (input + ";")
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
         let body, state = evalProgram { strict = false; element = input; labels =  [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = [] }
-        let continuation = exp.Lambda<Code>(block [| body:>exp; returnLabel |], [| environmentParam; argsParam |]).Compile()
+        let continuation = exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
         Code(performDeclarationBinding false state continuation)
 
     and compileFunctionCode (formalParameterList:ReadOnlyList<string>, functionBody:SourceElement) =

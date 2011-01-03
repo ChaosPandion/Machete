@@ -40,6 +40,27 @@
     <DocumentationFile>bin\Release\Machete.Compilers.XML</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Machete.Compilers.XML</DocumentationFile>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Machete.Compilers.XML</DocumentationFile>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="FParsec">
       <HintPath>..\References\FParsec.dll</HintPath>
@@ -63,8 +84,8 @@
   <ItemGroup>
     <Compile Include="Tools.fs" />
     <Compile Include="CharSets.fs" />
+    <Compile Include="InputElement.fs" />
     <Compile Include="Lexer.fs" />
-    <Compile Include="Parsers.fs" />
     <Compile Include="StringNumericLiteral.fs" />
     <Compile Include="SourceElement.fs" />
     <Compile Include="Parser.fs" />

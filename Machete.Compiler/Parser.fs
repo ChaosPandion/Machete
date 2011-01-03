@@ -37,6 +37,7 @@ module Parser =
             let! v = passLineTerminator
             match v with
             | IdentifierName (x, y) 
+                //when Lexer.evalIdentifierName v = value ->
                 when IdentifierNameParser.evalIdentifierName v = value ->
                         return v
             | _ -> ()
@@ -47,6 +48,7 @@ module Parser =
             let! v = passLineTerminator
             match v with
             | IdentifierName (_, _) 
+                //when value.Contains (Lexer.evalIdentifierName v) ->
                 when value.Contains (IdentifierNameParser.evalIdentifierName v) -> 
                     return v
             | _ -> ()
@@ -57,6 +59,7 @@ module Parser =
             let! v = passLineTerminator
             match v with
             | IdentifierName (x, y)
+                //when not (CharSets.reservedWordSet.Contains (Lexer.evalIdentifierName v)) ->
                 when not (CharSets.reservedWordSet.Contains (IdentifierNameParser.evalIdentifierName v)) ->
                     return Identifier v
             | _ -> ()
@@ -100,6 +103,7 @@ module Parser =
                 match v with
                 | IdentifierName (_, _) ->
                     let str = Lexer.IdentifierNameParser.evalIdentifierName v
+                    //let str = Lexer.evalIdentifierName v
                     let r = value.TryFind str
                     match r with
                     | Some v ->
@@ -221,7 +225,7 @@ module Parser =
             ("==", EqualityOperator.Equal)
             ("!=", EqualityOperator.DoesNotEqual)
             ("===", EqualityOperator.StrictEqual)
-            ("!===", EqualityOperator.StrictDoesNotEqual)
+            ("!==", EqualityOperator.StrictDoesNotEqual)
         |]
 
     let unaryOperatorMap =
@@ -317,7 +321,9 @@ module Parser =
             let! v = passLineTerminator
             match v with
             | IdentifierName (_, _) ->
-                match IdentifierNameParser.evalIdentifierName v with
+                //let str = Lexer.evalIdentifierName v
+                let str = Lexer.IdentifierNameParser.evalIdentifierName v
+                match str with
                 | "true" | "false" as s -> return Literal (BooleanLiteral s)
                 | "null" as s -> return Literal (NullLiteral s)
                 | _ -> ()
@@ -337,7 +343,9 @@ module Parser =
                 let! v = passLineTerminator
                 match v with
                 | IdentifierName (_, _) ->
-                    match IdentifierNameParser.evalIdentifierName v with
+                    //let str = Lexer.evalIdentifierName v
+                    let str = Lexer.IdentifierNameParser.evalIdentifierName v
+                    match str with
                     | "true" | "false" as s -> return PrimaryExpression (InputElement (Literal (BooleanLiteral s)))
                     | "null" as s -> return PrimaryExpression (InputElement (Literal (NullLiteral s)))
                     | "this" -> return PrimaryExpression (InputElement v)
@@ -569,13 +577,22 @@ module Parser =
         }) state 
 
     and assignmentExpressionNoIn state = 
-        ((conditionalExpressionNoIn |>> fun e -> AssignmentExpressionNoIn (e, AssignmentOperator.Nil, SourceElement.Nil)) 
-            <|> parse {
+        (parse {
             let! a = leftHandSideExpression
             let! b = expectAssignmentOperator
             let! c = assignmentExpressionNoIn
-            return AssignmentExpressionNoIn (a, b, c)  
-        }) state 
+            return AssignmentExpressionNoIn (a, b, c)                
+         }  <|> parse {
+            let! e = conditionalExpression
+            return AssignmentExpressionNoIn (e, AssignmentOperator.Nil, SourceElement.Nil)
+        }) state  
+//        ((conditionalExpressionNoIn |>> fun e -> AssignmentExpressionNoIn (e, AssignmentOperator.Nil, SourceElement.Nil)) 
+//            <|> parse {
+//            let! a = leftHandSideExpression
+//            let! b = expectAssignmentOperator
+//            let! c = assignmentExpressionNoIn
+//            return AssignmentExpressionNoIn (a, b, c)  
+//        }) state 
 
     and expression state =
         (parse {
@@ -602,7 +619,7 @@ module Parser =
     and functionExpression state = 
         (parse {
             do! skip expectFunction
-            let! i = expectIdentifier <|> result Nil
+            let! i = expectIdentifier <|> result InputElement.Nil
             let! l = between expectOpenParenthesis expectCloseParenthesis (formalParameterList <|> nil)
             let! b = between expectOpenBrace expectCloseBrace functionBody             
             return FunctionExpression (i, l, b)
