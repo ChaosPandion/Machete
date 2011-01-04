@@ -248,6 +248,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return first;
         }
 
+        [NativeFunction("slice", "start", "end"), DataDescriptor(true, false, true)]
         internal static IDynamic Slice(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -272,6 +273,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //return result;
         }
 
+        [NativeFunction("sort", "comparefn"), DataDescriptor(true, false, true)]
         internal static IDynamic Sort(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -331,207 +333,215 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //defined = (isSparse && (hasNonConfigurable || hasNonWritable || hasAccessor || protoHasProp));
         }
 
+        [NativeFunction("slice", "start", "deleteCount"), DataDescriptor(true, false, true)]
         internal static IDynamic Splice(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
+        [NativeFunction("unshift", "item1"), DataDescriptor(true, false, true)]
         internal static IDynamic Unshift(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
+        [NativeFunction("indexOf", "searchElement"), DataDescriptor(true, false, true)]
         internal static IDynamic IndexOf(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
 
-        //    //if (length == 0)
-        //    //{
-        //    //    return new NumberPrimitive(-1D);
-        //    //}
+            if (length == 0)
+            {
+                return environment.CreateNumber(-1);
+            }
 
-        //    //var searchElement = args[0];
-        //    //var fromIndex = Math.Max(Math.Floor(args[1].ToNumberPrimitive().Value), 0D);
+            var searchElement = args[0];
+            var fromIndex = (uint)Math.Max(Math.Floor(args[1].ConvertToNumber().BaseValue), 0D);
 
-        //    //if (fromIndex >= length)
-        //    //{
-        //    //    return new NumberPrimitive(-1D);
-        //    //}
+            if (fromIndex >= length)
+            {
+                return environment.CreateNumber(-1);
+            }
 
-        //    //for (int i = (int)fromIndex; i < length; i++)
-        //    //{
-        //    //    if (obj.HasProperty(i.ToString()))
-        //    //    {
-        //    //        if (obj.Get(i.ToString()).Execute(BinaryOp.StrictEqual, searchElement).ToBooleanPrimitive())
-        //    //        {
-        //    //            return new NumberPrimitive(i);
-        //    //        }
-        //    //    }
-        //    //}
+            for (uint i = 0; i < length; i++)
+            {
+                var key = i.ToString();
+                if (obj.HasProperty(key))
+                {
+                    if (obj.Get(key).Op_StrictEquals(searchElement).ConvertToBoolean().BaseValue)
+                    {
+                        return environment.CreateNumber(i);
+                    }
+                }
+            }
 
-        //    //return new NumberPrimitive(-1D);
+            return environment.CreateNumber(-1);
         }
 
+        [NativeFunction("lastIndexOf", "searchElement"), DataDescriptor(true, false, true)]
         internal static IDynamic LastIndexOf(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
 
-        //    //if (length == 0)
-        //    //{
-        //    //    return new NumberPrimitive(-1D);
-        //    //}
+            if (length == 0)
+            {
+                return environment.CreateNumber(-1);
+            }
 
-        //    //var searchElement = args[0];
-        //    //var fromIndex = Math.Max(Math.Floor(args[1].ToNumberPrimitive().Value), 0D);
+            var searchElement = args[0];
+            var fromIndex = (uint)Math.Max(Math.Floor(args[1].ConvertToNumber().BaseValue), 0D);
 
-        //    //if (fromIndex >= length)
-        //    //{
-        //    //    return new NumberPrimitive(-1D);
-        //    //}
-        //    //else if (fromIndex == 0D)
-        //    //{
-        //    //    fromIndex = (double)(length - 1);
-        //    //}
-        //    //else if (fromIndex > 0)
-        //    //{
-        //    //    fromIndex = Math.Min(fromIndex, (double)(length - 1));
-        //    //}
+            if (fromIndex >= length)
+            {
+                return environment.CreateNumber(-1);
+            }
+            else if (fromIndex == 0)
+            {
+                fromIndex = length - 1;
+            }
+            else if (fromIndex > 0)
+            {
+                fromIndex = Math.Min(fromIndex, (length - 1));
+            }
 
-        //    //for (int i = (int)fromIndex; i >= 0; --i)
-        //    //{
-        //    //    if (obj.HasProperty(i.ToString()))
-        //    //    {
-        //    //        if (obj.Get(i.ToString()).Execute(BinaryOp.StrictEqual, searchElement).ToBooleanPrimitive())
-        //    //        {
-        //    //            return new NumberPrimitive(i);
-        //    //        }
-        //    //    }
-        //    //}
+            for (uint i = fromIndex; i >= 0; --i)
+            {
+                var key = i.ToString();
+                if (obj.HasProperty(key))
+                {
+                    if (obj.Get(key).Op_StrictEquals(searchElement).ConvertToBoolean().BaseValue)
+                    {
+                        return environment.CreateNumber(i);
+                    }
+                }
+            }
 
-        //    //return new NumberPrimitive(-1D);
+            return environment.CreateNumber(-1);
         }
 
+        [NativeFunction("every", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Every(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var callback = args.Get<ICallable>(0);
-        //    //var thisArg = args[1];
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var callArgs = new IDynamic[] { null, null, obj };
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var callbackfn = args[0] as ICallable;
+            var thisArg = args[1];
 
-        //    //if (callback == null)
-        //    //{
-        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-        //    //}
+            if (callbackfn == null)
+            {
+                throw environment.CreateTypeError("The first parameter 'callbackfn' must be callable.");
+            }
 
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-        //    //for (int i = 0; i < length; i++)
-        //    //{
-        //    //    if (obj.HasProperty(i.ToString()))
-        //    //    {
-        //    //        callbackArgs[0] = obj.Get(i.ToString());
-        //    //        callbackArgs[1] = new NumberPrimitive(i);
-        //    //        if (!callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
-        //    //        {
-        //    //            return new BooleanPrimitive(false);
-        //    //        }
-        //    //    }
-        //    //}
-        //    //return new BooleanPrimitive(true);
+            for (uint i = 0; i < length; i++)
+            {
+                var key = i.ToString();
+                if (obj.HasProperty(key))
+                {
+                    callArgs[0] = obj.Get(key);
+                    callArgs[1] = environment.CreateNumber(i);
+                    if (!callbackfn.Call(environment, thisArg, environment.CreateArgs(callArgs)).ConvertToBoolean().BaseValue)
+                    {
+                        return environment.False;
+                    }
+                }
+            }
+
+            return environment.True;
         }
 
+        [NativeFunction("some", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Some(IEnvironment environment, IArgs args)
         {
-           throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var callback = args.Get<ICallable>(0);
-        //    //var thisArg = args[1];
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var callArgs = new IDynamic[] { null, null, obj };
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var callbackfn = args[0] as ICallable;
+            var thisArg = args[1];
 
-        //    //if (callback == null)
-        //    //{
-        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-        //    //}
+            if (callbackfn == null)
+            {
+                throw environment.CreateTypeError("The first parameter 'callbackfn' must be callable.");
+            }
 
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-        //    //var key = default(string);
-        //    //for (int i = 0; i < length; i++)
-        //    //{
-        //    //    key = i.ToString();
-        //    //    if (obj.HasProperty(key))
-        //    //    {
-        //    //        callbackArgs[0] = obj.Get(key);
-        //    //        callbackArgs[1] = new NumberPrimitive(i);
-        //    //        if (callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
-        //    //        {
-        //    //            return new BooleanPrimitive(true);
-        //    //        }
-        //    //    }
-        //    //}
-        //    //return new BooleanPrimitive(false);
+            for (uint i = 0; i < length; i++)
+            {
+                var key = i.ToString();
+                if (obj.HasProperty(key))
+                {
+                    callArgs[0] = obj.Get(key);
+                    callArgs[1] = environment.CreateNumber(i);
+                    if (callbackfn.Call(environment, thisArg, environment.CreateArgs(callArgs)).ConvertToBoolean().BaseValue)
+                    {
+                        return environment.True;
+                    }
+                }
+            }
+
+            return environment.False;
         }
 
+        [NativeFunction("forEach", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic ForEach(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var callback = args.Get<ICallable>(0);
-        //    //var thisArg = args[1];
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var callArgs = new IDynamic[] { null, null, obj };
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var callbackfn = args[0] as ICallable;
+            var thisArg = args[1];
 
-        //    //if (callback == null)
-        //    //{
-        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-        //    //}
+            if (callbackfn == null)
+            {
+                throw environment.CreateTypeError("The first parameter 'callbackfn' must be callable.");
+            }
 
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-        //    //var key = default(string);
-        //    //for (int i = 0; i < length; i++)
-        //    //{
-        //    //    key = i.ToString();
-        //    //    if (obj.HasProperty(key))
-        //    //    {
-        //    //        callbackArgs[0] = obj.Get(key);
-        //    //        callbackArgs[1] = new NumberPrimitive(i);
-        //    //        callback.Call(thisArg, callbackArgs);
-        //    //    }
-        //    //}
-        //    //return new UndefinedPrimitive();
+            for (uint i = 0; i < length; i++)
+            {
+                var key = i.ToString();
+                if (obj.HasProperty(key))
+                {
+                    callArgs[0] = obj.Get(key);
+                    callArgs[1] = environment.CreateNumber(i);
+                    callbackfn.Call(environment, thisArg, environment.CreateArgs(callArgs));
+                }
+            }
+
+            return environment.Undefined;
         }
 
+        [NativeFunction("map", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Map(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var callback = args.Get<ICallable>(0);
-        //    //var thisArg = args[1];
+            var result = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var callArgs = new IDynamic[] { null, null, obj };
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var callbackfn = args[0] as ICallable;
+            var thisArg = args[1];
 
-        //    //if (callback == null)
-        //    //{
-        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-        //    //}
+            if (callbackfn == null)
+            {
+                throw environment.CreateTypeError("The first parameter 'callbackfn' must be callable.");
+            }
 
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-        //    //var key = default(string);
-        //    //for (int i = 0; i < length; i++)
-        //    //{
-        //    //    key = i.ToString();
-        //    //    if (obj.HasProperty(key))
-        //    //    {
-        //    //        callbackArgs[0] = obj.Get(key);
-        //    //        callbackArgs[1] = new NumberPrimitive(i);
-        //    //        result.DefineOwnProperty(key, Property.Create(callback.Call(thisArg, callbackArgs), true, true, true), false);
-        //    //    }
-        //    //}
-        //    //return result;
+            for (uint i = 0; i < length; i++)
+            {
+                var key = i.ToString();
+                if (obj.HasProperty(key))
+                {
+                    callArgs[0] = obj.Get(key);
+                    callArgs[1] = environment.CreateNumber(i);
+                    var value = callbackfn.Call(environment, thisArg, environment.CreateArgs(callArgs));
+                    result.DefineOwnProperty(key, environment.CreateDataDescriptor(value, true, true, true), false);
+                }
+            }
+
+            return result;
         }
 
+        [NativeFunction("filter", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Filter(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -566,6 +576,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //return result;
         }
 
+        [NativeFunction("reduce", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Reduce(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -617,6 +628,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //return accumulator;
         }
 
+        [NativeFunction("reduceRight", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic ReduceRight(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -668,30 +680,17 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //return accumulator;
         }
 
-        internal static bool IsSparse(LObject obj, int length)
+        private static bool IsSparse(IObject o)
         {
-            throw new NotImplementedException();
-        //    //for (int i = 0; i < length; i++)
-        //    //{
-        //    //    if (obj.GetOwnProperty(i.ToString()).IsUndefined)
-        //    //    {
-        //    //        return true;
-        //    //    }
-        //    //}
-        //    //return false;
+            uint len = (uint)o.Get("length").ConvertToUInt32().BaseValue;
+            for (uint i = 0; i < len; i++)
+            {
+                if (o.GetOwnProperty(i.ToString()) == null)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
-        
-        //private static bool IsSparse(IObject o)
-        //{
-        //    uint len = (uint)o.Get("length").ConvertToUInt32().BaseValue;
-        //    for (uint i = 0; i < len; i++)
-        //    {
-        //        if (o.GetOwnProperty(i.ToString()) == null)
-        //        {
-        //            return true;
-        //        }
-        //    }
-        //    return false;
-        //}
     }
 }

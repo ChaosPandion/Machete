@@ -14,7 +14,7 @@ module ConsoleAgent =
     | WriteLine of obj * ConsoleColor
     | GetPosition of AsyncReplyChannel<Position>
     | SetPosition of Position
-    | ReadKey of AsyncReplyChannel<ConsoleKeyInfo>
+    | ReadLine of AsyncReplyChannel<string>
 
     let processMessage (inbox:MailboxProcessor<RequestAction>) =
         async {
@@ -37,8 +37,8 @@ module ConsoleAgent =
                     | SetPosition (position) ->
                         Console.CursorTop <- position.top
                         Console.CursorLeft <- position.left
-                    | ReadKey (channel) ->
-                        channel.Reply (Console.ReadKey(true))
+                    | ReadLine (channel) ->
+                        channel.Reply (Console.ReadLine())
                 with | e -> ()
         }
 
@@ -56,5 +56,5 @@ module ConsoleAgent =
     let setPosition position =
         agent.Post (SetPosition position)
         
-    let readKey () =
-        agent.PostAndReply (fun channel -> ReadKey channel)
+    let readLine () =
+        agent.PostAndReply (fun channel -> ReadLine channel)

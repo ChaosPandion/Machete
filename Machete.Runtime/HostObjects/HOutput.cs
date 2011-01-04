@@ -8,7 +8,7 @@ namespace Machete.Runtime.HostObjects
         public HOutput(IEnvironment environment)
             : base(environment)
         {
-
+            Initialize();
         }
 
         public override void Initialize()

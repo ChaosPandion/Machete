@@ -26,7 +26,7 @@ namespace Machete.Tests
             Assert.Equal("boolean", (string)Engine.ExecuteScript("typeof true"));
             Assert.Equal("number", (string)Engine.ExecuteScript("typeof 0"));
             Assert.Equal("string", (string)Engine.ExecuteScript("typeof ''"));
-            Assert.Equal("object", (string)Engine.ExecuteScript("typeof {}"));
+            Assert.Equal("object", (string)Engine.ExecuteScript("typeof ({})"));
             Assert.Equal("function", (string)Engine.ExecuteScript("typeof function(){}"));
         }
 

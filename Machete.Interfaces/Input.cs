@@ -12,14 +12,9 @@ namespace Machete.Interfaces
             return _messages.Take();
         }
 
-        public string Read(int timeout)
+        public void Write(string value)
         {
-            string result;
-            if (!_messages.TryTake(out result, timeout))
-            {
-                return null;
-            }
-            return result;
+            _messages.Add(value);
         }
 
         public string Take()

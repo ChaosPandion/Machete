@@ -15,6 +15,7 @@ type Engine () =
     let compiler = new Compiler(environment)
     let handlers = Microsoft.FSharp.Collections.HashMultiMap<Action<string>, MailboxProcessor<Action<string>>>(HashIdentity.Structural)
 
+
     let checkOutput (inbox:MailboxProcessor<Action<string>>) = async {
         do! Async.SwitchToNewThread ()
         let! handler = inbox.Receive ()
@@ -76,6 +77,5 @@ type Engine () =
     member this.ExecuteScriptAsTask (script:string, timeout:int) =
         agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script, timeout) |> Async.StartAsTask 
         
-
     member this.RegisterOutputHandler (handler:Action<string>) =
         agent.Value.Post (RegisterOutputHandler handler)

@@ -128,13 +128,25 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.4.4.16 Array.prototype.every ( callbackfn [ , thisArg ] )")]
         public void Test154416()
         {
-            Assert.True(false);
+            var script = @"
+                function every(value, index, obj) {
+                    return value >= 10;
+                }
+                ([10, 20, 30, 40, 50, 60]).every(every);
+            ";
+            Assert.True((bool)Engine.ExecuteScript(script));
         }
 
         [Fact(DisplayName = "15.4.4.17 Array.prototype.some ( callbackfn [ , thisArg ] )")]
         public void Test154417()
         {
-            Assert.True(false);
+            var script = @"
+                function some(value, index, obj) {
+                    return value >= 10;
+                }
+                ([1, 2, 3, 4, 5, 10]).some(some);
+            ";
+            Assert.True((bool)Engine.ExecuteScript(script));
         }
 
         [Fact(DisplayName = "15.4.4.18 Array.prototype.forEach ( callbackfn [ , thisArg ] )")]

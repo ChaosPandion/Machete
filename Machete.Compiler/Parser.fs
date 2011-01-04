@@ -4,6 +4,7 @@ module Parser =
     open System
     open Machete.Compiler.Lexer
     open Machete.Compiler.Tools
+    open Machete.Compiler.Tools.TreeTraverser
 
     type State = {
         dummy:int
@@ -565,34 +566,53 @@ module Parser =
             return ConditionalExpressionNoIn (e1, SourceElement.Nil, SourceElement.Nil)
         }) state
 
-    and assignmentExpression state = 
+    and getLeftHandSideExpression e =
+        (traverse {
+            do! function | ConditionalExpression (e, Nil, Nil) -> Some e | _ -> None            
+            do! function | LogicalORExpression (Nil, e) -> Some e | _ -> None
+            do! function | LogicalANDExpression (Nil, e) -> Some e | _ -> None
+            do! function | BitwiseORExpression (Nil, e) -> Some e | _ -> None
+            do! function | BitwiseXORExpression (Nil, e) -> Some e | _ -> None
+            do! function | BitwiseANDExpression (Nil, e) -> Some e | _ -> None            
+            do! function | EqualityExpression (Nil, EqualityOperator.Nil, e) -> Some e | _ -> None
+            do! function | RelationalExpression (Nil, RelationalOperator.Nil, e) -> Some e | _ -> None
+            do! function | ShiftExpression (Nil, BitwiseShiftOperator.Nil, e) -> Some e | _ -> None            
+            do! function | AdditiveExpression (Nil, AdditiveOperator.Nil, e) -> Some e | _ -> None
+            do! function | MultiplicativeExpression (Nil, MultiplicativeOperator.Nil, e) -> Some e | _ -> None
+            do! function | UnaryExpression (UnaryOperator.Nil, e) -> Some e | _ -> None
+            do! function | PostfixExpression (e, PostfixOperator.Nil) -> Some e | _ -> None            
+            return! fun e -> match e with | LeftHandSideExpression (_) -> Some e | _ -> None
+        }) e
+
+    and assignmentExpression state =
         (parse {
-            let! a = leftHandSideExpression
-            let! b = expectAssignmentOperator
-            let! c = assignmentExpression
-            return AssignmentExpression (a, b, c)                
-         }  <|> parse {
             let! e = conditionalExpression
-            return AssignmentExpression (e, AssignmentOperator.Nil, SourceElement.Nil)
+            let! b = maybe expectAssignmentOperator
+            if b.IsSome then
+                let e = getLeftHandSideExpression e
+                let! c = assignmentExpression
+                if e.IsNone then
+                    return AssignmentExpression (SourceElement.Nil, b.Value, c)
+                else
+                    return AssignmentExpression (e.Value, b.Value, c)
+            else
+                return AssignmentExpression (e, AssignmentOperator.Nil, SourceElement.Nil)  
         }) state 
 
     and assignmentExpressionNoIn state = 
         (parse {
-            let! a = leftHandSideExpression
-            let! b = expectAssignmentOperator
-            let! c = assignmentExpressionNoIn
-            return AssignmentExpressionNoIn (a, b, c)                
-         }  <|> parse {
             let! e = conditionalExpression
-            return AssignmentExpressionNoIn (e, AssignmentOperator.Nil, SourceElement.Nil)
-        }) state  
-//        ((conditionalExpressionNoIn |>> fun e -> AssignmentExpressionNoIn (e, AssignmentOperator.Nil, SourceElement.Nil)) 
-//            <|> parse {
-//            let! a = leftHandSideExpression
-//            let! b = expectAssignmentOperator
-//            let! c = assignmentExpressionNoIn
-//            return AssignmentExpressionNoIn (a, b, c)  
-//        }) state 
+            let! b = maybe expectAssignmentOperator
+            if b.IsSome then
+                let e = getLeftHandSideExpression e
+                let! c = assignmentExpressionNoIn
+                if e.IsNone then
+                    return AssignmentExpressionNoIn (SourceElement.Nil, b.Value, c)
+                else
+                    return AssignmentExpressionNoIn (e.Value, b.Value, c)
+            else
+                return AssignmentExpressionNoIn (e, AssignmentOperator.Nil, SourceElement.Nil)  
+        }) state
 
     and expression state =
         (parse {

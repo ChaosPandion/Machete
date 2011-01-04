@@ -23,7 +23,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             Class = "Core";
             Prototype = null;
             Extensible = true;
-            DefineOwnProperty("core", Environment.CreateDataDescriptor(this, false, false, false), false);
+
             DefineOwnProperty("NaN", Environment.CreateDataDescriptor(Environment.CreateNumber(double.NaN), false, false, false), false);
             DefineOwnProperty("Infinity", Environment.CreateDataDescriptor(Environment.CreateNumber(double.PositiveInfinity), false, false, false), false);
             DefineOwnProperty("undefined", Environment.CreateDataDescriptor(Environment.Undefined, false, false, false), false);
@@ -45,9 +45,8 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             DefineOwnProperty("Math", Environment.CreateDataDescriptor(Environment.MathObject, true, false, true), false);
             DefineOwnProperty("JSON", Environment.CreateDataDescriptor(Environment.JsonObject, true, false, true), false);
 
-            var o = new HOutput(Environment);
-            o.Initialize();
-            DefineOwnProperty("output", Environment.CreateDataDescriptor(o, false, false, false), false);
+            DefineOwnProperty("core", Environment.CreateDataDescriptor(this, false, false, false), false);
+            DefineOwnProperty("output", Environment.CreateDataDescriptor(new HOutput(Environment), false, false, false), false);
 
             base.Initialize();
         }

@@ -5,9 +5,6 @@ module Lexer =
     open FParsec.CharParsers
     open FParsec.Primitives
     
-
-
-
     type LexerState = {
         previousElement : option<InputElement>
     }
@@ -134,10 +131,7 @@ module Lexer =
                     match c with
                     | c when c >= '0' && c <= '9' -> int c - 48 |> double   
                     | c when c >= 'a' && c <= 'f' -> int c - 87 |> double  
-                    | c when c >= 'A' && c <= 'F' -> int c - 55 |> double    
-                    | _ ->  invalidOp ("Unexpected value '" + c.ToString() + "' found while evaluating HexDigit.")        
-                | _ -> invalidOp "Unexpected pattern for HexDigit."     
-            | _ -> invalidArg "v" "Expected HexDigit."
+                    | c when c >= 'A' && c <= 'F' -> int c - 55 |> double
 
         let rec evalHexIntegerLiteral v =
             match v with
@@ -146,9 +140,7 @@ module Lexer =
                 | Nil, HexDigit _ ->
                     evalHexDigit r |> double 
                 | HexIntegerLiteral (_, _), HexDigit _ ->
-                    (16.0 * evalHexIntegerLiteral l + evalHexDigit r) |> double  
-                | _ -> invalidOp "Unexpected pattern for HexIntegerLiteral."       
-            | _ -> invalidArg "v" "Expected HexDigit."
+                    (16.0 * evalHexIntegerLiteral l + evalHexDigit r) |> double
 
         let evalDecimalDigit v =
             match v with
@@ -156,9 +148,7 @@ module Lexer =
                 match v with
                 | Chr c ->
                     assert(c >= '0' && c <= '9')
-                    int c - 48       
-                | _ -> invalidOp "Unexpected pattern for DecimalDigit."     
-            | _ -> invalidArg "v" "Expected DecimalDigit."
+                    int c - 48
 
         let evalNonZeroDigit v =
             match v with
@@ -166,9 +156,7 @@ module Lexer =
                 match v with
                 | Chr c -> 
                     assert(c >= '1' && c <= '9')
-                    int c - 48        
-                | _ -> invalidOp "Unexpected pattern for NonZeroDigit."     
-            | _ -> invalidArg "v" "Expected NonZeroDigit."
+                    int c - 48
     
         let rec countDecimalDigits v n =
             match v with
@@ -176,8 +164,6 @@ module Lexer =
                 match l, r with
                 | Nil, DecimalDigit _ -> n + 1
                 | DecimalDigits (_, _), DecimalDigit _ -> countDecimalDigits l (n + 1)
-                | _ -> invalidOp "Invalid DecimalDigits pattern found."                   
-            | _ -> invalidArg "v" "Expected DecimalDigits."
 
         let rec evalDecimalDigits d =
             match d with
@@ -187,8 +173,6 @@ module Lexer =
                     evalDecimalDigit r
                 | DecimalDigits (_, _), DecimalDigit _ ->
                     10 * evalDecimalDigits l + evalDecimalDigit r
-                | _ -> invalidOp "Invalid DecimalDigits pattern found."                   
-            | _ -> invalidArg "d" "Expected DecimalDigits."
 
         let evalDecimalIntegerLiteral d =
             match d with
@@ -200,9 +184,7 @@ module Lexer =
                 | NonZeroDigit _, DecimalDigits (_, _) ->  
                     let n = float (countDecimalDigits r 0) 
                     let n = int (10.0 ** n)
-                    n * evalNonZeroDigit l + evalDecimalDigits r                    
-                | _ -> invalidOp "Invalid DecimalIntegerLiteral pattern found."                    
-            | _ -> invalidArg "d" "Expected DecimalIntegerLiteral."
+                    n * evalNonZeroDigit l + evalDecimalDigits r
 
         let evalSignedInteger v =
             match v with
@@ -220,8 +202,6 @@ module Lexer =
                 match r with
                 | SignedInteger (_, _) ->
                     evalSignedInteger r
-                | _ -> invalidOp "Invalid ExponentPart pattern found."                  
-            | _ -> invalidArg "v" "Expected ExponentPart."
         
         let evalDecimalLiteral v =
             match v with
@@ -255,8 +235,6 @@ module Lexer =
                     let eValue = evalExponentPart d |> double
                     let fValue = evalDecimalDigits c |> double
                     fValue * 10.0 ** (eValue - digitCount)
-                | _ -> invalidOp "Invalid DecimalLiteral pattern found."                  
-            | _ -> invalidArg "v" "Expected DecimalLiteral."
 
         let evalNumericLiteral v =
             match v with
@@ -341,22 +319,18 @@ module Lexer =
         let evalUnicodeEscapeSequence v =
             match v with
             | UnicodeEscapeSequence (a, b, c, d) -> 
-                char (4096.0 * evalHexDigit a + 256.0 * evalHexDigit b + 16.0 * evalHexDigit c + evalHexDigit d)                  
-            | _ -> invalidArg "v" "Expected UnicodeEscapeSequence." 
+                char (4096.0 * evalHexDigit a + 256.0 * evalHexDigit b + 16.0 * evalHexDigit c + evalHexDigit d)
 
         let evalHexEscapeSequence v =
             match v with
             | HexEscapeSequence (h, l) -> 
-                char (16.0 * evalHexDigit h + evalHexDigit l)                  
-            | _ -> invalidArg "v" "Expected HexEscapeSequence." 
+                char (16.0 * evalHexDigit h + evalHexDigit l)
 
         let evalNonEscapeCharacter v =
             match v with
             | NonEscapeCharacter v -> 
                 match v with
                 | Chr c -> c
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected NonEscapeCharacter." 
         
         let evalCharacterEscapeSequence v =
             match v with
@@ -375,11 +349,7 @@ module Lexer =
                         | 'r' -> '\u000D'
                         | '\"' -> '\u0022'
                         | '\'' -> '\u0027'
-                        | '\\' -> '\u005C'
-                        | _ -> invalidOp ""  
-                    | _ -> invalidOp ""  
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected CharacterEscapeSequence." 
+                        | '\\' -> '\u005C' 
     
         let evalEscapeSequence v =
             match v with
@@ -388,9 +358,7 @@ module Lexer =
                 | CharacterEscapeSequence _ -> evalCharacterEscapeSequence v
                 | Chr '0' -> '\u0000'
                 | HexEscapeSequence (_,_) -> evalHexEscapeSequence v 
-                | UnicodeEscapeSequence (_,_,_,_) -> evalUnicodeEscapeSequence v 
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected EscapeSequence."
+                | UnicodeEscapeSequence (_,_,_,_) -> evalUnicodeEscapeSequence v
     
         let evalSingleStringCharacter v =
             match v with
@@ -398,9 +366,7 @@ module Lexer =
                 match v with
                 | Chr c -> c |> string
                 | EscapeSequence _ -> evalEscapeSequence v |> string
-                | LineContinuation -> "" 
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected SingleStringCharacter."
+                | LineContinuation -> ""
 
         let evalDoubleStringCharacter v =
             match v with
@@ -408,14 +374,11 @@ module Lexer =
                 match v with
                 | Chr c -> c |> string
                 | EscapeSequence _ -> evalEscapeSequence v |> string
-                | LineContinuation -> "" 
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected DoubleStringCharacter."
+                | LineContinuation -> ""
 
         let evalLineContinuation v =
             match v with
-            | LineContinuation -> ""                
-            | _ -> invalidArg "v" "Expected LineContinuation."
+            | LineContinuation -> ""
 
         let rec evalSingleStringCharacters v =
             match v with
@@ -425,8 +388,6 @@ module Lexer =
                     evalSingleStringCharacter l |> string
                 | SingleStringCharacter _, SingleStringCharacters (_, _) ->
                     (evalSingleStringCharacter l) + evalSingleStringCharacters r
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected SingleStringCharacters."
 
         let rec evalDoubleStringCharacters v =
             match v with
@@ -436,8 +397,6 @@ module Lexer =
                     evalDoubleStringCharacter l |> string
                 | DoubleStringCharacter _, DoubleStringCharacters (_, _) ->
                     (evalDoubleStringCharacter l) + evalDoubleStringCharacters r
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected DoubleStringCharacter."
         
         let evalStringLiteral v =
             match v with
@@ -446,10 +405,8 @@ module Lexer =
                 | DoubleStringCharacters (_, _) ->
                     evalDoubleStringCharacters v
                 | SingleStringCharacters (_, _) ->
-                    evalSingleStringCharacters v
-                | _ -> ""                
-            | _ -> invalidArg "v" "Expected StringLiteral."
-            
+                    evalSingleStringCharacters v 
+                | Nil -> ""           
 
     module IdentifierNameParser =
 
@@ -504,8 +461,6 @@ module Lexer =
                 | UnicodeLetter c -> c
                 | Chr c -> c
                 | UnicodeEscapeSequence (_, _, _, _) -> evalUnicodeEscapeSequence v
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected IdentifierStart."
     
         let evalIdentifierPart v =
             match v with
@@ -515,9 +470,7 @@ module Lexer =
                 | UnicodeCombiningMark c -> c
                 | UnicodeDigit c -> c
                 | UnicodeConnectorPunctuation c -> c
-                | Chr c -> c
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected IdentifierPart."    
+                | Chr c -> c   
 
         let rec evalIdentifierName v =
             match v with
@@ -527,8 +480,6 @@ module Lexer =
                     evalIdentifierStart l |> string
                 | IdentifierName (_, _), IdentifierPart _ ->
                     evalIdentifierName l + (evalIdentifierPart r |> string)
-                | _ -> invalidOp ""                 
-            | _ -> invalidArg "v" "Expected IdentifierName."
 
     module Punctuator =
 
@@ -744,46 +695,20 @@ module Lexer =
                     | _ -> RegularExpressionLiteralParser.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
                 | None -> RegularExpressionLiteralParser.parseRegularExpressionLiteral <|> DivPunctuator.parseDivPunctuator 
 
-    let private exec =
-        choice [
-            WhiteSpace.parseWhiteSpace
-            LineTerminator.parseLineTerminator
-            Comment.parseComment
-            IdentifierNameParser.identifierName
-            NumericLiteralParser.numericLiteral
-            Punctuator.parsePunctuator
-            StringLiteralParser.stringLiteral
-            divChoice  
-        ]
+    let private choices = [|
+        WhiteSpace.parseWhiteSpace
+        LineTerminator.parseLineTerminator
+        Comment.parseComment
+        IdentifierNameParser.identifierName
+        NumericLiteralParser.numericLiteral
+        Punctuator.parsePunctuator
+        StringLiteralParser.stringLiteral
+        divChoice  
+    |]
 
-
-//    let evalCache = 
-//        MailboxProcessor.Start (
-//            fun (inbox:MailboxProcessor<InputElement * AsyncReplyChannel<obj>>) -> async {
-//                let cache = Microsoft.FSharp.Collections.HashMultiMap<int, obj>(HashIdentity.Structural)
-//                while true do
-//                    let! msg, channel = inbox.Receive ()
-//                    let key = msg.GetHashCode ()
-//                    match msg with
-//                    | NumericLiteral (_) ->
-//                        if not (cache.ContainsKey(key)) then
-//                            let num = NumericLiteralParser.evalNumericLiteral msg
-//                            cache.Add (key, num :> obj)
-//                        channel.Reply (cache.[key])
-//                    | IdentifierName (_, _) ->
-//                        if not (cache.ContainsKey(key)) then
-//                            let str = IdentifierNameParser.evalIdentifierName msg
-//                            cache.Add (key, str :> obj)
-//                        channel.Reply (cache.[key])     
-//            } 
-//        )
-//        
-//    let evalNumericLiteral e =
-//        evalCache.PostAndReply (fun channel -> e, channel) :?> double
-//
-//    let evalIdentifierName e =
-//        evalCache.PostAndReply (fun channel -> e, channel) :?> string
-
+    let private exec reply =
+        choice choices reply
+        
     let tokenize (input:string) =        
         let rec tokenize i r =
             seq {
