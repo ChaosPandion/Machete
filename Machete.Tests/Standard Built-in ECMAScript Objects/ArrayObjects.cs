@@ -62,7 +62,7 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.4.4.5 Array.prototype.join (separator)")]
         public void Test15445()
         {
-            Assert.True(false);
+            Assert.Equal("1|2|3|4|5", (string)Engine.ExecuteScript("[1,2,3,4,5].join('|')"));
         }
 
         [Fact(DisplayName = "15.4.4.6 Array.prototype.pop ( )")]
