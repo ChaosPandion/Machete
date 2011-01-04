@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Machete.Interfaces
 {
     public interface IEnvironment
     {
+        Input Input { get; }
+        Output Output { get; }
+ 
         IExecutionContext Context { get; }
         IArgs EmptyArgs { get; }
         IUndefined Undefined { get; }

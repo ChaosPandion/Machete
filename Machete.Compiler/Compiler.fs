@@ -1265,10 +1265,16 @@ type Compiler(environment:IEnvironment) as this =
         continuation.Invoke (environment, args)           
 
     and compileGlobalCode (input:string) =
+        let sw = System.Diagnostics.Stopwatch.StartNew()
         let input = Parser.parse (input + ";")
+        sw.Stop()
+        environment.Output.Write ("Parse Time: " + sw.Elapsed.ToString())
+        sw.Restart()
         let returnLabel = exp.Label(exp.Label(typeof<dyn>, "return"), getUndefined)
         let body, state = evalProgram { strict = false; element = input; labels = [ Map.ofList [ ("return", returnLabel) ] ]; functions = []; variables = [] }
         let continuation = exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
+        sw.Stop()
+        environment.Output.Write ("Compile Time: " + sw.Elapsed.ToString())
         Code(performDeclarationBinding true state continuation)
         
     and compileEvalCode (input:string) =

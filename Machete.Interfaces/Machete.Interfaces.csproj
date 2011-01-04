@@ -89,6 +89,7 @@
     <Compile Include="IFunction.cs" />
     <Compile Include="IHasInstance.cs" />
     <Compile Include="ILexicalEnvironment.cs" />
+    <Compile Include="Input.cs" />
     <Compile Include="INull.cs" />
     <Compile Include="INumber.cs" />
     <Compile Include="IObject.cs" />
@@ -103,6 +104,7 @@
     <Compile Include="MacheteException.cs" />
     <Compile Include="MacheteRuntimeException.cs" />
     <Compile Include="NativeFunctionAttribute.cs" />
+    <Compile Include="Output.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReadOnlyList.cs" />
   </ItemGroup>

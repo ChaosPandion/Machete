@@ -13,6 +13,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Interfaces;
 using Machete.Compiler;
 using System.Diagnostics;
+using System.IO;
 
 namespace Machete.Runtime
 {
@@ -26,6 +27,9 @@ namespace Machete.Runtime
         {
             _contextStack = new Stack<IExecutionContext>();
             _compiler = new Compiler.Compiler(this);
+
+            Input = new Input();
+            Output = new Output();
 
             EmptyArgs = new SArgs(this);
             True = new LBoolean(this, true);
@@ -174,6 +178,11 @@ namespace Machete.Runtime
         }
 
 
+
+
+
+        public Input Input { get; private set; }
+        public Output Output { get; private set; }
         public IExecutionContext Context { get; private set; }
         public IArgs EmptyArgs { get; private set; }
         public IUndefined Undefined { get; private set; }

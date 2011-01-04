@@ -102,6 +102,8 @@
   <ItemGroup>
     <Compile Include="Environment.cs" />
     <Compile Include="ExecutionContext.cs" />
+    <Compile Include="HostObjects\HInput.cs" />
+    <Compile Include="HostObjects\HOutput.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CBoolean.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CDate.cs" />

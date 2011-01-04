@@ -1,22 +1,40 @@
 ﻿namespace Machete
 
+open System
 open Machete.Interfaces
 open Machete.Runtime
 open Machete.Compiler
 
 type internal Message =
 | ExecuteScript of string * AsyncReplyChannel<obj>
+| RegisterOutputHandler of Action<string> 
 
-type Engine () =   
+type Engine () = 
+
+    let environment = new Environment()
+    let compiler = new Compiler(environment)
+    let handlers = Microsoft.FSharp.Collections.HashMultiMap<Action<string>, MailboxProcessor<Action<string>>>(HashIdentity.Structural)
+
+    let checkOutput (inbox:MailboxProcessor<Action<string>>) = async {
+        do! Async.SwitchToNewThread ()
+        let! handler = inbox.Receive ()
+        while true do
+            try
+                let str = environment.Output.Take()
+                handler.Invoke str
+            with | e -> ()
+    }  
 
     let proccessMessages (inbox:MailboxProcessor<Message>) = async {
         do! Async.SwitchToNewThread ()
-        let environment = new Environment()
-        let compiler = new Compiler(environment)
         while true do
             try
                 let! msg = inbox.Receive ()
                 match msg with
+                | RegisterOutputHandler (handler) ->
+                    let agent = MailboxProcessor.Start checkOutput
+                    agent.Post handler
+                    handlers.Add (handler, agent)    
                 | ExecuteScript (script, channel) ->
                     try
                         let r = compiler.CompileGlobalCode(script)
@@ -56,4 +74,8 @@ type Engine () =
         agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script) |> Async.StartAsTask 
 
     member this.ExecuteScriptAsTask (script:string, timeout:int) =
-        agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script, timeout) |> Async.StartAsTask   
+        agent.Value.PostAndAsyncReply (buildExecuteScriptMessage script, timeout) |> Async.StartAsTask 
+        
+
+    member this.RegisterOutputHandler (handler:Action<string>) =
+        agent.Value.Post (RegisterOutputHandler handler)

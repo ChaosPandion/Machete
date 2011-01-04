@@ -531,39 +531,36 @@ module Lexer =
             | _ -> invalidArg "v" "Expected IdentifierName."
 
     module Punctuator =
-        let punctuatorMap<'a> : Map<char, Parser<InputElement, 'a>> =
-             Map.ofList [
-                ('!', choice [str "!=="; str "!="; str "!"])
-                ('%', choice [str "%="; str "%"])
-                ('&', choice [str "&&"; str "&="; str "&"])
-                ('(', choice [str "("])
-                (')', choice [str ")"])
-                ('*', choice [str "*="; str "*"])
-                ('+', choice [str "++"; str "+="; str "+"])
-                (',', choice [str ","])
-                ('-', choice [str "-="; str "--"; str "-"])
-                ('.', choice [str "."])
-                (';', choice [str ";"])
-                ('<', choice [str "<<="; str "<<"; str "<="; str "<"])
-                ('=', choice [str "==="; str "=="; str "="])
-                ('>', choice [str ">>>="; str ">>>"; str ">>="; str ">>"; str ">="; str ">"])
-                ('?', choice [str "?"])
-                (':', choice [str ":"])
-                ('[', choice [str "["])
-                (']', choice [str "]"])
-                ('^', choice [str "^="; str "^"])
-                ('{', choice [str "{"])
-                ('|', choice [str "||"; str "|="; str "|"])
-                ('}', choice [str "}"])
-                ('~', choice [str "~"])
+
+        let punctuatorChoices = 
+            choice [
+                str "!=="; str "!="; str "!"
+                str "%="; str "%"
+                str "&&"; str "&="; str "&"
+                str "("
+                str ")"
+                str "*="; str "*"
+                str "++"; str "+="; str "+"
+                str ","
+                str "-="; str "--"; str "-"
+                str "."
+                str ";"
+                str "<<="; str "<<"; str "<="; str "<"
+                str "==="; str "=="; str "="
+                str ">>>="; str ">>>"; str ">>="; str ">>"; str ">="; str ">"
+                str "?"
+                str ":"
+                str "["
+                str "]"
+                str "^="; str "^"
+                str "{"
+                str "||"; str "|="; str "|"
+                str "}"
+                str "~"
             ]
-        let parsePunctuator<'a> : Parser<InputElement, 'a> =
-            parse {
-                let! c = lookAhead anyChar
-                match punctuatorMap.TryFind c with
-                | Some p -> return p
-                | None -> ()
-            } >>= fun p -> p |>> Punctuator
+
+        let parsePunctuator reply =
+            (punctuatorChoices |>> Punctuator) reply
             
     module DivPunctuator =
         let parseDivPunctuator<'a> : Parser<InputElement, 'a> =

@@ -6,6 +6,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Threading;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using Machete.Interfaces;
+using Machete.Runtime.HostObjects;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects
 {
@@ -19,9 +20,10 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
 
         public override void Initialize()
         {
-            Class = "Environment";
+            Class = "Core";
             Prototype = null;
             Extensible = true;
+            DefineOwnProperty("core", Environment.CreateDataDescriptor(this, false, false, false), false);
             DefineOwnProperty("NaN", Environment.CreateDataDescriptor(Environment.CreateNumber(double.NaN), false, false, false), false);
             DefineOwnProperty("Infinity", Environment.CreateDataDescriptor(Environment.CreateNumber(double.PositiveInfinity), false, false, false), false);
             DefineOwnProperty("undefined", Environment.CreateDataDescriptor(Environment.Undefined, false, false, false), false);
@@ -42,13 +44,17 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             DefineOwnProperty("URIError", Environment.CreateDataDescriptor(Environment.UriErrorConstructor, true, false, true), false);
             DefineOwnProperty("Math", Environment.CreateDataDescriptor(Environment.MathObject, true, false, true), false);
             DefineOwnProperty("JSON", Environment.CreateDataDescriptor(Environment.JsonObject, true, false, true), false);
-            DefineOwnProperty("environment", Environment.CreateDataDescriptor(this, false, false, false), false);
+
+            var o = new HOutput(Environment);
+            o.Initialize();
+            DefineOwnProperty("output", Environment.CreateDataDescriptor(o, false, false, false), false);
+
             base.Initialize();
         }
 
         public override IDynamic DefaultValue(string hint)
         {
-            return Environment.CreateString("[object, Environment]");
+            return Environment.CreateString("[object, Core]");
         }
 
         [NativeFunction("eval", "x"), DataDescriptor(true, false, true)]
