@@ -643,5 +643,82 @@ namespace Machete.Runtime
                     throw CreateTypeError("'" + value + "' cannot be coerced into an object.");
             }
         }
+
+        public void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
+        {
+            BindFunctionDeclarations(functionDeclarations, strict, true);
+            BindVariableDeclarations(variableDeclarations, strict, true);
+        }
+
+        public void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
+        {
+            BindFunctionDeclarations(functionDeclarations, strict, false);
+            BindVariableDeclarations(variableDeclarations, strict, false);
+        }
+
+        public void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args)
+        {
+            var currentFunction = Context.CurrentFunction;
+            var formalParameterList = currentFunction.FormalParameterList;
+            var strict = currentFunction.Strict;
+            var record = (IDeclarativeEnvironmentRecord)Context.VariableEnviroment.Record;
+            {
+                for (int i = 0; i < formalParameterList.Count; i++)
+                {
+                    var name = formalParameterList[i];
+                    if (!record.HasBinding(name))
+                    {
+                        record.CreateMutableBinding(name, false);
+                    }
+                    record.SetMutableBinding(name, args[i], strict);
+                }
+            }
+
+            BindFunctionDeclarations(functionDeclarations, strict, true);
+
+            if (!record.HasBinding("arguments"))
+            {
+                var argumentsObj = CreateArguments(formalParameterList, args, strict);                
+                if (strict) 
+                {
+                    record.CreateImmutableBinding ("arguments");
+                    record.InitializeImmutableBinding ("arguments", argumentsObj);
+                }
+                else
+                {
+                    record.CreateMutableBinding ("arguments", false);
+                    record.SetMutableBinding("arguments", argumentsObj, false);
+                }
+            }
+
+            BindVariableDeclarations(variableDeclarations, strict, true);
+        }
+
+        private void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings)
+        {
+            var record = Context.VariableEnviroment.Record;
+            foreach (var functionDeclaration in functionDeclarations)
+            {
+                if (!record.HasBinding(functionDeclaration.Identifier))
+                {
+                    record.CreateMutableBinding(functionDeclaration.Identifier, configurableBindings);
+                }
+                var func = CreateFunction(functionDeclaration.FormalParameterList, functionDeclaration.Strict, functionDeclaration.Code);
+                record.SetMutableBinding(functionDeclaration.Identifier, func, strict);
+            }
+        }
+
+        private void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings)
+        {
+            var record = Context.VariableEnviroment.Record;
+            foreach (var variableDeclaration in variableDeclarations)
+            {
+                if (!record.HasBinding(variableDeclaration))
+                {
+                    record.CreateMutableBinding(variableDeclaration, configurableBindings);
+                }
+                record.SetMutableBinding(variableDeclaration, Undefined, strict);
+            }
+        }
     }
 }

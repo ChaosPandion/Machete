@@ -43,6 +43,10 @@ module Reflection =
         let throwRuntimeException = t.GetMethod "ThrowRuntimeException"
 
         let createSyntaxError = t.GetMethod "CreateSyntaxError"
+        
+        let enterGlobalCode = t.GetMethod "EnterGlobalCode"
+        let enterEvalCode = t.GetMethod "EnterEvalCode"
+        let enterFunctionCode = t.GetMethod "EnterFunctionCode"
 
     module MacheteRuntimeException =
         let t = typeof<MacheteRuntimeException>

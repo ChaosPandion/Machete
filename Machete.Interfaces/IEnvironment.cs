@@ -100,5 +100,10 @@ namespace Machete.Interfaces
         void CheckObjectCoercible(IDynamic value);
 
         bool Instanceof(IDynamic left, IDynamic right);
+
+
+        void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
+        void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
+        void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args);
     }
 }

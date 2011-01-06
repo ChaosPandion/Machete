@@ -90,6 +90,7 @@
     <Compile Include="SourceElement.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Reflection.fs" />
+    <Compile Include="Parser2.fs" />
     <Compile Include="Compiler.fs" />
     <Compile Include="IntParser.fs" />
     <Compile Include="FloatParser.fs" />

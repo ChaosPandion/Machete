@@ -9,18 +9,18 @@ open Machete.Interfaces
 open Tools.TreeTraverser
 
 
-type internal exp = System.Linq.Expressions.Expression
+//type internal exp = System.Linq.Expressions.Expression
 type internal label = System.Linq.Expressions.LabelExpression
 type internal methodinfo = System.Reflection.MethodInfo
 type internal dyn = Machete.Interfaces.IDynamic
 
-type internal Function = {
-    identifier : string
-    formalParameterList : ReadOnlyList<string>
-    strict : bool
-    functionBody : SourceElement 
-}
-
+//type internal Function = {
+//    identifier : string
+//    formalParameterList : ReadOnlyList<string>
+//    strict : bool
+//    functionBody : SourceElement 
+//}
+//
 type internal State = {
     strict : bool
     element : SourceElement
