@@ -38,16 +38,18 @@ type Engine () =
                     handlers.Add (handler, agent)    
                 | ExecuteScript (script, channel) ->
                     try
-                        let r = compiler.CompileGlobalCode(script)
-                        let r = r.Invoke(environment, environment.EmptyArgs)
-                        let r = 
-                            match r.Value with
-                            | :? INull as r -> null :> obj
-                            | :? IBoolean as r -> r.BaseValue :> obj
-                            | :? INumber as r -> r.BaseValue :> obj
-                            | :? IString as r -> r.BaseValue :> obj
-                            | _ -> r.ToString() :> obj
-                        channel.Reply r
+                        ()
+//                        let r = compiler.CompileGlobalCode(script)
+//                        //let r = r.Invoke(environment, environment.EmptyArgs)
+//                        let r = environment.Execute(environment.EmptyArgs, r)
+//                        let r = 
+//                            match r.Value with
+//                            | :? INull as r -> null :> obj
+//                            | :? IBoolean as r -> r.BaseValue :> obj
+//                            | :? INumber as r -> r.BaseValue :> obj
+//                            | :? IString as r -> r.BaseValue :> obj
+//                            | _ -> r.ToString() :> obj
+//                        channel.Reply r
                     with | e ->
                         channel.Reply e
             with | e -> ()

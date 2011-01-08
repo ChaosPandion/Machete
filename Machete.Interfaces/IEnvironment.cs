@@ -79,6 +79,7 @@ namespace Machete.Interfaces
 
         IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code);
         IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
+        IFunction CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameterList, ILexicalEnvironment scope);
 
 
         IPropertyDescriptor CreateGenericDescriptor();
@@ -100,7 +101,9 @@ namespace Machete.Interfaces
         void CheckObjectCoercible(IDynamic value);
 
         bool Instanceof(IDynamic left, IDynamic right);
-
+        IDynamic Execute(ExecutableCode executableCode);
+        void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings);
+        void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings);
 
         void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
         void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);

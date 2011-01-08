@@ -14,11 +14,14 @@ using Machete.Interfaces;
 using Machete.Compiler;
 using System.Diagnostics;
 using System.IO;
+using System.Linq.Expressions;
 
 namespace Machete.Runtime
 {
     public sealed class Environment : IEnvironment
     {
+
+
         private readonly Stack<IExecutionContext> _contextStack;
         private readonly Machete.Compiler.Compiler _compiler;
     
@@ -38,12 +41,12 @@ namespace Machete.Runtime
             Null = new LNull(this);
 
             GlobalObject = new BGlobal(this);
+            GlobalEnvironment = new SLexicalEnvironment(this, new SObjectEnvironmentRecord(this, GlobalObject, false), null);
 
-            var record = new SObjectEnvironmentRecord(this, GlobalObject, false);
-            var environment = new SLexicalEnvironment(this, record, null);
-            Context = new ExecutionContext(() => { });
-            Context.LexicalEnviroment = Context.VariableEnviroment = environment;
-            Context.ThisBinding = GlobalObject;
+            //var environment = new SLexicalEnvironment(this, record, null);
+            //Context = new ExecutionContext(() => { });
+            //Context.LexicalEnviroment = Context.VariableEnviroment = environment;
+            //Context.ThisBinding = GlobalObject;
 
             MathObject = new BMath(this);
             JsonObject = new BJson(this);
@@ -189,6 +192,7 @@ namespace Machete.Runtime
         public IBoolean True { get; private set; }
         public IBoolean False { get; private set; }
         public INull Null { get; private set; }
+        public ILexicalEnvironment GlobalEnvironment { get; private set; }
         public IObject GlobalObject { get; private set; }
         public IObject ObjectConstructor { get; private set; }
         public IObject ObjectPrototype { get; private set; }
@@ -224,6 +228,21 @@ namespace Machete.Runtime
         public IObject JsonObject { get; private set; }
 
         public IFunction ThrowTypeErrorFunction { get; private set; }
+
+
+        public IDynamic Execute(ExecutableCode executableCode)
+        {
+            using (var context = EnterContext())
+            {
+                context.ThisBinding = GlobalObject;
+                context.VariableEnviroment = GlobalEnvironment;
+                context.LexicalEnviroment = GlobalEnvironment;
+                context.Strict = executableCode.Strict;
+                BindFunctionDeclarations(executableCode.FunctionDeclarations, executableCode.Strict, true);
+                BindVariableDeclarations(executableCode.VariableDeclarations, executableCode.Strict, true);
+                return executableCode.Code(this, EmptyArgs);
+            }
+        }
  
         
         public IBoolean CreateBoolean(bool value)
@@ -280,7 +299,7 @@ namespace Machete.Runtime
 
         public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code)
         {
-            return CreateFunction(formalParameterList, strict, code, Context.VariableEnviroment);
+            return CreateFunction(formalParameterList, strict, code, GlobalEnvironment);
         }
 
         public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope)
@@ -385,73 +404,74 @@ namespace Machete.Runtime
 
         public IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict)
         {
-            var obj = new NArguments(this);
-            var len = CreateNumber(args.Count);
-            var lenDesc = CreateDataDescriptor(len, true, false, true);
-            var map = ObjectConstructor.Op_Construct(EmptyArgs);
-            var mappedNames = new List<string>();
-            var index = args.Count - 1;
+            return null;
+            //var obj = new NArguments(this);
+            //var len = CreateNumber(args.Count);
+            //var lenDesc = CreateDataDescriptor(len, true, false, true);
+            //var map = ObjectConstructor.Op_Construct(EmptyArgs);
+            //var mappedNames = new List<string>();
+            //var index = args.Count - 1;
 
-            obj.Class = "Arguments";
-            obj.Extensible = true;
-            obj.Prototype = ObjectPrototype;
-            obj.DefineOwnProperty("length", lenDesc, false);
+            //obj.Class = "Arguments";
+            //obj.Extensible = true;
+            //obj.Prototype = ObjectPrototype;
+            //obj.DefineOwnProperty("length", lenDesc, false);
 
-            while (--index >= 0)
-            {
-                var val = args[index];
-                var valDesc = CreateDataDescriptor(val, true, true, true);
+            //while (--index >= 0)
+            //{
+            //    var val = args[index];
+            //    var valDesc = CreateDataDescriptor(val, true, true, true);
 
-                obj.DefineOwnProperty(index.ToString(), valDesc, false);
-                if (index < formalParameterList.Count)
-                {
-                    var name = formalParameterList[index];
-                    if (!strict)
-                    {
-                        var g = MakeArgGetter(name);
-                        var p = MakeArgSetter(name);
-                        var desc = CreateAccessorDescriptor(g, p, false, true);
+            //    obj.DefineOwnProperty(index.ToString(), valDesc, false);
+            //    if (index < formalParameterList.Count)
+            //    {
+            //        var name = formalParameterList[index];
+            //        if (!strict)
+            //        {
+            //            //var g = MakeArgGetter(name);
+            //            //var p = MakeArgSetter(name);
+            //            //var desc = CreateAccessorDescriptor(g, p, false, true);
 
-                        map.DefineOwnProperty(name, desc, false);
-                        mappedNames.Add(name);
-                    }
-                }
-            }
+            //            //map.DefineOwnProperty(name, desc, false);
+            //            mappedNames.Add(name);
+            //        }
+            //    }
+            //}
 
-            if (mappedNames.Count > 0)
-            {
-                obj.ParameterMap = map;
-            }
+            //if (mappedNames.Count > 0)
+            //{
+            //    obj.ParameterMap = map;
+            //}
 
-            if (!strict)
-            {
-                var desc = CreateDataDescriptor(Context.CurrentFunction, true, false, true);
-                obj.DefineOwnProperty("callee", desc, false);
-            }
-            else
-            {
-                var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
-                obj.DefineOwnProperty("caller", desc, false);
-                obj.DefineOwnProperty("callee", desc, false);
-            }
+            //if (!strict)
+            //{
+            //    var desc = CreateDataDescriptor(Context.CurrentFunction, true, false, true);
+            //    obj.DefineOwnProperty("callee", desc, false);
+            //}
+            //else
+            //{
+            //    var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
+            //    obj.DefineOwnProperty("caller", desc, false);
+            //    obj.DefineOwnProperty("callee", desc, false);
+            //}
 
-            return obj;
+            //return obj;
         }
 
-        private IObject MakeArgGetter(string name)
-        {
-            var fpl = ReadOnlyList<string>.Empty;
-            var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, "return " + name + ";"));
-            return CreateFunction(fpl, true, code, Context.VariableEnviroment);
-        }
+        //private IObject MakeArgGetter(string name)
+        //{
+        //    var fpl = ReadOnlyList<string>.Empty;
+        //    var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, "return " + name + ";"));
+        //    return CreateFunction(fpl, true, code, Context.VariableEnviroment);
+        //}
 
-        private IObject MakeArgSetter(string name)
-        {
-            var param = name + "_arg";
-            var fpl = new ReadOnlyList<string>(param);
-            var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, name + " = " + param + ";"));
-            return CreateFunction(fpl, true, code, Context.VariableEnviroment);
-        }
+        //private IObject MakeArgSetter(string name)
+        //{
+        //    var param = name + "_arg";
+        //    var fpl = new ReadOnlyList<string>(param);
+        //    var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, name + " = " + param + ";"));
+        //    return CreateFunction(fpl, true, code, Context.VariableEnviroment);
+        //}
 
         public IDynamic FromPropertyDescriptor(IPropertyDescriptor desc)
         {
@@ -644,6 +664,9 @@ namespace Machete.Runtime
             }
         }
 
+
+
+
         public void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
         {
             BindFunctionDeclarations(functionDeclarations, strict, true);
@@ -658,43 +681,43 @@ namespace Machete.Runtime
 
         public void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args)
         {
-            var currentFunction = Context.CurrentFunction;
-            var formalParameterList = currentFunction.FormalParameterList;
-            var strict = currentFunction.Strict;
-            var record = (IDeclarativeEnvironmentRecord)Context.VariableEnviroment.Record;
-            {
-                for (int i = 0; i < formalParameterList.Count; i++)
-                {
-                    var name = formalParameterList[i];
-                    if (!record.HasBinding(name))
-                    {
-                        record.CreateMutableBinding(name, false);
-                    }
-                    record.SetMutableBinding(name, args[i], strict);
-                }
-            }
+            //var currentFunction = Context.CurrentFunction;
+            //var formalParameterList = currentFunction.FormalParameterList;
+            //var strict = currentFunction.Strict;
+            //var record = (IDeclarativeEnvironmentRecord)Context.VariableEnviroment.Record;
+            //{
+            //    for (int i = 0; i < formalParameterList.Count; i++)
+            //    {
+            //        var name = formalParameterList[i];
+            //        if (!record.HasBinding(name))
+            //        {
+            //            record.CreateMutableBinding(name, false);
+            //        }
+            //        record.SetMutableBinding(name, args[i], strict);
+            //    }
+            //}
 
-            BindFunctionDeclarations(functionDeclarations, strict, true);
+            //BindFunctionDeclarations(functionDeclarations, strict, true);
 
-            if (!record.HasBinding("arguments"))
-            {
-                var argumentsObj = CreateArguments(formalParameterList, args, strict);                
-                if (strict) 
-                {
-                    record.CreateImmutableBinding ("arguments");
-                    record.InitializeImmutableBinding ("arguments", argumentsObj);
-                }
-                else
-                {
-                    record.CreateMutableBinding ("arguments", false);
-                    record.SetMutableBinding("arguments", argumentsObj, false);
-                }
-            }
+            //if (!record.HasBinding("arguments"))
+            //{
+            //    var argumentsObj = CreateArguments(formalParameterList, args, strict);                
+            //    if (strict) 
+            //    {
+            //        record.CreateImmutableBinding ("arguments");
+            //        record.InitializeImmutableBinding ("arguments", argumentsObj);
+            //    }
+            //    else
+            //    {
+            //        record.CreateMutableBinding ("arguments", false);
+            //        record.SetMutableBinding("arguments", argumentsObj, false);
+            //    }
+            //}
 
-            BindVariableDeclarations(variableDeclarations, strict, true);
+            //BindVariableDeclarations(variableDeclarations, strict, true);
         }
 
-        private void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings)
+        internal void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings)
         {
             var record = Context.VariableEnviroment.Record;
             foreach (var functionDeclaration in functionDeclarations)
@@ -708,7 +731,7 @@ namespace Machete.Runtime
             }
         }
 
-        private void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings)
+        internal void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings)
         {
             var record = Context.VariableEnviroment.Record;
             foreach (var variableDeclaration in variableDeclarations)
@@ -719,6 +742,23 @@ namespace Machete.Runtime
                 }
                 record.SetMutableBinding(variableDeclaration, Undefined, strict);
             }
+        }
+
+
+        void IEnvironment.BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IEnvironment.BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public IFunction CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameterList, ILexicalEnvironment scope)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -13,7 +13,10 @@ namespace Machete.Runtime.NativeObjects
     public class NFunction : LObject, IFunction
     {
         public ILexicalEnvironment Scope { get; set; }
+        public ExecutableCode ExecutableCode { get; set; }
         public ReadOnlyList<string> FormalParameterList { get; set; }
+        public ReadOnlyList<string> VariableDeclarations { get; set; }
+        public ReadOnlyList<FunctionDeclaration> FunctionDeclarations { get; set; }
         public Lazy<Code> Code { get; set; }
         public IObject TargetFunction { get; set; }
         public IDynamic BoundThis { get; set; }
@@ -85,7 +88,6 @@ namespace Machete.Runtime.NativeObjects
             if (BindFunction)
             {
                 // 15.3.4.5.1 [[Call]] 
-
                 var func = TargetFunction as IFunction;
                 Debug.Assert(func != null);
                 return func.Call(environment, BoundThis, environment.ConcatArgs(BoundArguments, args));
@@ -93,32 +95,13 @@ namespace Machete.Runtime.NativeObjects
             else
             {
                 // 13.2.1 [[Call]] 
-
-                var scope = Scope.NewDeclarativeEnvironment();
                 using (var c = environment.EnterContext())
                 {
-                    c.CurrentFunction = this;
-                    c.LexicalEnviroment = scope;
-                    c.VariableEnviroment = scope;
-
-                    if (Strict)
-                    {
-                        c.ThisBinding = thisBinding;
-                    }
-                    else
-                    {
-                        switch (thisBinding.TypeCode)
-                        {
-                            case LanguageTypeCode.Undefined:
-                            case LanguageTypeCode.Null:
-                                c.ThisBinding = environment.GlobalObject;
-                                break;
-                            default:
-                                c.ThisBinding = thisBinding.ConvertToObject();
-                                break;
-                        }
-                    }
-
+                    PrepareContext(thisBinding);
+                    BindFormalParameters(args);
+                    Environment.BindFunctionDeclarations(FunctionDeclarations, Strict, true);
+                    BindArgumentsObject(args);
+                    Environment.BindVariableDeclarations(VariableDeclarations, Strict, true);
                     return Code.Value(environment, args);
                 }
             }
@@ -182,6 +165,138 @@ namespace Machete.Runtime.NativeObjects
             {
                 return Environment.Instanceof(value, this);
             }
+        }
+
+        private void PrepareContext(IDynamic thisBinding)
+        {
+            var scope = Scope.NewDeclarativeEnvironment();
+            var context = Environment.Context;
+            context.LexicalEnviroment = scope;
+            context.VariableEnviroment = scope;
+            context.Strict = Strict;
+
+            if (Strict)
+            {
+                Environment.Context.ThisBinding = thisBinding;
+            }
+            else
+            {
+                switch (thisBinding.TypeCode)
+                {
+                    case LanguageTypeCode.Undefined:
+                    case LanguageTypeCode.Null:
+                        Environment.Context.ThisBinding = Environment.GlobalObject;
+                        break;
+                    default:
+                        Environment.Context.ThisBinding = thisBinding.ConvertToObject();
+                        break;
+                }
+            }
+        }
+
+        private void BindFormalParameters(IArgs args)
+        {
+            var record = (IDeclarativeEnvironmentRecord)Environment.Context.VariableEnviroment.Record;
+            for (int i = 0; i < FormalParameterList.Count; i++)
+            {
+                var name = FormalParameterList[i];
+                if (!record.HasBinding(name))
+                {
+                    record.CreateMutableBinding(name, false);
+                }
+                record.SetMutableBinding(name, args[i], Strict);
+            }
+        }
+
+        private void BindArgumentsObject(IArgs args)
+        {
+            var record = (IDeclarativeEnvironmentRecord)Environment.Context.VariableEnviroment.Record;
+            if (!record.HasBinding("arguments"))
+            {
+                var argumentsObj = CreateArgumentsObject(args);
+                if (Strict)
+                {
+                    record.CreateImmutableBinding("arguments");
+                    record.InitializeImmutableBinding("arguments", argumentsObj);
+                }
+                else
+                {
+                    record.CreateMutableBinding("arguments", false);
+                    record.SetMutableBinding("arguments", argumentsObj, false);
+                }
+            }
+        }
+
+        private IObject CreateArgumentsObject(IArgs args)
+        {
+            var obj = new NArguments(Environment);
+            var len = Environment.CreateNumber(args.Count);
+            var lenDesc = Environment.CreateDataDescriptor(len, true, false, true);
+            var map = Environment.ObjectConstructor.Op_Construct(Environment.EmptyArgs);
+            var mappedNames = new List<string>();
+            var index = args.Count - 1;
+
+            obj.Class = "Arguments";
+            obj.Extensible = true;
+            obj.Prototype = Environment.ObjectPrototype;
+            obj.DefineOwnProperty("length", lenDesc, false);
+
+            while (--index >= 0)
+            {
+                var val = args[index];
+                var valDesc = Environment.CreateDataDescriptor(val, true, true, true);
+
+                obj.DefineOwnProperty(index.ToString(), valDesc, false);
+                if (index < FormalParameterList.Count)
+                {
+                    var name = FormalParameterList[index];
+                    if (!Strict)
+                    {
+                        var g = MakeArgGetter(name);
+                        var p = MakeArgSetter(name);
+                        var desc = Environment.CreateAccessorDescriptor(g, p, false, true);
+
+                        map.DefineOwnProperty(name, desc, false);
+                        mappedNames.Add(name);
+                    }
+                }
+            }
+
+            if (mappedNames.Count > 0)
+            {
+                obj.ParameterMap = map;
+            }
+
+            if (!Strict)
+            {
+                var desc = Environment.CreateDataDescriptor(this, true, false, true);
+                obj.DefineOwnProperty("callee", desc, false);
+            }
+            else
+            {
+                var desc = Environment.CreateAccessorDescriptor(Environment.ThrowTypeErrorFunction, Environment.ThrowTypeErrorFunction, false, false);
+                obj.DefineOwnProperty("caller", desc, false);
+                obj.DefineOwnProperty("callee", desc, false);
+            }
+
+            return obj;
+        }
+
+        private IObject MakeArgGetter(string name)
+        {
+            return null;
+            //var fpl = ReadOnlyList<string>.Empty;
+            //var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, "return " + name + ";"));
+            //return Environment.CreateFunction(fpl, true, code, Environment.Context.VariableEnviroment);
+        }
+
+        private IObject MakeArgSetter(string name)
+        {
+            return null;
+            //var param = name + "_arg";
+            //var fpl = new ReadOnlyList<string>(param);
+            //var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, name + " = " + param + ";"));
+            //return Environment.CreateFunction(fpl, true, code, Environment.Context.VariableEnviroment);
         }
     }
 }

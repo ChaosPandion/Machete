@@ -25,7 +25,7 @@ type internal State1 = {
     variables : list<string>
 }
 
-type Parser2 (environment:IEnvironment) =
+type CompilerService (environment:IEnvironment) =
 
     let environmentParam = exp.Parameter (Reflection.IEnvironment.t, "environment")
     let argsParam = exp.Parameter (Reflection.IArgs.t, "args")
@@ -656,7 +656,7 @@ type Parser2 (environment:IEnvironment) =
             let! e1 = evalPropertyName
             do! skipToken "("
             do! skipToken ")"
-            let! e3 = betweenBraces (evalFunctionBody e1 ReadOnlyList<string>.Empty)
+            let! e3 = betweenBraces evalFunctionBody
             return "getter", e1, None, None, Some e3, false
         }) state
 
@@ -665,7 +665,7 @@ type Parser2 (environment:IEnvironment) =
             do! skipToken "set"
             let! e1 = evalPropertyName
             let! e2 = betweenParentheses evalPropertySetParameterList
-            let! e3 = betweenBraces (evalFunctionBody e1 e2)
+            let! e3 = betweenBraces evalFunctionBody
             return "setter", e1, Some e2, None, Some e3, false
         }) state
                   
@@ -1283,7 +1283,7 @@ type Parser2 (environment:IEnvironment) =
             do! skipToken ")"
             do! skipToken "{"
             do! skipIgnorableTokens
-            let! functionBody = evalFunctionBody identifier formalParameterList
+            let! functionBody = evalFunctionBody
             do! skipToken "}"
             let! (state:State1) = getUserState
             let func = FunctionDeclaration(identifier, formalParameterList, lazy(functionBody.Compile()), state.strict.Head |> fst)
@@ -1302,21 +1302,12 @@ type Parser2 (environment:IEnvironment) =
             return ReadOnlyList<string>.Empty
         }) state
 
-    and evalFunctionBody (identifier:string) (formalParameterList:ReadOnlyList<string>) state =
-        (parse {
-            let returnLabel = exp.Label(exp.Label(typeof<IDynamic>, "return"), exp.Constant (environment.Undefined))
+    and evalFunctionBody state =
+        (parse {            
             let! (oldState:State1) = getUserState
-            let strict = oldState.strict.Head |> fst
-            do! setUserState ({ oldState with strict = [(strict, false)]; variables = []; functions = []; labels = [ Map.ofArray [| "return", returnLabel |] ]  })
-            do! skipIgnorableTokens
-            let! e1 = evalSourceElements
-            let! (newState:State1) = getUserState
-            let variableDeclarations = exp.Constant (ReadOnlyList<string>(newState.variables)) :> exp
-            let functionDeclarations = exp.Constant (ReadOnlyList<FunctionDeclaration>(newState.functions)) :> exp
-            let enterFunction = exp.Call (environmentParam, typeof<IEnvironment>.GetMethod "EnterFunctionCode", [| variableDeclarations; functionDeclarations; argsParam :> exp |]) :> exp
-            let e1 = enterFunction :: (e1 @ [ returnLabel :> exp ])
-            do! setUserState oldState
-            let body = exp.Block e1
+            let returnLabel = oldState.labels.Head.["return"]
+            let! e1 = evalSourceElements            
+            let body = exp.Block (e1 @ [ returnLabel :> exp ])
             return exp.Lambda<Code>(body, [| environmentParam; argsParam |])
         }) state
 
@@ -1327,67 +1318,43 @@ type Parser2 (environment:IEnvironment) =
         manyTill evalSourceElement eof state      
          
     and evalProgram state =
-        (parse {
-            let returnLabel = exp.Label(exp.Label(typeof<IDynamic>, "return"), exp.Constant (environment.Undefined))
+        (parse {            
             let! (oldState:State1) = getUserState
-            do! setUserState ({ oldState with strict = [(false, false)]; variables = []; functions = []; labels = [ Map.ofArray [| "return", returnLabel |] ]  })
-            let! e1 = evalSourceElements
-            let (body:BlockExpression) = exp.Block e1
+            let returnLabel = oldState.labels.Head.["return"]
+            let! e1 = evalSourceElements            
+            let body = exp.Block e1
+            let body =
+                if body.Expressions.Count = 0 then
+                    body.Update([||], [| returnLabel |]) 
+                else
+                    let count = body.Expressions.Count - 1
+                    let last = body.Expressions.[count]
+                    let last = exp.Return (returnLabel.Target, last)
+                    body.Update([||], body.Expressions |> Seq.take count |> Seq.append [| last; returnLabel |])
             return exp.Lambda<Code>(body, [| environmentParam; argsParam |])
         }) state
 
-    let createInitialState () =
+    let createInitialState (strict:bool) =
         let returnLabel = exp.Label(exp.Label(typeof<IDynamic>, "return"), exp.Constant (environment.Undefined))
-        { strict = []; element = Nil; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }
-        
+        { strict = [strict, false]; element = Nil; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }        
 
-    member this.Parse (input:string) =
-        let state = { strict = []; element = Nil; labels = []; functions = []; variables = [] }
-        let result = runParserOnString evalProgram state "" input
+    let compile (parser:Parser<Expression<Code>, State1>) (input:string) (strict:bool) (streamName:string) =
+        let initialState = createInitialState strict
+        let result = runParserOnString parser initialState streamName input
         match result with
-        | Success (e, s, p) ->
-            e.Compile()
-        | Failure (m, e, o) -> failwith m
-        
+        | Success (expression, finalState, position) ->
+            let variableDeclarations = ReadOnlyList<string>(finalState.variables)
+            let functionDeclarations = ReadOnlyList<FunctionDeclaration>(finalState.functions)
+            let strict = finalState.strict.Head |> fst
+            ExecutableCode(expression.Compile(), variableDeclarations, functionDeclarations, strict)
+        | Failure (message, error, finalState) -> 
+            raise (environment.CreateSyntaxError message)         
         
     member this.CompileGlobalCode (input:string) =
-        let initialState = createInitialState ()
-        let result = runParserOnString evalProgram initialState "GlobalCode" input
-        ()        
+        compile evalProgram input false "GlobalCode"
         
     member this.CompileEvalCode (input:string, strict:bool) =
-        let initialState = createInitialState ()
-        let initialState = { initialState with strict = [ strict, false ] }
-        let result = runParserOnString evalSourceElements initialState "EvalCode" input
-        match result with
-        | Success (expressions, finalState, position) ->
-            let variableDeclarations = ReadOnlyList<string>(finalState.variables)
-            let variableDeclarations = exp.Constant variableDeclarations :> exp
-            let functionDeclarations = ReadOnlyList<FunctionDeclaration>(finalState.functions)
-            let functionDeclarations = exp.Constant functionDeclarations :> exp
-            let strict = exp.Constant (finalState.strict.Head |> fst) :> exp
-            let args = [| variableDeclarations; functionDeclarations; strict |]
-            let enterEvalCode = exp.Call (environmentParam, Reflection.IEnvironment.enterEvalCode, args) :> exp
-            let body = (enterEvalCode :: expressions) @ [ finalState.labels.Head.["return"] ]
-            let body = exp.Block body
-            exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
-        | Failure (message, error, finalState) -> 
-            raise (environment.CreateSyntaxError message)
+        compile evalProgram input strict "EvalCode"
 
-    member this.CompileFunctionCode (input:string, formalParameterList:ReadOnlyList<string>, strict:bool) =
-        let initialState = createInitialState ()
-        let initialState = { initialState with strict = [ strict, false ] }
-        let result = runParserOnString evalSourceElements initialState "FunctionCode" input
-        match result with
-        | Success (expressions, finalState, position) ->
-            let variableDeclarations = ReadOnlyList<string>(finalState.variables)
-            let variableDeclarations = exp.Constant variableDeclarations :> exp
-            let functionDeclarations = ReadOnlyList<FunctionDeclaration>(finalState.functions)
-            let functionDeclarations = exp.Constant functionDeclarations :> exp
-            let args = [| variableDeclarations; functionDeclarations; argsParam :> exp |]
-            let enterFunctionCode = exp.Call (environmentParam, Reflection.IEnvironment.enterFunctionCode, args) :> exp
-            let body = (enterFunctionCode :: expressions) @ [ finalState.labels.Head.["return"] ]
-            let body = exp.Block body
-            exp.Lambda<Code>(body, [| environmentParam; argsParam |]).Compile()
-        | Failure (message, error, finalState) -> 
-            raise (environment.CreateSyntaxError message)
+    member this.CompileFunctionCode (input:string, strict:bool) =
+        compile evalFunctionBody input strict "FunctionCode"
