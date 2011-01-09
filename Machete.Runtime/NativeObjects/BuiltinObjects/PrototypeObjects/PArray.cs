@@ -121,7 +121,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
-            var separator = ", ";
+            var separator = ",";
 
             if (length == 0)
             {
@@ -136,11 +136,20 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             var sb = new StringBuilder();
             for (int i = 0; i < length; i++)
             {
-                if (sb.Length > 0)
+                if (sb.Length > 0 || i == 1)
                 {
                     sb.Append(separator);
                 }
-                sb.Append(obj.Get(i.ToString()).Value.ConvertToString().Value);
+                var element = obj.Get(i.ToString()).Value;
+                switch (element.TypeCode)
+                {
+                    case LanguageTypeCode.Undefined:
+                    case LanguageTypeCode.Null:
+                        break;
+                    default:
+                        sb.Append(element.ConvertToString().Value);
+                        break;
+                }
             }
             return environment.CreateString(sb.ToString());
         }

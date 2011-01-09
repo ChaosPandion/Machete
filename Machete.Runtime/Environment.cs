@@ -23,15 +23,14 @@ namespace Machete.Runtime
 
 
         private readonly Stack<IExecutionContext> _contextStack;
-        private readonly Machete.Compiler.Compiler _compiler;
+        //private readonly Machete.Compiler.Compiler _compiler;
     
 
         public Environment()
         {
             _contextStack = new Stack<IExecutionContext>();
-            _compiler = new Compiler.Compiler(this);
+            //_compiler = new Compiler.Compiler(this);
 
-            Input = new Input();
             Output = new Output();
 
             EmptyArgs = new SArgs(this);
@@ -184,7 +183,6 @@ namespace Machete.Runtime
 
 
 
-        public Input Input { get; private set; }
         public Output Output { get; private set; }
         public IExecutionContext Context { get; private set; }
         public IArgs EmptyArgs { get; private set; }
@@ -308,7 +306,7 @@ namespace Machete.Runtime
 
             var f = new NFunction(this);
             {
-                f.FormalParameterList = formalParameterList;
+                f.FormalParameters = formalParameterList;
                 f.Code = code;
                 f.Strict = strict;
                 f.Scope = scope;
@@ -717,7 +715,9 @@ namespace Machete.Runtime
             //BindVariableDeclarations(variableDeclarations, strict, true);
         }
 
-        internal void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings)
+
+
+        public void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings)
         {
             var record = Context.VariableEnviroment.Record;
             foreach (var functionDeclaration in functionDeclarations)
@@ -731,7 +731,7 @@ namespace Machete.Runtime
             }
         }
 
-        internal void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings)
+        public void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings)
         {
             var record = Context.VariableEnviroment.Record;
             foreach (var variableDeclaration in variableDeclarations)
@@ -745,20 +745,18 @@ namespace Machete.Runtime
         }
 
 
-        void IEnvironment.BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IEnvironment.BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings)
-        {
-            throw new NotImplementedException();
-        }
-
-
         public IFunction CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameterList, ILexicalEnvironment scope)
         {
-            throw new NotImplementedException();
+            // 13.2 Creating Function Objects 
+
+            var f = new NFunction(this);
+            {
+                f.ExecutableCode = executableCode;
+                f.FormalParameters = formalParameterList;
+                f.Scope = scope;
+                f.Initialize();
+            }
+            return f;
         }
     }
 }

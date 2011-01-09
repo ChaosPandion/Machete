@@ -6,10 +6,10 @@ namespace Machete.Interfaces
 {
     public interface IEnvironment
     {
-        Input Input { get; }
         Output Output { get; }
- 
+
         IExecutionContext Context { get; }
+        ILexicalEnvironment GlobalEnvironment { get; }
         IArgs EmptyArgs { get; }
         IUndefined Undefined { get; }
         INull Null { get; }

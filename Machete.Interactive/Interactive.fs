@@ -40,7 +40,7 @@ module Interactive =
                 run := false
             let line = line.TrimEnd ([| '@' |])
             sb.AppendLine line |> ignore
-        sb.ToString()
+        sb.ToString().Trim()
 
     let private isExn (o:obj) =
         match o with
@@ -53,7 +53,7 @@ module Interactive =
                 let text =  read ()
                 let r = engine.ExecuteScript text
                 let result, color = if isExn r then (r:?>exn).Message, errorColor else r |> string, outputColor
-                System.Threading.Thread.Sleep (250)
+                //System.Threading.Thread.Sleep (250)
                 ConsoleAgent.writeLine (result + "\n") color
             with 
             | e ->

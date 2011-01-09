@@ -59,21 +59,22 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         [NativeFunction("eval", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Eval(IEnvironment environment, IArgs args)
         {
-            var x = args[0];
-            if (x.TypeCode != LanguageTypeCode.String)
-            {
-                return x;
-            }
-            var compiler = new Machete.Compiler.Compiler(environment);
-            var code = compiler.CompileEvalCode(x.ConvertToString().BaseValue);
-            var context = environment.Context;
-            using (var c = environment.EnterContext())
-            {
-                c.ThisBinding = context.ThisBinding;
-                c.LexicalEnviroment = context.LexicalEnviroment;
-                c.VariableEnviroment = context.VariableEnviroment;
-                return code(environment, environment.EmptyArgs);
-            }
+            throw new NotImplementedException();
+            //var x = args[0];
+            //if (x.TypeCode != LanguageTypeCode.String)
+            //{
+            //    return x;
+            //}
+            //var compiler = new Machete.Compiler.Compiler(environment);
+            //var code = compiler.CompileEvalCode(x.ConvertToString().BaseValue);
+            //var context = environment.Context;
+            //using (var c = environment.EnterContext())
+            //{
+            //    c.ThisBinding = context.ThisBinding;
+            //    c.LexicalEnviroment = context.LexicalEnviroment;
+            //    c.VariableEnviroment = context.VariableEnviroment;
+            //    return code(environment, environment.EmptyArgs);
+            //}
         }
 
         [NativeFunction("parseInt", "string", "radix"), DataDescriptor(true, false, true)]

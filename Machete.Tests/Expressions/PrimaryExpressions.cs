@@ -26,8 +26,10 @@ namespace Machete.Tests
         [Fact(DisplayName = "11.1.4 Array Initialiser")]
         public void Test1114()
         {
-            Assert.Equal("object", (string)Engine.ExecuteScript("typeof []"));
-            Assert.Equal(0.0, (double)Engine.ExecuteScript("[].length"));
+            Assert.Equal("1,2,3,4,5", (string)Engine.ExecuteScript("[1, 2, 3, 4, 5]"));
+            Assert.Equal(",,1,2,3,4,5", (string)Engine.ExecuteScript("[,,1, 2, 3, 4, 5]"));
+            Assert.Equal("1,,2,3,4,5", (string)Engine.ExecuteScript("[1,,2, 3, 4, 5]"));
+            Assert.Equal("1,2,3,4,5,,", (string)Engine.ExecuteScript("[1, 2, 3, 4, 5,,,]"));
         }
 
         [Fact(DisplayName = "11.1.5 Object Initialiser")]

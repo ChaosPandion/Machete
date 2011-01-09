@@ -14,9 +14,7 @@ namespace Machete.Runtime.NativeObjects
     {
         public ILexicalEnvironment Scope { get; set; }
         public ExecutableCode ExecutableCode { get; set; }
-        public ReadOnlyList<string> FormalParameterList { get; set; }
-        public ReadOnlyList<string> VariableDeclarations { get; set; }
-        public ReadOnlyList<FunctionDeclaration> FunctionDeclarations { get; set; }
+        public ReadOnlyList<string> FormalParameters { get; set; }
         public Lazy<Code> Code { get; set; }
         public IObject TargetFunction { get; set; }
         public IDynamic BoundThis { get; set; }
@@ -38,7 +36,7 @@ namespace Machete.Runtime.NativeObjects
             Extensible = true;
             Prototype = Environment.FunctionPrototype;
 
-            DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(FormalParameterList.Count)), false);
+            DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(FormalParameters.Count)), false);
 
             var proto = Environment.ObjectConstructor.Op_Construct(Environment.EmptyArgs);
             DefineOwnProperty("constructor", Environment.CreateDataDescriptor(proto, true, false, true), false);
@@ -99,10 +97,10 @@ namespace Machete.Runtime.NativeObjects
                 {
                     PrepareContext(thisBinding);
                     BindFormalParameters(args);
-                    Environment.BindFunctionDeclarations(FunctionDeclarations, Strict, true);
+                    Environment.BindFunctionDeclarations(ExecutableCode.FunctionDeclarations, ExecutableCode.Strict, true);
                     BindArgumentsObject(args);
-                    Environment.BindVariableDeclarations(VariableDeclarations, Strict, true);
-                    return Code.Value(environment, args);
+                    Environment.BindVariableDeclarations(ExecutableCode.VariableDeclarations, ExecutableCode.Strict, true);
+                    return ExecutableCode.Code(environment, args);
                 }
             }
         }
@@ -173,7 +171,7 @@ namespace Machete.Runtime.NativeObjects
             var context = Environment.Context;
             context.LexicalEnviroment = scope;
             context.VariableEnviroment = scope;
-            context.Strict = Strict;
+            context.Strict = ExecutableCode.Strict;
 
             if (Strict)
             {
@@ -197,9 +195,9 @@ namespace Machete.Runtime.NativeObjects
         private void BindFormalParameters(IArgs args)
         {
             var record = (IDeclarativeEnvironmentRecord)Environment.Context.VariableEnviroment.Record;
-            for (int i = 0; i < FormalParameterList.Count; i++)
+            for (int i = 0; i < FormalParameters.Count; i++)
             {
-                var name = FormalParameterList[i];
+                var name = FormalParameters[i];
                 if (!record.HasBinding(name))
                 {
                     record.CreateMutableBinding(name, false);
@@ -247,9 +245,9 @@ namespace Machete.Runtime.NativeObjects
                 var valDesc = Environment.CreateDataDescriptor(val, true, true, true);
 
                 obj.DefineOwnProperty(index.ToString(), valDesc, false);
-                if (index < FormalParameterList.Count)
+                if (index < FormalParameters.Count)
                 {
-                    var name = FormalParameterList[index];
+                    var name = FormalParameters[index];
                     if (!Strict)
                     {
                         var g = MakeArgGetter(name);
@@ -297,6 +295,39 @@ namespace Machete.Runtime.NativeObjects
             //var fpl = new ReadOnlyList<string>(param);
             //var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, name + " = " + param + ";"));
             //return Environment.CreateFunction(fpl, true, code, Environment.Context.VariableEnviroment);
+        }
+
+
+        public ReadOnlyList<string> FormalParameterList
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public IDynamic Get(string name, bool strict)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Set(string name, IDynamic value, bool strict)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerator<string> GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace Machete.Compiler
 
+
 open System
 open System.Text
 open System.Linq.Expressions
@@ -16,14 +17,26 @@ type internal Function = {
     functionBody : SourceElement 
 }
 
+type Label = {
+    labelExpression: LabelExpression
+} with     
+    interface IComparable with
+        member this.CompareTo o =
+            match o with
+            | :? Label as label ->              
+                this.labelExpression.Target.Name.CompareTo (label.labelExpression.Target.Name)
+            | _ -> -1
+
 
 type internal State1 = {
     strict : list<bool * bool>
     element : SourceElement
-    labels : list<Map<string, LabelExpression>>
+    labels : Map<string, Label>
     functions : list<FunctionDeclaration>
     variables : list<string>
 }
+
+    
 
 type CompilerService (environment:IEnvironment) =
 
@@ -32,6 +45,7 @@ type CompilerService (environment:IEnvironment) =
     
     let propEmptyArgs = exp.Property(environmentParam, "EmptyArgs") :> exp
     let propContext = exp.Property (environmentParam, "Context") :> exp
+    let propUndefined = exp.Property (environmentParam, "Undefined") :> exp
     let propThisBinding = exp.Property (propContext, "ThisBinding") :> exp
     let propLexicalEnviroment = exp.Property (propContext, "LexicalEnviroment") :> exp
     let propVariableEnvironment = exp.Property (propContext, "VariableEnviroment") :> exp
@@ -42,31 +56,25 @@ type CompilerService (environment:IEnvironment) =
     let nullNullableBool = exp.Constant (null, typeof<Nullable<bool>>) :> exp
         
     // White Space
-
     let rec evalWhiteSpace state =
         satisfy CharSets.isWhiteSpace state     
 
     // Line Terminators
-
     and evalLineTerminator state =
-        satisfy CharSets.isLineTerminator state
-           
+        satisfy CharSets.isLineTerminator state           
     and evalLineTerminatorSequence state =
-        (pstring "\r\n" <|> (satisfy CharSets.isLineTerminator |>> string))        
+        (pstring "\r\n" <|> (satisfy CharSets.isLineTerminator |>> string)) state       
 
     // Comments
-
     and evalComment state =
-        (evalMultiLineComment <|> evalSingleLineComment) state
-         
+        (evalMultiLineComment <|> evalSingleLineComment) state         
     and evalMultiLineComment state =
         (parse {
             do! skipString "/*"
             let! r = manyCharsTill anyChar (lookAhead (pstring "*/"))
             do! skipString "*/"
             return r
-        }) state
-           
+        }) state           
     and evalSingleLineComment state =
         (parse {
             do! skipString "//"
@@ -74,22 +82,19 @@ type CompilerService (environment:IEnvironment) =
             return r
         }) state
 
-    // Identifier Names
-    
+    // Identifier Names    
     and evalIdentifier state =
         (attempt <| parse {
             let! r = evalIdentifierName
             if not (CharSets.reservedWordSet.Contains r) then
                 return r
         }) state
-
     and evalIdentifierName state =
         (parse {
             let! start = evalIdentifierStart
             let! rest = manyStrings evalIdentifierPart 
             return start + rest 
         }) state
-
     and evalIdentifierStart state =
         choice [|
             evalUnicodeLetter
@@ -101,7 +106,6 @@ type CompilerService (environment:IEnvironment) =
                 return r
             }
         |] state
-
     and evalIdentifierPart state =
         choice [|
             evalIdentifierStart
@@ -111,24 +115,18 @@ type CompilerService (environment:IEnvironment) =
             pstring "\u200C"
             pstring "\u200D"
         |] state
-
     and evalUnicodeLetter state =
         (satisfy CharSets.isUnicodeLetter |>> string) state
-
     and evalUnicodeCombiningMark state =
         (satisfy CharSets.isUnicodeCombiningMark |>> string) state
-
     and evalUnicodeDigit state =
         (satisfy CharSets.isUnicodeDigit |>> string) state
-
     and evalUnicodeConnectorPunctuation state =
         (satisfy CharSets.isUnicodeConnectorPunctuation |>> string) state
         
-    // Numeric Literal
-    
+    // Numeric Literal    
     and evalNumericLiteral state =
         (evalDecimalLiteral <|> evalHexIntegerLiteral) state
-
     and evalDecimalLiteral state =
         choice [|
             parse {
@@ -166,7 +164,6 @@ type CompilerService (environment:IEnvironment) =
                     return e1
             }
         |] state
-
     and evalDecimalIntegerLiteral state =
         (parse {
             let! r = opt (pchar '0')
@@ -176,36 +173,30 @@ type CompilerService (environment:IEnvironment) =
                 let! r = evalDecimalDigits 1.0
                 return r
         }) state
-
     and evalDecimalDigits sign state =
         (parse {
-            let! e = many1 evalDecimalDigit
+            let! e = many1Rev evalDecimalDigit
             let e = e |> List.mapi (fun i n -> n * (10.0 ** (sign * double i)))
             return e |> List.reduce (+)
         }) state 
-
     and evalDecimalDigit state =
         (parse {
             let! c = anyOf "0123456789"
             return double c - 48.0
         }) state
-
     and evalNonZeroDigit state =
         (parse {
             let! c = anyOf "123456789"
             return double c - 48.0
         }) state
-
     and evalExponentPart state =
         (parse {
             do! evalExponentIndicator
             let! r = evalSignedInteger
             return r
         }) state
-
     and evalExponentIndicator state =
         (skipAnyOf "eE") state
-
     and evalSignedInteger state =
         (parse {
             let! r = opt (anyOf "+-")
@@ -216,16 +207,14 @@ type CompilerService (environment:IEnvironment) =
             | _ -> 
                 let! r = evalDecimalDigits 1.0
                 return r
-        }) state 
- 
+        }) state  
     and evalHexIntegerLiteral state =
         (parse {
             do! skipString "0x" <|> skipString "0X"
-            let! e = many1 evalHexDigit
+            let! e = many1Rev evalHexDigit
             let e = e |> List.mapi (fun i n -> n * (16.0 ** (double i)))
             return e |> List.reduce (+)
         }) state
-
     and evalHexDigit state =
         (parse {
             let! c = anyOf "0123456789ABCDEFabcdef"             
@@ -238,8 +227,7 @@ type CompilerService (environment:IEnvironment) =
                 return double c - 87.0
         }) state
 
-    // String Literals    
-
+    // String Literals
     and evalStringLiteral state =
         choice [|
             parse {
@@ -262,20 +250,15 @@ type CompilerService (environment:IEnvironment) =
                 | None ->
                     return ""
             }
-        |] state
-    
+        |] state    
     and evalDoubleStringCharacters state =
         many1Strings evalDoubleStringCharacter state
-
     and evalSingleStringCharacters state =
-        many1Strings evalSingleStringCharacter state
-        
+        many1Strings evalSingleStringCharacter state        
     and evalDoubleStringCharacter state =
         evalStringCharacter '\"' state
-
     and evalSingleStringCharacter state =
         evalStringCharacter '\'' state
-
     and evalStringCharacter quoteChar state =
         choice [|
             satisfy (satisfyStringCharacter quoteChar) |>> fun c -> c.ToString()
@@ -285,106 +268,141 @@ type CompilerService (environment:IEnvironment) =
                 return r
             }
         |] state
-
     and satisfyStringCharacter quoteChar c =
-        (c <> quoteChar && c <> '\\' && not (CharSets.isLineTerminator c)) 
-    
+        (c <> quoteChar && c <> '\\' && not (CharSets.isLineTerminator c))     
     and evalLineContinuation state =
         (parse {
-            do! skipSatisfy CharSets.isLineTerminator
+            let! r = evalLineTerminatorSequence 
             return ""
-        }) state        
-    
+        }) state 
     and evalEscapeSequence state =
-        (parse {
-            return ""
-        }) state
-
+        choice [|
+            evalCharacterEscapeSequence
+            parse {
+                do! skipChar '0'
+                do! notFollowedBy digit
+                return "\0"
+            }
+            evalHexEscapeSequence
+            evalUnicodeEscapeSequence
+        |] state
     and evalCharacterEscapeSequence state =
-        (parse {
-            return ""
-        }) state
-
+        choice [|
+            evalSingleEscapeCharacter
+            evalNonEscapeCharacter
+        |] state
     and evalSingleEscapeCharacter state =
         (parse {
-            return ""
+            let! c = anyOf "\'\"\\bfnrtv"
+            let c = 
+                match c with
+                | 'b' -> '\u0008'
+                | 't' -> '\u0009'
+                | 'n' -> '\u000A'
+                | 'v' -> '\u000B'
+                | 'f' -> '\u000C'
+                | 'r' -> '\u000D'
+                | '\"' -> '\u0022'
+                | '\'' -> '\u0027'
+                | '\\' -> '\u005C'
+            return c.ToString()
         }) state
-
     and evalNonEscapeCharacter state =
         (parse {
-            return ""
+            do! notFollowedBy evalSingleEscapeCharacter
+            do! notFollowedBy evalLineTerminator
+            let! c = anyChar
+            return c.ToString()
         }) state
-
     and evalEscapeCharacter state =
-        (parse {
-            return ""
-        }) state
-
+        choice [|
+            evalSingleEscapeCharacter
+            digit |>> string
+            pchar 'x' |>> string
+            pchar 'u' |>> string
+        |] state
     and evalHexEscapeSequence state =
         (parse {
-            return ""
+            do! skipChar 'x'
+            let! first = evalHexDigit
+            let! second = evalHexDigit
+            return (16.0 * first + second) |> char |> string
         }) state
-
     and evalUnicodeEscapeSequence state =
         (parse {
-            return ""
+            do! skipChar 'x'
+            let! first = evalHexDigit
+            let! second = evalHexDigit
+            let! third = evalHexDigit
+            let! fourth = evalHexDigit
+            return (4096.0 * first + 256.0 * second + 16.0 * third + fourth) |> char |> string
         }) state
 
     // Regular Expression Literal
-
-    and evalRegularExpressionFlags state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionNonTerminator state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionBackslashSequence state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionClassChar state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionClassChars state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionClass state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionChar state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionFirstChar state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionChars state =
-        (parse {
-            return ()
-        }) state
-
-    and evalRegularExpressionBody state =
-        (parse {
-            return ()
-        }) state
-
     and evalRegularExpressionLiteral state =
         (parse {
-            return "", ""
+            do! skipChar '/'
+            let! body = evalRegularExpressionBody
+            do! skipChar '/'
+            let! flags = evalRegularExpressionFlags
+            return body, flags
+        }) state
+    and evalRegularExpressionBody state =
+        (parse {
+            let! first = evalRegularExpressionFirstChar
+            let! rest = evalRegularExpressionChars 
+            return first + rest
+        }) state
+    and evalRegularExpressionChars state =
+        (parse {
+            let! r = manyStrings evalRegularExpressionChar
+            return r
+        }) state
+    and evalRegularExpressionFirstChar state =
+        choice [|
+            satisfy (fun c -> c <> '*' && c <> '\\' && c <> '/' && c <> ']') |>> string
+            evalRegularExpressionBackslashSequence
+            evalRegularExpressionClass
+        |] state
+    and evalRegularExpressionChar state =
+        choice [|
+            satisfy (fun c -> c <> '\\' && c <> '/' && c <> ']') |>> string
+            evalRegularExpressionBackslashSequence
+            evalRegularExpressionClass
+        |] state
+    and evalRegularExpressionBackslashSequence state =
+        (parse {
+            do! skipChar '\\'
+            let! r = evalRegularExpressionNonTerminator
+            return r |> string
+        }) state
+    and evalRegularExpressionNonTerminator state =
+        (parse {
+            do! notFollowedBy evalLineTerminator
+            let! c = anyChar
+            return c |> string
+        }) state
+    and evalRegularExpressionClass state =
+        (parse {
+            do! skipChar '['
+            let! r = evalRegularExpressionClassChars
+            do! skipChar ']'
+            return r
+        }) state
+    and evalRegularExpressionClassChars state =
+        (parse {
+            let! r = manyStrings evalRegularExpressionClassChar
+            return r
+        }) state
+    and evalRegularExpressionClassChar state =
+        choice [|
+            satisfy (fun c -> c <> '\\' && c <> ']') |>> string
+            evalRegularExpressionBackslashSequence
+        |] state
+    and evalRegularExpressionFlags state =
+        (parse {
+            let! r = manyStrings evalIdentifierPart
+            return r
         }) state
 
     // Source Elements
@@ -470,36 +488,36 @@ type CompilerService (environment:IEnvironment) =
     let evalBitwiseShiftOperator =  
         choice [|
             skipString "<<" |>> fun () -> Reflection.IDynamic.op_LeftShift
-            skipString ">>" |>> fun () -> Reflection.IDynamic.op_SignedRightShift
             skipString ">>>" |>> fun () -> Reflection.IDynamic.op_UnsignedRightShift
+            skipString ">>" |>> fun () -> Reflection.IDynamic.op_SignedRightShift
         |]
         
     let evalRelationalOperator =  
         choice [|
-            skipString "<" |>> fun () -> Reflection.IDynamic.op_Lessthan
-            skipString ">" |>> fun () -> Reflection.IDynamic.op_Greaterthan
             skipString "<=" |>> fun () -> Reflection.IDynamic.op_LessthanOrEqual
             skipString ">=" |>> fun () -> Reflection.IDynamic.op_GreaterthanOrEqual
+            skipString "<" |>> fun () -> Reflection.IDynamic.op_Lessthan
+            skipString ">" |>> fun () -> Reflection.IDynamic.op_Greaterthan
             skipString "instanceof" |>> fun () -> Reflection.IDynamic.op_Instanceof
             skipString "in" |>> fun () -> Reflection.IDynamic.op_In
         |]
         
     let evalRelationalOperatorNoIn =  
         choice [|
-            skipString "<" |>> fun () -> Reflection.IDynamic.op_Lessthan
-            skipString ">" |>> fun () -> Reflection.IDynamic.op_Greaterthan
             skipString "<=" |>> fun () -> Reflection.IDynamic.op_LessthanOrEqual
             skipString ">=" |>> fun () -> Reflection.IDynamic.op_GreaterthanOrEqual
+            skipString "<" |>> fun () -> Reflection.IDynamic.op_Lessthan
+            skipString ">" |>> fun () -> Reflection.IDynamic.op_Greaterthan
             skipString "instanceof" |>> fun () -> Reflection.IDynamic.op_Instanceof
             skipString "in" |>> fun () -> Reflection.IDynamic.op_In
         |]
 
     let evalEqualityOperator =  
         choice [|
-            skipString "==" |>> fun () -> Reflection.IDynamic.op_Equals
-            skipString "!=" |>> fun () -> Reflection.IDynamic.op_DoesNotEquals
             skipString "===" |>> fun () -> Reflection.IDynamic.op_StrictEquals
             skipString "!==" |>> fun () -> Reflection.IDynamic.op_StrictDoesNotEquals
+            skipString "==" |>> fun () -> Reflection.IDynamic.op_Equals
+            skipString "!=" |>> fun () -> Reflection.IDynamic.op_DoesNotEquals
         |]
 
     let evalBitwiseANDOperator =  
@@ -522,11 +540,11 @@ type CompilerService (environment:IEnvironment) =
             do! skipIgnorableTokens
             let! r = 
                 choice [|
-                    evalArrayLiteral
-                    evalObjectLiteral
                     evalThis
                     evalIdentifierReference
                     evalLiteral
+                    evalArrayLiteral
+                    evalObjectLiteral
                     evalGroupingOperator
                 |] 
             return r
@@ -542,7 +560,7 @@ type CompilerService (environment:IEnvironment) =
         (parse {
             let! identifier = evalIdentifier
             let! s = getUserState
-            let args = [| exp.Constant (identifier) :> exp; exp.Constant (s.strict) :> exp |]
+            let args = [| exp.Constant (identifier) :> exp; exp.Constant (s.strict.Head |> fst) :> exp |]
             return exp.Call (propLexicalEnviroment, Reflection.ILexicalEnvironment.getIdentifierReference, args) :> exp
         }) state
     
@@ -701,9 +719,9 @@ type CompilerService (environment:IEnvironment) =
                 let value = getLength ()
                 let value = exp.Call (value, Reflection.IDynamic.op_Addition, [| pad |]) :> exp
                 exp.Call (value, Reflection.IDynamic.convertToUInt32, Array.empty) :> exp                
-            let setElement (e, pad) =
+            let setElement (pad, e) =
                 let name = exp.Constant ("length") :> exp
-                let strict = exp.Constant (s.strict) :> exp
+                let strict = exp.Constant (s.strict.Head |> fst) :> exp
                 let name = addPad pad
                 let name = exp.Call (name, Reflection.IDynamic.convertToString, Array.empty) :> exp
                 let name = exp.Convert (name, typeof<IString>)
@@ -721,7 +739,7 @@ type CompilerService (environment:IEnvironment) =
             let assign = exp.Convert (assign, typeof<IConstructable>)
             let assign = exp.Call (assign, Reflection.IConstructable.construct, [| environmentParam :> exp; propEmptyArgs |]) :> exp
             let assign = exp.Assign (arrayVar, assign) :> exp
-            let! elements = evalElementList
+            let! elements = evalElementList 
             match elements with
             | [] ->
                 let! pad = evalElision
@@ -730,7 +748,7 @@ type CompilerService (environment:IEnvironment) =
                     do! skipToken "]"
                     return exp.Block ([| arrayVar |], [| assign; arrayVar :> exp |]) :> exp
                 | pad ->
-                    let putLength = createPutLength pad s.strict
+                    let putLength = createPutLength pad (s.strict.Head |> fst)
                     do! skipToken "]"
                     return exp.Block ([| arrayVar |], [| assign; putLength; arrayVar :> exp |]) :> exp
             | elements ->
@@ -743,7 +761,7 @@ type CompilerService (environment:IEnvironment) =
                     do! skipToken "]"
                     return exp.Block ([| arrayVar |], body) :> exp
                 | pad ->
-                    let putLength = createPutLength pad s.strict
+                    let putLength = createPutLength pad (s.strict.Head |> fst)
                     let body = assign::body @ [ putLength; arrayVar :> exp ]
                     do! skipToken "]"
                     return exp.Block ([| arrayVar |], body) :> exp
@@ -757,15 +775,14 @@ type CompilerService (environment:IEnvironment) =
 
     and evalElementList state =
         (parse {
-            let parser = attempt <| parse {
-                do! skipIgnorableTokens
-                let! pad = evalElision
-                do! skipIgnorableTokens
-                let! e = evalAssignmentExpression
-                return e, pad
+            let p = parse {
+                let! pad = attempt evalElision <|> preturn 0.0
+                let! e = attempt (skipIgnorableTokens >>. evalAssignmentExpression)
+                return pad, e
             }
-            let! r = sepBy parser (attempt skipComma)
-            return r
+            let! first = p
+            let! r = many (attempt (skipToken "," >>. p))
+            return first::r
         }) state
 
     and evalMemberExpression state =
@@ -775,7 +792,9 @@ type CompilerService (environment:IEnvironment) =
             let! a = evalArguments
             return exp.Call (e, Reflection.IDynamic.op_Construct, [| environmentParam :> exp; a |]) :> exp
           } <|>  parse {
-            let! e1 = evalPrimaryExpression <|> evalFunctionExpression
+            let! e1 = evalPrimaryExpression <|> evalFunctionExpression 
+            let e1 = exp.Convert (e1, typeof<IDynamic>)
+            let e1 = exp.Property (e1, "Value") :> exp
             let! rest = manyRev (attempt evalBracketNotation <|> attempt evalDotNotation)
             let! s = getUserState
             return rest |> List.fold (
@@ -783,11 +802,15 @@ type CompilerService (environment:IEnvironment) =
                     match t with
                     | "bracket" ->  
                         let convert = exp.Call (e, Reflection.IDynamic.convertToString, [||]) :> exp                       
-                        let args = [| convert; acc; exp.Constant (s.strict) :> exp |]
-                        exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp 
+                        let args = [| convert; acc; exp.Constant (s.strict.Head |> fst) :> exp |]
+                        let r = exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp 
+                        let r = exp.Convert (r, typeof<IDynamic>)
+                        exp.Property (r, "Value") :> exp
                     | "dot" ->                         
-                        let args = [| e; exp.Convert(acc, typeof<IReferenceBase>) :> exp; exp.Constant (s.strict) :> exp |]
-                        exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp            
+                        let args = [| e; exp.Convert(acc, typeof<IReferenceBase>) :> exp; exp.Constant (s.strict.Head |> fst) :> exp |]
+                        let r = exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp 
+                        let r = exp.Convert (r, typeof<IDynamic>)
+                        exp.Property (r, "Value") :> exp        
             ) e1
         }) state
         
@@ -818,11 +841,15 @@ type CompilerService (environment:IEnvironment) =
                         exp.Call (acc, Reflection.IDynamic.op_Call, [| e |]) :> exp
                     | "bracket" ->  
                         let convert = exp.Call (e, Reflection.IDynamic.convertToString, [||]) :> exp                       
-                        let args = [| convert; acc; exp.Constant (s.strict) :> exp |]
-                        exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp 
+                        let args = [| convert; acc; exp.Constant (s.strict.Head |> fst) :> exp |]
+                        let r = exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp  
+                        let r = exp.Convert (r, typeof<IDynamic>)
+                        exp.Property (r, "Value") :> exp
                     | "dot" ->                         
-                        let args = [| e; acc; exp.Constant (s.strict) :> exp |]
-                        exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp            
+                        let args = [| e; acc; exp.Constant (s.strict.Head |> fst) :> exp |]
+                        let r = exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp 
+                        let r = exp.Convert (r, typeof<IDynamic>)
+                        exp.Property (r, "Value") :> exp            
             ) first
         }) state
 
@@ -848,7 +875,7 @@ type CompilerService (environment:IEnvironment) =
 
     and evalLeftHandSideExpression state =
         (parse {
-            let! e = evalNewExpression <|> evalCallExpression 
+            let! e = attempt evalNewExpression <|> evalCallExpression 
             return e
         }) state
 
@@ -1041,8 +1068,8 @@ type CompilerService (environment:IEnvironment) =
         evalExpressionCommon evalAssignmentExpressionNoIn state
 
     and evalStatement state =
-        (parse {            
-            do! skipIgnorableTokens
+        (parse {
+            do! skipIgnorableTokens            
             let! e = 
                 choice [|
                     evalBlock
@@ -1066,21 +1093,24 @@ type CompilerService (environment:IEnvironment) =
 
     and evalBlock state =
         (parse {
-            let! (e:list<exp>) = betweenBraces evalStatementList
+            do! skipToken "{"
+            let! e = evalStatementList
             let e = e |> List.filter (fun e -> e.Type <> typeof<Void>)
+            do! skipToken "}"
             if e.IsEmpty 
             then return exp.Constant (environment.Undefined :> IDynamic) :> exp 
             else return exp.Block (e) :> exp
         }) state 
 
-    and evalStatementList state =
+    and evalStatementList state : Reply<list<exp>, State1> =
         many evalStatement state
 
     and evalVariableStatement state =
         (parse {
-            do! skipToken "="
+            do! skipToken "var"
             do! skipIgnorableTokens
             let! e = evalVariableDeclarationList
+            do! skipStatementTerminator
             return e
         }) state
 
@@ -1108,14 +1138,21 @@ type CompilerService (environment:IEnvironment) =
     and evalVariableDeclarationCommon parser state =
         (parse {
             let! identifier = evalIdentifier
-            let! (oldState:State1) = getUserState
-            do! setUserState { oldState with variables = identifier::oldState.variables }
-            let! e2 = opt parser
+            let! oldState = getUserState
+            do! setUserState { oldState with variables = identifier::oldState.variables; labels = oldState.labels }
+            let args = [| exp.Constant (identifier) :> exp; exp.Constant (oldState.strict.Head |> fst) :> exp |]
+            let reference = exp.Call (propLexicalEnviroment, 
+                                      Reflection.ILexicalEnvironment.getIdentifierReference, 
+                                      args) :> exp
+
+            let reference = exp.Convert (reference, typeof<IDynamic>) :> exp
+            let reference = exp.Property (reference, "Value") :> exp
+            let! e2 = opt (attempt parser)
             match e2 with
             | Some e2 ->
-                return e2
+                return exp.Assign (reference, e2) :> exp
             | None ->
-                return exp.Empty() :> exp
+                return exp.Assign (reference, exp.Constant (environment.Undefined)) :> exp
         }) state
 
     and evalVariableDeclaration state =
@@ -1171,70 +1208,119 @@ type CompilerService (environment:IEnvironment) =
             else
                 return e
         }) state
-
+        
     and evalIfStatement state =
         (parse {
-            return exp.Empty() :> exp
+            do! skipToken "if"
+            do! skipToken "("
+            let! e = evalExpression
+            let e = exp.Call (e, Reflection.IDynamic.convertToBoolean, [||])
+            let e = exp.Property (e, "BaseValue") :> exp
+            do! skipToken ")"
+            do! skipIgnorableTokens
+            let! s1 = evalStatement
+            let! r = opt (skipToken "else")
+            match r with
+            | Some _ ->
+                do! skipIgnorableTokens
+                let! s2 = evalStatement
+                return exp.Condition(e, s1, s2) :> exp
+            | None ->
+                return exp.Condition(e, s1, propUndefined) :> exp
         }) state
 
     and evalIterationStatement state =
-        (parse {
-            return exp.Empty() :> exp
+        evalDoIterationStatement state
+        
+    and evalDoIterationStatement state =
+        (parse { 
+            let! currentState = getUserState          
+            let breakLabel = { labelExpression = exp.Label(exp.Label(typeof<Void>, "breakLoop")) }
+            let continueLabel = { labelExpression = exp.Label(exp.Label(typeof<Void>, "continueLoop")) }
+            let labels = currentState.labels.Add("breakLoop", breakLabel).Add("continueLoop", continueLabel)
+            do! setUserState { currentState with labels = labels }
+            do! skipToken "do"
+            let! s = evalStatement
+            do! skipToken "while"
+            do! skipToken "("
+            let! e = evalExpression
+            let e = exp.Call (e, Reflection.IDynamic.convertToBoolean, [||])
+            let e = exp.Property (e, "BaseValue") :> exp
+            do! skipToken ")" 
+            do! skipStatementTerminator
+            do! setUserState currentState
+            return exp.Loop (exp.IfThenElse (e, exp.Break (breakLabel.labelExpression.Target), s)) :> exp
         }) state
 
     and evalContinueStatement state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state
 
     and evalBreakStatement state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state
 
     and evalReturnStatement state =
         (parse {
-            return exp.Empty() :> exp
+            do! skipToken "return"
+            do! skipMany evalWhiteSpace
+            let! e = opt evalExpression      
+            do! skipStatementTerminator
+            let returnLabel = state.UserState.labels.["return"].labelExpression
+            let e = match e with | Some e -> e | None -> propUndefined
+            return exp.Return (returnLabel.Target, e, typeof<IDynamic>) :> exp
         }) state
 
     and evalWithStatement state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state
 
     and evalSwitchStatement state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state
 
     and evalCaseBlock state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state        
 
     and evalCaseClauses state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state
 
     and evalCaseClause state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state
 
     and evalDefaultClause state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state     
 
     and evalLabelledStatement state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state
 
     and evalThrowStatement state =
         (parse {
-            return exp.Empty() :> exp
+            if false then
+                return exp.Empty() :> exp
         }) state
 
     and evalTryStatement state =
@@ -1305,9 +1391,9 @@ type CompilerService (environment:IEnvironment) =
     and evalFunctionBody state =
         (parse {            
             let! (oldState:State1) = getUserState
-            let returnLabel = oldState.labels.Head.["return"]
+            let returnLabel = oldState.labels.["return"]
             let! e1 = evalSourceElements            
-            let body = exp.Block (e1 @ [ returnLabel :> exp ])
+            let body = exp.Block (e1 @ [ returnLabel.labelExpression :> exp ])
             return exp.Lambda<Code>(body, [| environmentParam; argsParam |])
         }) state
 
@@ -1315,36 +1401,44 @@ type CompilerService (environment:IEnvironment) =
         (evalStatement <|> evalFunctionDeclaration) state
 
     and evalSourceElements state =
-        manyTill evalSourceElement eof state      
+        manyTill (evalSourceElement) eof state      
          
-    and evalProgram state =
+    and evalProgram (state:FParsec.State<State1>) =
+        let complete (block:BlockExpression) =
+            let returnLabel = state.UserState.labels.["return"].labelExpression
+            match block.Expressions.Count with
+            | 0 -> block.Update ([||], [| returnLabel |]) 
+            | _ ->
+                let count = block.Expressions.Count - 1
+                let last = block.Expressions.[count]
+                match last with
+                | :? GotoExpression as last when last.Target = returnLabel.Target ->
+                    block.Update ([||], Seq.append block.Expressions [| returnLabel |]) 
+                | _ ->
+                    let last = exp.Return (returnLabel.Target, last) :> exp
+                    let last = [| last; returnLabel :> exp |]
+                    let newBlock = block.Expressions |> Seq.take count |> Seq.append last
+                    block.Update([||], newBlock)               
         (parse {            
             let! (oldState:State1) = getUserState
-            let returnLabel = oldState.labels.Head.["return"]
+            let returnLabel = oldState.labels.["return"]
             let! e1 = evalSourceElements            
-            let body = exp.Block e1
-            let body =
-                if body.Expressions.Count = 0 then
-                    body.Update([||], [| returnLabel |]) 
-                else
-                    let count = body.Expressions.Count - 1
-                    let last = body.Expressions.[count]
-                    let last = exp.Return (returnLabel.Target, last)
-                    body.Update([||], body.Expressions |> Seq.take count |> Seq.append [| last; returnLabel |])
+            let body = exp.Block (typeof<IDynamic>, e1)
+            let body = complete body
             return exp.Lambda<Code>(body, [| environmentParam; argsParam |])
         }) state
 
     let createInitialState (strict:bool) =
-        let returnLabel = exp.Label(exp.Label(typeof<IDynamic>, "return"), exp.Constant (environment.Undefined))
-        { strict = [strict, false]; element = Nil; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }        
+        let returnLabel = { labelExpression = exp.Label(exp.Label(typeof<IDynamic>, "return"), exp.Constant (environment.Undefined)) }
+        { strict = [strict, false]; element = Nil; labels = Map.ofArray [| "return", returnLabel |]; functions = []; variables = [] }        
 
     let compile (parser:Parser<Expression<Code>, State1>) (input:string) (strict:bool) (streamName:string) =
         let initialState = createInitialState strict
         let result = runParserOnString parser initialState streamName input
         match result with
         | Success (expression, finalState, position) ->
-            let variableDeclarations = ReadOnlyList<string>(finalState.variables)
-            let functionDeclarations = ReadOnlyList<FunctionDeclaration>(finalState.functions)
+            let variableDeclarations = ReadOnlyList<string>(finalState.variables |> List.rev)
+            let functionDeclarations = ReadOnlyList<FunctionDeclaration>(finalState.functions |> List.rev)
             let strict = finalState.strict.Head |> fst
             ExecutableCode(expression.Compile(), variableDeclarations, functionDeclarations, strict)
         | Failure (message, error, finalState) -> 

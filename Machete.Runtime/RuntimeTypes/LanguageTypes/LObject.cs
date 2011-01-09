@@ -668,8 +668,16 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 if (nf == null || dd == null)
                     continue;
 
-                var code = (Code)Delegate.CreateDelegate(typeof(Code), m);
-                var func = Environment.CreateFunction(nf.FormalParameterList, true,  new Lazy<Code>(() => code));
+                var func = Environment.CreateFunction(
+                    new ExecutableCode(
+                        (Code)Delegate.CreateDelegate(typeof(Code), m), 
+                        nf.FormalParameterList, 
+                        ReadOnlyList<FunctionDeclaration>.Empty, 
+                        true
+                    ), 
+                    nf.FormalParameterList, 
+                    Environment.GlobalEnvironment
+                ); 
                 var desc = Environment.CreateDataDescriptor(func, dd.Writable, dd.Enumerable, dd.Configurable);
 
                 DefineOwnProperty(nf.Identifier, desc, false);

@@ -8,7 +8,7 @@ using Machete.Interfaces;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
-    public struct LBoolean : IBoolean, IEquatable<LBoolean>
+    public sealed class LBoolean : IBoolean, IEquatable<LBoolean>
     {
         private readonly IEnvironment _environment;
         private readonly bool _value;

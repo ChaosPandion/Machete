@@ -76,7 +76,6 @@
   <ItemGroup>
     <Compile Include="Code.cs" />
     <Compile Include="DataDescriptorAttribute.cs" />
-    <Compile Include="DeclarationBinder.cs" />
     <Compile Include="ExecutableCode.cs" />
     <Compile Include="FunctionDeclaration.cs" />
     <Compile Include="IArgs.cs" />
@@ -92,7 +91,6 @@
     <Compile Include="IFunction.cs" />
     <Compile Include="IHasInstance.cs" />
     <Compile Include="ILexicalEnvironment.cs" />
-    <Compile Include="Input.cs" />
     <Compile Include="INull.cs" />
     <Compile Include="INumber.cs" />
     <Compile Include="IObject.cs" />
