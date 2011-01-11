@@ -15,7 +15,6 @@ namespace Machete.Tests
                 return test();
             ";
             Assert.Equal(2.0, (double)Engine.ExecuteScript(script));
-            Assert.True((bool)Engine.ExecuteScript("delete test;"));
         }
 
         [Fact(DisplayName = "12.9 The return Statement -> With No Expression")]
@@ -28,7 +27,6 @@ namespace Machete.Tests
                 typeof test();
             ";
             Assert.Equal("undefined", (string)Engine.ExecuteScript(script));
-            Assert.True((bool)Engine.ExecuteScript("delete test;"));
         }
     }
 }

@@ -38,7 +38,7 @@ namespace Machete.Tests
         [Fact(DisplayName = "11.2.4 Argument Lists")]
         public void Test1124()
         {
-            Assert.Equal("1, 2, 3, 4, 5", (string)Engine.ExecuteScript("new Array(1, 2, 3, 4, 5)"));
+            Assert.Equal("1,2,3,4,5", (string)Engine.ExecuteScript("new Array(1, 2, 3, 4, 5)"));
         }
 
         [Fact(DisplayName = "11.2.5 Function Expressions")]

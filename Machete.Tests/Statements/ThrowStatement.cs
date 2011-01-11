@@ -1,5 +1,6 @@
 ﻿using System;
 using Xunit;
+using Machete.Interfaces;
 
 namespace Machete.Tests
 {
@@ -11,8 +12,7 @@ namespace Machete.Tests
             var script = @"
                 throw 'Error';
             ";
-            var r = Engine.ExecuteScript(script);
-            Assert.IsAssignableFrom<Exception>(r);
+            Assert.IsAssignableFrom<MacheteRuntimeException>(Engine.ExecuteScript(script));
         }
     }
 }

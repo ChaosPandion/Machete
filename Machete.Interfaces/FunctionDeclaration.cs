@@ -6,15 +6,13 @@ namespace Machete.Interfaces
     {
         public string Identifier { get; private set; }
         public ReadOnlyList<string> FormalParameterList { get; private set; }
-        public Lazy<Code> Code { get; private set; }
-        public bool Strict { get; private set; }
+        public ExecutableCode ExecutableCode { get; private set; }
 
-        public FunctionDeclaration(string identifier, ReadOnlyList<string> formalParameterList, Lazy<Code> code, bool strict)
+        public FunctionDeclaration(string identifier, ReadOnlyList<string> formalParameterList, ExecutableCode executableCode)
         {
             Identifier = identifier;
             FormalParameterList = formalParameterList;
-            Code = code;
-            Strict = strict;
+            ExecutableCode = executableCode;
         }
     }
 }

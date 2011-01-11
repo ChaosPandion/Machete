@@ -30,6 +30,7 @@ module Reflection =
 
         let createFunction1 = t.GetMethod ("CreateFunction", [| typeof<ReadOnlyList<string>>; typeof<bool>; typeof<Lazy<Code>> |])
         let createFunction2 = t.GetMethod ("CreateFunction", [| typeof<ReadOnlyList<string>>; typeof<bool>; typeof<Lazy<Code>>; typeof<ILexicalEnvironment> |])
+        let createFunction3 = t.GetMethod ("CreateFunction", [| typeof<ExecutableCode>; typeof<ReadOnlyList<string>>; typeof<ILexicalEnvironment> |])
         
         let createDataDescriptor1 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic> |])
         let createDataDescriptor2 = t.GetMethod ("CreateDataDescriptor", [| typeof<IDynamic>; typeof<Nullable<bool>> |])

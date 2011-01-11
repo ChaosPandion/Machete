@@ -20,8 +20,6 @@ namespace Machete.Runtime
 {
     public sealed class Environment : IEnvironment
     {
-
-
         private readonly Stack<IExecutionContext> _contextStack;
         //private readonly Machete.Compiler.Compiler _compiler;
     
@@ -306,7 +304,7 @@ namespace Machete.Runtime
 
             var f = new NFunction(this);
             {
-                f.FormalParameters = formalParameterList;
+                f.FormalParameterList = formalParameterList;
                 f.Code = code;
                 f.Strict = strict;
                 f.Scope = scope;
@@ -726,7 +724,7 @@ namespace Machete.Runtime
                 {
                     record.CreateMutableBinding(functionDeclaration.Identifier, configurableBindings);
                 }
-                var func = CreateFunction(functionDeclaration.FormalParameterList, functionDeclaration.Strict, functionDeclaration.Code);
+                var func = CreateFunction(functionDeclaration.ExecutableCode, functionDeclaration.FormalParameterList, Context.LexicalEnviroment);
                 record.SetMutableBinding(functionDeclaration.Identifier, func, strict);
             }
         }
@@ -752,7 +750,7 @@ namespace Machete.Runtime
             var f = new NFunction(this);
             {
                 f.ExecutableCode = executableCode;
-                f.FormalParameters = formalParameterList;
+                f.FormalParameterList = formalParameterList;
                 f.Scope = scope;
                 f.Initialize();
             }

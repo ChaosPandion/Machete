@@ -1,6 +1,7 @@
 ﻿namespace Machete.Interactive
 
 open System
+open System.Diagnostics
 open System.Text
 open System.Text.RegularExpressions
 open FParsec.CharParsers
@@ -51,10 +52,12 @@ module Interactive =
         while true do
             try        
                 let text =  read ()
+                let sw = Stopwatch.StartNew()
                 let r = engine.ExecuteScript text
+                sw.Stop ()
                 let result, color = if isExn r then (r:?>exn).Message, errorColor else r |> string, outputColor
-                //System.Threading.Thread.Sleep (250)
-                ConsoleAgent.writeLine (result + "\n") color
+                ConsoleAgent.writeLine (result) color
+                ConsoleAgent.writeLine (sw.Elapsed.ToString() + "\n") statusColor
             with 
             | e ->
                 ConsoleAgent.writeLine e.Message errorColor 

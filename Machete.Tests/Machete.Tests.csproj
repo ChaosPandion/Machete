@@ -88,6 +88,8 @@
     <Compile Include="Expressions\PrimaryExpressions.cs" />
     <Compile Include="Expressions\RelationalOperators.cs" />
     <Compile Include="Expressions\UnaryOperators.cs" />
+    <Compile Include="Lexical Conventions\NumericLiteral.cs" />
+    <Compile Include="Lexical Conventions\StringLiteral.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\ArrayObjects.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\BooleanObjects.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\DateObjects.cs" />
@@ -118,6 +120,10 @@
     <Compile Include="TestBase.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Machete.Interfaces\Machete.Interfaces.csproj">
+      <Project>{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}</Project>
+      <Name>Machete.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Machete\Machete.fsproj">
       <Project>{882914A4-65AF-444B-9C79-362361998E70}</Project>
       <Name>Machete</Name>

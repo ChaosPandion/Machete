@@ -120,7 +120,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Instanceof(IDynamic other)
         {
-            return LType.Op_GreaterthanOrEqual(_environment, this, other);
+            return _environment.CreateBoolean(_environment.Instanceof(this, other));
         }
 
         public IDynamic Op_In(IDynamic other)
