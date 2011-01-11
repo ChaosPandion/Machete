@@ -2,6 +2,8 @@
 
 
 open System
+open System.Collections
+open System.Collections.Generic
 open System.Text
 open System.Linq.Expressions
 open System.Reflection
@@ -1093,21 +1095,21 @@ type CompilerService (environment:IEnvironment) as this =
             do! skipIgnorableTokens            
             let! e = 
                 choice [|
-                    evalBlock
-                    evalVariableStatement
-                    evalEmptyStatement
-                    evalExpressionStatement
-                    evalIfStatement
-                    evalIterationStatement
-                    evalContinueStatement
-                    evalBreakStatement
-                    evalReturnStatement
-                    evalWithStatement
-                    evalLabelledStatement
-                    evalSwitchStatement
-                    evalThrowStatement
-                    evalTryStatement
-                    evalDebuggerStatement
+                    attempt evalBlock
+                    attempt evalVariableStatement
+                    attempt evalEmptyStatement
+                    attempt evalExpressionStatement
+                    attempt evalIfStatement
+                    attempt evalIterationStatement
+                    attempt evalContinueStatement
+                    attempt evalBreakStatement
+                    attempt evalReturnStatement
+                    attempt evalWithStatement
+                    attempt evalLabelledStatement
+                    attempt evalSwitchStatement
+                    attempt evalThrowStatement
+                    attempt evalTryStatement
+                    attempt evalDebuggerStatement
                 |] 
             return e
         }) state
@@ -1122,9 +1124,9 @@ type CompilerService (environment:IEnvironment) as this =
             | Some e ->
                 let e = e |> List.filter (fun e -> e.Type <> typeof<Void>)
                 if e.IsEmpty 
-                then return propUndefined 
-                else return exp.Block (e) :> exp
-            | None -> return propUndefined
+                then return exp.Convert (propUndefined, typeof<IDynamic>) :> exp
+                else return exp.Block (typeof<IDynamic>, e) :> exp
+            | None -> return exp.Convert (propUndefined, typeof<IDynamic>) :> exp
         }) state 
 
     and evalStatementList state : Reply<list<exp>, State1> =
@@ -1148,10 +1150,8 @@ type CompilerService (environment:IEnvironment) as this =
             }
             let! r = sepBy parser (attempt skipComma)
             if r.IsEmpty 
-            then return exp.Constant (environment.Undefined :> IDynamic) :> exp 
-            elif r.Length = 1
-            then return r.Head
-            else return exp.Block (r) :> exp 
+            then return propUndefined
+            else return exp.Block (typeof<IDynamic>, r @ [ propUndefined ]) :> exp 
         }) state  
 
     and evalVariableDeclarationList state =
@@ -1201,13 +1201,13 @@ type CompilerService (environment:IEnvironment) as this =
         evalInitialiserCommon evalAssignmentExpressionNoIn state
 
     and evalEmptyStatement state =
-        (attempt <| parse {
+        (parse {
             do! skipToken ";"
             return exp.Empty() :> exp
         }) state
 
     and evalExpressionStatement state =
-        (attempt <| parse {
+        (parse {
             let check (e:exp) =
                 match e with
                 | :? MemberExpression as e ->
@@ -1252,32 +1252,125 @@ type CompilerService (environment:IEnvironment) as this =
             | Some _ ->
                 do! skipIgnorableTokens
                 let! s2 = evalStatement
-                return exp.Condition(e, s1, s2) :> exp
+                return exp.Condition(e, s1, s2, typeof<IDynamic>) :> exp
             | None ->
-                return exp.Condition(e, s1, propUndefined) :> exp
+                return exp.Condition(e, s1, propUndefined, typeof<IDynamic>) :> exp
         }) state
 
     and evalIterationStatement state =
-        (attempt evalDoIterationStatement) state
-        
-    and evalDoIterationStatement state =
-        (parse { 
-            let! currentState = getUserState          
-            let breakLabel = { labelExpression = exp.Label(exp.Label(typeof<Void>, "breakLoop")) }
-            let continueLabel = { labelExpression = exp.Label(exp.Label(typeof<Void>, "continueLoop")) }
+        (parse {             
+            let breakLabelExp = exp.Label(exp.Label(typeof<Void>, "breakLoop"))              
+            let breakLabel = { labelExpression = breakLabelExp }
+            let continueLabelExp = exp.Label(exp.Label(typeof<Void>, "continueLoop"))   
+            let continueLabel = { labelExpression = continueLabelExp }
+            let breakExpression = exp.Break (breakLabel.labelExpression.Target)
+            let evalDoWhileIterationStatement state =
+                (parse { 
+                    do! skipToken "do"
+                    do! skipIgnorableTokens
+                    let! s = evalStatement
+                    do! skipToken "while"
+                    do! skipToken "("
+                    do! skipIgnorableTokens
+                    let! e = evalExpression
+                    let e = exp.Call (e, Reflection.IDynamic.convertToBoolean, [||])
+                    let e = exp.Property (e, "BaseValue") :> exp
+                    let e = exp.Not e
+                    do! skipToken ")" 
+                    do! skipStatementTerminator
+                    let body = exp.Block ([| s; exp.IfThen (e, breakExpression) :> exp |])
+                    return exp.Loop (body, breakLabel.labelExpression.Target, continueLabel.labelExpression.Target) :> exp
+                }) state                
+            let evalWhileIterationStatement state =
+                (parse { 
+                    do! skipToken "while"
+                    do! skipToken "("
+                    do! skipIgnorableTokens
+                    let! e = evalExpression
+                    let e = exp.Call (e, Reflection.IDynamic.convertToBoolean, [||])
+                    let e = exp.Property (e, "BaseValue") :> exp
+                    do! skipToken ")" 
+                    do! skipIgnorableTokens
+                    let! s = evalStatement
+                    let body = exp.IfThenElse (e, s, breakExpression)
+                    return exp.Loop (body, breakLabel.labelExpression.Target, continueLabel.labelExpression.Target) :> exp
+                }) state                
+            let evalForIterationStatements state =                
+                let evalWithVar state =
+                    (parse {
+                        do! skipToken "var"
+                        do! skipIgnorableTokens
+                        let! vars = evalVariableDeclarationListNoIn
+                        do! skipIgnorableTokens
+
+                        let! e = evalExpression
+                        let e = exp.Call (e, Reflection.IDynamic.convertToBoolean, [||])
+                        let e = exp.Property (e, "BaseValue") :> exp
+                        do! skipToken ")" 
+                        do! skipStatementTerminator
+                        return exp.Loop (exp.IfThenElse (e, exp.Break (breakLabel.labelExpression.Target), e)) :> exp
+                    }) state                        
+                let evalWithoutVar state =
+                    let evalForIn state = 
+                        (parse {
+                            let! e1 = evalLeftHandSideExpression
+                            do! skipToken "in"
+                            let! e2 = evalExpression
+                            return Some e1, Some e2, None, None, None
+                        }) state
+                    let evalFor state = 
+                        (parse {
+                            let! e1 = opt evalExpressionNoIn
+                            do! skipToken ";"
+                            let! e2 = opt evalExpression
+                            do! skipToken ";"
+                            let! e3 = opt evalExpression
+                            return None, None, e1, e2, e3
+                        }) state
+                    (parse {
+                        let! r = choice [| attempt evalForIn;  attempt evalFor|]
+                        do! skipToken ")"
+                        do! skipIgnorableTokens  
+                        let! s = evalStatement
+                        match r with
+//                        | None, None, None, None, None ->
+//                            return exp.Loop (s, breakLabelExp.Target, continueLabelExp.Target) :> exp
+//                        | None, None, Some e1, None, None ->
+//                            let body = exp.Block ([| e1; s |])
+//                            return exp.Loop (body, breakLabelExp.Target, continueLabelExp.Target) :> exp
+                        | Some e1, Some e2, None, None, None ->
+                            let enumeratorVar = exp.Variable(typeof<IEnumerator<string>>, "enumerator")
+                            let obj = exp.Call (e2, Reflection.IDynamic.convertToObject, Array.empty) :> exp
+                            let asEnumerableString = exp.Convert(obj, typeof<IEnumerable<string>>)
+                            let getEnumerator = exp.Call (asEnumerableString, Reflection.IEnumerableString.getEnumerator, Array.empty) :> exp
+                            let assignEnumeratorVar = exp.Assign (enumeratorVar, getEnumerator) :> exp
+                            let asEnumeratorString = exp.Convert(enumeratorVar, typeof<IEnumerator<string>>)                 
+                            let current = exp.Call (asEnumeratorString, Reflection.IEnumeratorString.get_Current, Array.empty) :> exp
+                            let asEnumerator = exp.Convert(enumeratorVar, typeof<IEnumerator>)
+                            let moveNext = exp.Call (asEnumerator, Reflection.IEnumerator.moveNext, Array.empty)
+                            let asDisposable = exp.Convert(enumeratorVar, typeof<IDisposable>)
+                            let dispose = exp.Call (asDisposable, Reflection.IDisposable.dispose, Array.empty) :> exp
+                            let createString = exp.Call (environmentParam, Reflection.IEnvironment.createString, [| current |]) :> exp
+                            let putCurrent = exp.Call (e1, Reflection.IDynamic.set_Value, [| createString |]) :> exp
+                            let ifTrue = exp.Block ([| putCurrent; s |]) :> exp
+                            let loopCondition = exp.IfThenElse (moveNext, ifTrue, exp.Break(breakLabelExp.Target))
+                            let loop = exp.Loop (loopCondition, breakLabelExp.Target, continueLabelExp.Target)
+                            let initTest = exp.Not(exp.Or (exp.TypeIs (e1, typeof<IUndefined>), exp.TypeIs (e1, typeof<INull>)))
+                            let initCondition = exp.IfThen (initTest, loop) :> exp
+                            return exp.Block ([| enumeratorVar |], exp.TryFinally (exp.Block ([| assignEnumeratorVar; initCondition |]) :> exp, dispose)) :> exp
+                    }) state
+                (parse {
+                    do! skipToken "for"
+                    do! skipToken "("
+                    let! e = choice [| evalWithVar; evalWithoutVar |]
+                    return e :> exp
+                }) state            
+            let! currentState = getUserState
             let labels = currentState.labels.Head.Add("breakLoop", breakLabel).Add("continueLoop", continueLabel)
             do! setUserState { currentState with labels = labels::currentState.labels }
-            do! skipToken "do"
-            let! s = evalStatement
-            do! skipToken "while"
-            do! skipToken "("
-            let! e = evalExpression
-            let e = exp.Call (e, Reflection.IDynamic.convertToBoolean, [||])
-            let e = exp.Property (e, "BaseValue") :> exp
-            do! skipToken ")" 
-            do! skipStatementTerminator
+            let! r = choice [| evalDoWhileIterationStatement; evalWhileIterationStatement; evalForIterationStatements |]
             do! setUserState currentState
-            return exp.Loop (exp.IfThenElse (e, exp.Break (breakLabel.labelExpression.Target), s)) :> exp
+            return exp.Block ([| r; propUndefined |]) :> exp
         }) state
 
     and evalContinueStatement state =
@@ -1292,10 +1385,10 @@ type CompilerService (environment:IEnvironment) as this =
             let labels = currentState.labels.Head
             match identifier with
             | Some identifier ->
-                let label = labels.TryFind identifier
+                let label = labels.TryFind ("continue" + identifier)
                 match label with
                 | Some label ->
-                    return exp.Goto (label.labelExpression.Target) :> exp
+                    return exp.Continue (label.labelExpression.Target, typeof<IDynamic>) :> exp
                 | None ->
                     let msg = String.Format (identifierNotFound, identifier) 
                     let err = environment.CreateSyntaxError msg
@@ -1304,7 +1397,7 @@ type CompilerService (environment:IEnvironment) as this =
                 let label = labels.TryFind "continueLoop"
                 match label with
                 | Some label ->
-                    return exp.Goto (label.labelExpression.Target) :> exp
+                    return exp.Continue (label.labelExpression.Target, typeof<IDynamic>) :> exp
                 | None ->
                     let msg = String.Format (noSurroundingLoop, identifier) 
                     let err = environment.CreateSyntaxError msg
@@ -1323,10 +1416,10 @@ type CompilerService (environment:IEnvironment) as this =
             let labels = currentState.labels.Head
             match identifier with
             | Some identifier ->
-                let label = labels.TryFind identifier
+                let label = labels.TryFind ("break" + identifier)
                 match label with
                 | Some label ->
-                    return exp.Goto (label.labelExpression.Target) :> exp
+                    return exp.Break (label.labelExpression.Target, propUndefined, typeof<IDynamic>) :> exp
                 | None ->
                     let msg = String.Format (identifierNotFound, identifier) 
                     let err = environment.CreateSyntaxError msg
@@ -1337,9 +1430,9 @@ type CompilerService (environment:IEnvironment) as this =
                 match labelSwitch, labelLoop with
                 | Some labelSwitch, None
                 | Some labelSwitch, Some _ ->
-                    return exp.Goto (labelSwitch.labelExpression.Target) :> exp
+                    return exp.Break (labelSwitch.labelExpression.Target, propUndefined) :> exp
                 | None, Some labelLoop ->
-                    return exp.Goto (labelLoop.labelExpression.Target) :> exp
+                    return exp.Break (labelLoop.labelExpression.Target, propUndefined) :> exp
                 | None, None ->
                     let msg = String.Format (noSurrounding, identifier) 
                     let err = environment.CreateSyntaxError msg
@@ -1455,17 +1548,17 @@ type CompilerService (environment:IEnvironment) as this =
             let! identifier = evalIdentifier
             do! skipToken ":"
             let breakName = "break" + identifier 
-            let breakLabelExp = exp.Label(exp.Label(typeof<Void>, breakName))
+            let breakLabelExp = exp.Label(exp.Label(typeof<IDynamic>, breakName), propUndefined)
             let breakLabel = breakName, { labelExpression = breakLabelExp }
             let continueName = "continue" + identifier
-            let continueLabelExp = exp.Label(exp.Label(typeof<Void>, continueName))
+            let continueLabelExp = exp.Label(exp.Label(typeof<IDynamic>, continueName), propUndefined)
             let continueLabel = continueName, { labelExpression = continueLabelExp }
             let! currentState = getUserState 
             let labels = currentState.labels.Head.Add(breakLabel).Add(continueLabel) 
             do! setUserState { currentState with labels = labels::currentState.labels }
             let! s = evalStatement
             do! setUserState currentState
-            return exp.Block ([| continueLabelExp :> exp; s; breakLabelExp :> exp |]) :> exp
+            return exp.Block (typeof<IDynamic>, [| continueLabelExp :> exp; s; breakLabelExp :> exp |]) :> exp
         }) state
 
     and evalThrowStatement state =
@@ -1481,8 +1574,8 @@ type CompilerService (environment:IEnvironment) as this =
         (parse {
             do! skipToken "try"
             let! e1 = evalBlock
-            let! e2 = opt evalCatch
-            let! e3 = opt evalFinally
+            let! e2 = opt (attempt evalCatch)
+            let! e3 = opt (attempt evalFinally)
             match e2, e3 with
             | Some e2, None ->
                 return exp.TryCatch (e1, [| e2 |]) :> exp
@@ -1646,7 +1739,10 @@ type CompilerService (environment:IEnvironment) as this =
             let strict = finalState.strict.Head |> fst
             ExecutableCode(expression.Compile(), variableDeclarations, functionDeclarations, strict)
         | Failure (message, error, finalState) -> 
-            raise (environment.CreateSyntaxError message)         
+            raise (environment.CreateSyntaxError message) 
+            
+    
+                    
         
     member this.CompileGlobalCode (input:string) =
         compile evalProgram input false "GlobalCode"

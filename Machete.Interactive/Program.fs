@@ -16,6 +16,7 @@ module Program =
 //        let v = environment.Execute (r)
 //        System.Console.Write (v.ToString())
 //        System.Console.ReadKey(true) |> ignore
+        //let r = Test.parse "XYZ Hotel: 6 nights at 220EUR / night plus 17.5% tax"
         Interactive.initialize ()
 
     main()

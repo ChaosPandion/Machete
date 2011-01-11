@@ -1,4 +1,89 @@
 ﻿namespace Machete.Compiler
+open System
+open FParsec.Primitives
+open FParsec.CharParsers
+
+module Test =
+
+// XYZ Hotel: 6 nights at 220EUR / night plus 17.5% tax
+    //    [ ("XYZ", Word); ("Hotel:", Word);
+//("6", Number); ("nights", Word);
+//("at", Operator); ("220", Number);
+//("EUR", CurrencyCode); ("/", Operator); ("night", Word);
+//("plus", Operator); ("17.5", Number); ("%", PerCent); ("tax", Word) ]   
+
+    type Element =
+    | Word of string
+    | Number of string
+    | Operator of string
+    | CurrencyCode of string
+    | PerCent  of string    
+
+    let parsePerCent state =
+        (parse {
+            let! r = pstring "%"
+            return PerCent r
+        }) state
+        
+    let currencyCodes = [|
+        pstring "EUR"
+    |]
+
+    let parseCurrencyCode state =
+        (parse {
+            let! r = choice currencyCodes
+            return CurrencyCode r
+        }) state
+
+    let operators = [|
+        pstring "at"
+        pstring "/"
+    |]
+
+    let parseOperator state =
+        (parse {
+            let! r = choice operators
+            return Operator r
+        }) state
+
+    let parseNumber state =
+        (parse {
+            let! e1 = many1Chars digit
+            let! r = opt (pchar '.')
+            let! e2 = manyChars digit
+            return Number (e1 + (if r.IsSome then "." else "") + e2)
+        }) state
+
+    let parseWord state =
+        (parse {
+            let! r = many1Chars (letter <|> pchar ':')
+            return Word r
+        }) state
+
+    let elements = [| 
+        parseOperator
+        parseCurrencyCode
+        parseWord
+        parseNumber 
+        parsePerCent
+    |]
+
+    let parseElement state =
+        (parse {
+            do! spaces
+            let! r = choice elements
+            do! spaces
+            return r
+        }) state
+        
+    let parseElements state =
+        manyTill parseElement eof state
+        
+    let parse (input:string) =
+        let result = run parseElements input 
+        match result with
+        | Success (v, _, _) -> v
+        | Failure (m, _, _) -> failwith m
 
 //open System
 //open System.Collections
