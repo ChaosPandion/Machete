@@ -5,7 +5,7 @@ namespace Machete.Tests
 {
     public class ContinueStatement : TestBase
     {
-        [Fact(DisplayName = "12.7 The continue Statement -> continue [no LineTerminator here] Identifieropt ;")]
+        [Fact(DisplayName = "12.7 The continue Statement")]
         public void Test127A()
         {
             var script = @"
