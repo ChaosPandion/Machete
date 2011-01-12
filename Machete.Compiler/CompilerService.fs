@@ -13,12 +13,6 @@ open Machete.Interfaces
 
 type internal exp = System.Linq.Expressions.Expression
 
-type internal Function = {
-    identifier : string
-    formalParameterList : ReadOnlyList<string>
-    strict : bool
-    functionBody : SourceElement 
-}
 
 type Label = {
     labelExpression: LabelExpression
@@ -38,12 +32,6 @@ type internal State1 = {
     functions : list<FunctionDeclaration>
     variables : list<string>
 }
-
-type internal ForStatement =
-| For of option<exp> * option<exp> * option<exp>   
-| ForWithVar of exp * option<exp> * option<exp>  
-| ForIn of exp * exp   
-| ForInWithVar of exp * exp
 
 type CompilerService (environment:IEnvironment) as this =
 
@@ -1597,12 +1585,7 @@ type CompilerService (environment:IEnvironment) as this =
             let! e = opt evalStatementList           
             match e with
             | Some e -> return exp.SwitchCase (e, [| e1 |])
-            | None -> return exp.SwitchCase (propUndefined, [| e1 |])          
-//            match e2 with
-//            | [] -> 
-//                return exp.SwitchCase (propUndefined, [| e1 |])
-//            | _ -> 
-//                return exp.SwitchCase (exp.Block e2 :> exp, [| e1 |])
+            | None -> return exp.SwitchCase (propUndefined, [| e1 |])
         }) state
 
     and evalDefaultClause state =
@@ -1614,9 +1597,6 @@ type CompilerService (environment:IEnvironment) as this =
             match e with
             | Some e -> return e
             | None -> return exp.Convert (propUndefined, typeof<IDynamic>) :> exp
-//            match e with
-//            | [] -> return propUndefined
-//            | _ -> return exp.Block e :> exp
         }) state     
 
     and evalLabelledStatement state =
