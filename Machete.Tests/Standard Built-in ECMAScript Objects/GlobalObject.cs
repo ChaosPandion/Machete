@@ -80,25 +80,25 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.1.3.1 decodeURI (encodedURI)")]
         public void Test15131()
         {
-            Assert.True(false);
+            Assert.Equal("[ ]", (string)Engine.ExecuteScript("decodeURI('%5B%20%5D')"));
         }
 
         [Fact(DisplayName = "15.1.3.2 decodeURIComponent (encodedURIComponent)")]
         public void Test15132()
         {
-            Assert.True(false);
+            Assert.Equal("a?b", (string)Engine.ExecuteScript("decodeURIComponent('a%3Fb')"));
         }
 
         [Fact(DisplayName = "15.1.3.3 encodeURI (uri)")]
         public void Test15133()
         {
-            Assert.True(false);
+            Assert.Equal("%5B%20%5D", (string)Engine.ExecuteScript("encodeURI('[ ]')"));
         }
 
         [Fact(DisplayName = "15.1.3.4 encodeURIComponent (uriComponent)")]
         public void Test15134()
         {
-            Assert.True(false);
+            Assert.Equal("a%3Fb", (string)Engine.ExecuteScript("encodeURIComponent('a?b')"));
         }
 
         [Fact(DisplayName = "15.1.4.1 Object ( . . . )")]

@@ -21,13 +21,13 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.2.3.1 Object.prototype")]
         public void Test15231()
         {
-            Assert.True(false);
+            Assert.Equal("object", (string)Engine.ExecuteScript("typeof Object.prototype"));
         }
 
         [Fact(DisplayName = "15.2.3.2 Object.getPrototypeOf ( O )")]
         public void Test15232()
         {
-            Assert.True(false);
+            Assert.True((bool)Engine.ExecuteScript("Object.getPrototypeOf({}) === Object.prototype"));
         }
 
         [Fact(DisplayName = "15.2.3.3 Object.getOwnPropertyDescriptor ( O, P )")]
@@ -129,10 +129,8 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.2.4.5 Object.prototype.hasOwnProperty (V)")]
         public void Test15245()
         {
-            Assert.IsNotType<MacheteRuntimeException>("var o = { test : 1 }");
-            Assert.True((bool)Engine.ExecuteScript("o.hasOwnProperty('test')"));
-            Assert.True((bool)Engine.ExecuteScript("!o.hasOwnProperty('hasOwnProperty')"));
-            Assert.True((bool)Engine.ExecuteScript("delete o"));
+            Assert.True((bool)Engine.ExecuteScript("({ test : 1 }).hasOwnProperty('test')"));
+            Assert.True((bool)Engine.ExecuteScript("!({ test : 1 }).hasOwnProperty('hasOwnProperty')"));
         }
 
         [Fact(DisplayName = "15.2.4.6 Object.prototype.isPrototypeOf (V)")]
