@@ -129,7 +129,6 @@ namespace Machete.Runtime
             ArrayPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ArrayConstructor), false);
             StringPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(StringConstructor), false);
             BooleanPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(BooleanConstructor), false);
-            NumberPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(NumberConstructor), false);
             DatePrototype.DefineOwnProperty("constructor", CreateDataDescriptor(DateConstructor), false);
             RegExpPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(RegExpConstructor), false);
             ErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ErrorConstructor), false);

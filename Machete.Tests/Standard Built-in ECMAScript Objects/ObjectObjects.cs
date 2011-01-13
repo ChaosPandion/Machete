@@ -1,5 +1,6 @@
 ﻿using System;
 using Xunit;
+using Machete.Interfaces;
 
 namespace Machete.Tests
 {
@@ -128,7 +129,10 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.2.4.5 Object.prototype.hasOwnProperty (V)")]
         public void Test15245()
         {
-            Assert.True(false);
+            Assert.IsNotType<MacheteRuntimeException>("var o = { test : 1 }");
+            Assert.True((bool)Engine.ExecuteScript("o.hasOwnProperty('test')"));
+            Assert.True((bool)Engine.ExecuteScript("!o.hasOwnProperty('hasOwnProperty')"));
+            Assert.True((bool)Engine.ExecuteScript("delete o"));
         }
 
         [Fact(DisplayName = "15.2.4.6 Object.prototype.isPrototypeOf (V)")]

@@ -172,7 +172,8 @@ type CompilerService (environment:IEnvironment) as this =
         }) state
     and evalDecimalDigits sign modifier state =
         (parse {
-            let! e = many1Rev evalDecimalDigit
+            let p = if modifier = 0.0 then many1Rev evalDecimalDigit else many1 evalDecimalDigit
+            let! e = p
             let e = e |> List.mapi (fun i n -> n * (10.0 ** (sign * (double i + modifier))))
             return e |> List.reduce (+)
         }) state 
@@ -205,6 +206,7 @@ type CompilerService (environment:IEnvironment) as this =
                 let! r = evalDecimalDigits 1.0 0.0
                 return r
         }) state  
+
     and evalHexIntegerLiteral state =
         (parse {
             do! skipString "0x" <|> skipString "0X"
@@ -212,17 +214,18 @@ type CompilerService (environment:IEnvironment) as this =
             let e = e |> List.mapi (fun i n -> n * (16.0 ** (double i)))
             return e |> List.reduce (+)
         }) state
+
     and evalHexDigit state =
-        (parse {
-            let! c = anyOf "0123456789ABCDEFabcdef"             
-            match c with
-            | c when c >= '0' && c <= '9' -> 
-                return double c - 48.0 
-            | c when c >= 'A' && c <= 'F' -> 
-                return double c - 55.0
-            | c when c >= 'a' && c <= 'f' -> 
-                return double c - 87.0
-        }) state
+        (anyOf "0123456789ABCDEFabcdef" |>> completeHexDigit) state
+
+    and completeHexDigit c =
+        match c with
+        | c when c >= '0' && c <= '9' -> 
+            double c - 48.0 
+        | c when c >= 'A' && c <= 'F' -> 
+            double c - 55.0
+        | c when c >= 'a' && c <= 'f' -> 
+            double c - 87.0
 
     // String Literals
     and evalStringLiteral state =
@@ -408,11 +411,7 @@ type CompilerService (environment:IEnvironment) as this =
         optional (skipMany ((evalWhiteSpace |>> ignore) <|> (evalLineTerminator |>> ignore) <|> (evalComment |>> ignore))) state
         
     let skipToken value state =
-        (parse {
-            do! skipIgnorableTokens
-            do! skipString value
-            return ()
-        }) state
+        (skipIgnorableTokens >>. skipString value >>. skipIgnorableTokens ) state
         
     let skipStatementTerminator state =
         (parse {
@@ -428,7 +427,10 @@ type CompilerService (environment:IEnvironment) as this =
                     let! r = opt evalMultiLineComment
                     if r.IsSome then                  
                         return ()
-        } <|> eof) state
+                    else 
+                        do! eof
+                        return ()
+        }) state
          
     let skipEval parser state =
         (parse {
@@ -1065,12 +1067,7 @@ type CompilerService (environment:IEnvironment) as this =
 
     and evalExpressionCommon parser state =
         (parse {
-            let parser = attempt <| parse {
-                do! skipIgnorableTokens
-                let! e = parser
-                return e
-            }
-            let! r = sepBy parser (attempt skipComma)
+            let! r = sepBy (attempt (skipIgnorableTokens >>. parser)) (attempt skipComma)
             if r.Length > 0 then
                 let r = r |> List.map (fun e -> exp.Property (e, "Value") :> exp)
                 return if r.Length = 1 then r.Head else exp.Block (r) :> exp
@@ -1082,29 +1079,25 @@ type CompilerService (environment:IEnvironment) as this =
     and evalExpressionNoIn state =
         evalExpressionCommon evalAssignmentExpressionNoIn state
 
+     
     and evalStatement state =
-        (parse {
-            do! skipIgnorableTokens            
-            let! e = 
-                choice [|
-                    attempt evalBlock
-                    attempt evalVariableStatement
-                    attempt evalEmptyStatement
-                    attempt evalExpressionStatement
-                    attempt evalIfStatement
-                    attempt evalIterationStatement
-                    attempt evalContinueStatement
-                    attempt evalBreakStatement
-                    attempt evalReturnStatement
-                    attempt evalWithStatement
-                    attempt evalLabelledStatement
-                    attempt evalSwitchStatement
-                    attempt evalThrowStatement
-                    attempt evalTryStatement
-                    attempt evalDebuggerStatement
-                |] 
-            return e
-        }) state
+        (skipIgnorableTokens >>. choice [|
+            attempt evalBlock
+            attempt evalVariableStatement
+            attempt evalIfStatement
+            attempt evalIterationStatement
+            attempt evalContinueStatement
+            attempt evalBreakStatement
+            attempt evalReturnStatement
+            attempt evalWithStatement
+            attempt evalLabelledStatement
+            attempt evalSwitchStatement
+            attempt evalThrowStatement
+            attempt evalTryStatement
+            attempt evalDebuggerStatement
+            attempt evalEmptyStatement
+            attempt evalExpressionStatement
+        |]) state
 
     and evalBlock state =
         (parse {
@@ -1132,22 +1125,11 @@ type CompilerService (environment:IEnvironment) as this =
         }) state
 
     and evalVariableStatement state =
-        (parse {
-            do! skipToken "var"
-            do! skipIgnorableTokens
-            let! e = evalVariableDeclarationList
-            do! skipStatementTerminator
-            return e
-        }) state
+        (skipToken "var" >>. evalVariableDeclarationList .>> skipStatementTerminator) state
 
     and evalVariableDeclarationListCommon parser state =
         (parse {
-            let parser = attempt <| parse {
-                do! skipIgnorableTokens
-                let! e = parser
-                return e
-            }
-            let! r = sepBy parser (attempt skipComma)
+            let! r = sepBy (attempt (skipIgnorableTokens >>. parser)) (attempt skipComma)
             if r.IsEmpty 
             then return propUndefined
             else return exp.Block (typeof<IDynamic>, r @ [ propUndefined ]) :> exp 
@@ -1186,12 +1168,7 @@ type CompilerService (environment:IEnvironment) as this =
         evalVariableDeclarationCommon evalInitialiserNoIn state
 
     and evalInitialiserCommon parser state =
-        (parse {
-            do! skipToken "="
-            do! skipIgnorableTokens
-            let! e = parser
-            return e
-        }) state
+        (skipToken "=" .>> skipIgnorableTokens >>. parser) state
 
     and evalInitialiser state =
         evalInitialiserCommon evalAssignmentExpression state
@@ -1200,10 +1177,7 @@ type CompilerService (environment:IEnvironment) as this =
         evalInitialiserCommon evalAssignmentExpressionNoIn state
 
     and evalEmptyStatement state =
-        (parse {
-            do! skipToken ";"
-            return exp.Empty() :> exp
-        }) state
+        (skipToken ";" |>> fun () -> exp.Empty() :> exp) state
 
     and evalExpressionStatement state =
         (parse {
@@ -1221,8 +1195,7 @@ type CompilerService (environment:IEnvironment) as this =
                         | _ -> false, true
                     | _ -> false, true
                 | _ -> false, true
-            do! notFollowedByString "{"
-            do! notFollowedByString "function"
+            do! notFollowedByString "{" .>> notFollowedByString "function"
             let! e = evalExpression           
             do! skipStatementTerminator
             let! (oldState:State1) = getUserState
@@ -1237,15 +1210,10 @@ type CompilerService (environment:IEnvironment) as this =
         
     and evalIfStatement state =
         (parse {
-            do! skipToken "if"
-            do! skipToken "("
-            do! skipIgnorableTokens
-            let! e = evalExpression
+            let! e = skipToken "if" >>. skipToken "(" >>. evalExpression .>> skipToken ")"
+            let! s1 = evalStatement
             let e = exp.Call (e, Reflection.IDynamic.convertToBoolean, [||])
             let e = exp.Property (e, "BaseValue") :> exp
-            do! skipToken ")"
-            do! skipIgnorableTokens
-            let! s1 = evalStatement
             let! r = opt (attempt (skipToken "else"))
             match r with
             | Some _ ->
@@ -1265,18 +1233,11 @@ type CompilerService (environment:IEnvironment) as this =
             let breakExpression = exp.Break (breakLabel.labelExpression.Target)
             let evalDoWhileIterationStatement state =
                 (parse { 
-                    do! skipToken "do"
-                    do! skipIgnorableTokens
-                    let! s = evalStatement
-                    do! skipToken "while"
-                    do! skipToken "("
-                    do! skipIgnorableTokens
-                    let! e = evalExpression
+                    let! s = skipToken "do" >>. evalStatement
+                    let! e = skipToken "while" >>. skipToken "(" >>. evalExpression .>> skipToken ")" .>> skipStatementTerminator
                     let e = exp.Call (e, Reflection.IDynamic.convertToBoolean, [||])
                     let e = exp.Property (e, "BaseValue") :> exp
                     let e = exp.Not e
-                    do! skipToken ")" 
-                    do! skipStatementTerminator
                     let body = exp.Block ([| s; exp.IfThen (e, breakExpression) :> exp |])
                     return exp.Loop (body, breakLabel.labelExpression.Target, continueLabel.labelExpression.Target) :> exp
                 }) state                
@@ -1510,10 +1471,7 @@ type CompilerService (environment:IEnvironment) as this =
 
     and evalWithStatement state =
         (parse {
-            do! skipToken "with"
-            do! skipToken "("
-            let! e = evalExpression  
-            do! skipToken ")"
+            let! e = skipToken "with" >>. skipToken "(" >>. evalExpression .>> skipToken ")"
             let! s = evalStatement
             let! currentState = getUserState 
             match currentState.strict.Head with
@@ -1536,10 +1494,7 @@ type CompilerService (environment:IEnvironment) as this =
 
     and evalSwitchStatement state =
         (parse {
-            do! skipToken "switch"
-            do! skipToken "("
-            let! e = evalExpression  
-            do! skipToken ")"
+            let! e = skipToken "switch" >>. skipToken "(" >>. evalExpression .>> skipToken ")"
             let breakName = "breakSwitch" 
             let breakLabelExp = exp.Label(exp.Label(typeof<IDynamic>, breakName), propUndefined)
             let breakLabel = breakName, { labelExpression = breakLabelExp }
@@ -1577,11 +1532,7 @@ type CompilerService (environment:IEnvironment) as this =
 
     and evalCaseClause state =
         (parse {
-            do! skipToken "case"
-            do! skipIgnorableTokens
-            let! e1 = evalExpression
-            do! skipToken ":"
-            do! skipIgnorableTokens
+            let! e1 = skipToken "case" >>. evalExpression .>> skipToken ":"
             let! e = opt evalStatementList           
             match e with
             | Some e -> return exp.SwitchCase (e, [| e1 |])
@@ -1590,9 +1541,7 @@ type CompilerService (environment:IEnvironment) as this =
 
     and evalDefaultClause state =
         (parse {
-            do! skipToken "default"
-            do! skipToken ":"
-            do! skipIgnorableTokens
+            do! skipToken "default" >>. skipToken ":"
             let! e = opt evalStatementList            
             match e with
             | Some e -> return e
@@ -1673,11 +1622,7 @@ type CompilerService (environment:IEnvironment) as this =
         }) state     
 
     and evalFinally state =
-        (parse {
-            do! skipToken "finally"
-            let! block = evalBlock
-            return block
-        }) state
+        (skipToken "finally" >>. evalBlock) state
 
     and evalDebuggerStatement state =
         (parse {

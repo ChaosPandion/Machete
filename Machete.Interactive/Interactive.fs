@@ -36,10 +36,10 @@ module Interactive =
         let sb = StringBuilder()
         let run = ref true
         while !run do
-            let line = Console.ReadLine()
-            if line.EndsWith "@" then
+            let line = ConsoleAgent.readLine()
+            if line.EndsWith ";;" then
                 run := false
-            let line = line.TrimEnd ([| '@' |])
+            let line = line.TrimEnd ([| ';' |])
             sb.AppendLine line |> ignore
         sb.ToString().Trim()
 

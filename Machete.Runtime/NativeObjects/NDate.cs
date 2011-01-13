@@ -7,8 +7,10 @@ using Machete.Interfaces;
 
 namespace Machete.Runtime.NativeObjects
 {
-    public sealed class NDate : LObject
+    public sealed class NDate : LObject, IPrimitiveWrapper
     {
+        public IDynamic PrimitiveValue { get; set; }
+
         public NDate(IEnvironment environment)
             : base(environment)
         {

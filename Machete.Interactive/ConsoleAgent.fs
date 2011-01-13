@@ -1,6 +1,7 @@
 ﻿namespace Machete.Interactive
 
 open System
+open System.IO
 
 module ConsoleAgent =
 
@@ -38,7 +39,9 @@ module ConsoleAgent =
                         Console.CursorTop <- position.top
                         Console.CursorLeft <- position.left
                     | ReadLine (channel) ->
-                        channel.Reply (Console.ReadLine())
+                        let s = Console.ReadLine()
+                        let s = s.Replace ("\t", "    ")
+                        channel.Reply s
                 with | e -> ()
         }
 

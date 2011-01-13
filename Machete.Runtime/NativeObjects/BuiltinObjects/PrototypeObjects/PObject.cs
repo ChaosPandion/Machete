@@ -50,7 +50,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             if (args.IsEmpty) return environment.False;
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var desc = obj.GetOwnProperty(args[0].ConvertToString().BaseValue);
-            return environment.CreateBoolean(desc == null);
+            return environment.CreateBoolean(desc != null);
         }
 
         [NativeFunction("isPrototypeOf", "V"), DataDescriptor(true, false, true)]

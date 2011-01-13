@@ -8,15 +8,6 @@ module Program =
 
 
     let main () =
-//        let environment = new Environment()
-//        let compiler = new CompilerService(environment)
-//        //let sw = Stopwatch.StartNew()
-//        let r = compiler.CompileGlobalCode ("2 + 2")
-//        //System.Console.Write (sw.Elapsed)
-//        let v = environment.Execute (r)
-//        System.Console.Write (v.ToString())
-//        System.Console.ReadKey(true) |> ignore
-        //let r = Test.parse "XYZ Hotel: 6 nights at 220EUR / night plus 17.5% tax"
         Interactive.initialize ()
 
     main()
