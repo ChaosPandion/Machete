@@ -532,7 +532,7 @@ namespace Machete.Runtime
 
             if (obj.HasProperty("writable"))
             {
-                desc.Enumerable = obj.Get("writable").ConvertToBoolean().BaseValue;
+                desc.Writable = obj.Get("writable").ConvertToBoolean().BaseValue;
             }
 
             if (obj.HasProperty("get"))

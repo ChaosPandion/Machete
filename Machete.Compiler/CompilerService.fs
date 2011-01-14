@@ -651,25 +651,14 @@ type CompilerService (environment:IEnvironment) as this =
         }) state
 
     and evalPropertyNameAndValueList state =
-        (parse {
-            let parser = attempt <| parse {
-                do! skipIgnorableTokens
-                let! e = evalPropertyAssignment
-                return e
-            }
-            let! r = sepBy parser (attempt skipComma)
-            return r
-        }) state
+        (sepBy (attempt (skipEval evalPropertyAssignment)) (attempt skipComma)) state
 
     and evalPropertyAssignment state =
         (evalValuePropertyAssignment <|> evalGetPropertyAssignment <|> evalSetPropertyAssignment) state
 
     and evalValuePropertyAssignment state =
         (parse {
-            let! e1 = evalPropertyName
-            do! skipToken ":"
-            do! skipIgnorableTokens
-            let! e3 = evalAssignmentExpression
+            let! e1, e3 = tuple2 (skipEval evalPropertyName) (skipToken ":" >>. evalAssignmentExpression)
             return "data", e1, None, Some e3, None, false
         }) state
        
@@ -694,7 +683,7 @@ type CompilerService (environment:IEnvironment) as this =
                   
     and evalPropertyName state =
         (parse {
-            let! r = opt (evalIdentifierName <|> evalStringLiteral)
+            let! r = opt (skipIgnorableTokens >>. (evalIdentifierName <|> evalStringLiteral))
             match r with
             | Some r -> return r
             | None ->
@@ -791,13 +780,11 @@ type CompilerService (environment:IEnvironment) as this =
         }) state
 
     and evalMemberExpression state =
-        (attempt (parse {
-            do! skipToken "new"
-            let! e = skipEval evalMemberExpression
-            let! a = evalArguments
-            return exp.Call (e, Reflection.IDynamic.op_Construct, [| a |]) :> exp
-          }) <|>  parse {
-            let! e1 = evalFunctionExpression <|> evalPrimaryExpression 
+        let newMemberExpression state = 
+            (tuple2 (skipToken "new" >>. skipEval evalMemberExpression) (skipEval evalArguments) 
+            |>> fun (e, a) -> exp.Call (e, Reflection.IDynamic.op_Construct, [| a |]) :> exp) state
+        (parse {
+            let! e1 = newMemberExpression <|> evalFunctionExpression <|> evalPrimaryExpression 
             let e1 = exp.Convert (e1, typeof<IDynamic>) :> exp
             let! rest = many (attempt evalBracketNotation <|> attempt evalDotNotation)
             if rest.IsEmpty then
@@ -841,7 +828,7 @@ type CompilerService (environment:IEnvironment) as this =
             do! skipIgnorableTokens
             let! e2 = evalArguments
             let first = exp.Call (e1, Reflection.IDynamic.op_Call, [| e2 |]) :> exp
-            let! rest = manyRev ((evalArguments |>> fun a -> "args", a) <|> evalBracketNotation <|> evalDotNotation)
+            let! rest = many ((evalArguments |>> fun a -> "args", a) <|> evalBracketNotation <|> evalDotNotation)
             let! s = getUserState
             return rest |> List.fold (
                 fun acc (t, e) ->
@@ -854,12 +841,14 @@ type CompilerService (environment:IEnvironment) as this =
                         let args = [| convert; exp.Convert(acc, typeof<IReferenceBase>) :> exp; exp.Constant (s.strict.Head |> fst) :> exp |]
                         let r = exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp  
                         let r = exp.Convert (r, typeof<IDynamic>)
-                        exp.Property (r, "Value") :> exp
+                        r :> exp
+                        //exp.Property (r, "Value") :> exp
                     | "dot" ->                         
                         let args = [| e; exp.Convert(acc, typeof<IReferenceBase>) :> exp; exp.Constant (s.strict.Head |> fst) :> exp |]
                         let r = exp.Call (environmentParam, Reflection.IEnvironment.createReference, args) :> exp 
                         let r = exp.Convert (r, typeof<IDynamic>)
-                        exp.Property (r, "Value") :> exp            
+                        r :> exp
+                        //exp.Property (r, "Value") :> exp            
             ) first
         }) state
 
@@ -874,6 +863,7 @@ type CompilerService (environment:IEnvironment) as this =
     and evalArgumentList state =
         (parse {
             let! r = sepBy (skipIgnorableTokens >>. evalAssignmentExpression) (skipToken ",")
+            let r = r |> List.map (fun e -> exp.Property (e, "Value") :> exp)
             let args = [| exp.NewArrayInit (typeof<IDynamic>, r) :> exp |]
             return exp.Call (environmentParam, Reflection.IEnvironment.createArgsMany, args) :> exp
         }) state
@@ -891,7 +881,7 @@ type CompilerService (environment:IEnvironment) as this =
     and evalLeftHandSideExpression state =
         choice [| 
             parse {
-                let! e1 = evalMemberExpression
+                let! e1 = attempt evalMemberExpression
                 let! e2 = opt (attempt (evalCallExpression e1))
                 return if e2.IsSome then e2.Value else e1
             }

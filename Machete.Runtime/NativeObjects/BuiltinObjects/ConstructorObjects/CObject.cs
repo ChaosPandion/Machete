@@ -36,6 +36,18 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         IObject IConstructable.Construct(IEnvironment environment, IArgs args)
         {
+            if (args.Count > 0)
+            {
+                var arg = args[0];
+                switch (arg.TypeCode)
+                {
+                    case LanguageTypeCode.Boolean:
+                    case LanguageTypeCode.String:
+                    case LanguageTypeCode.Number:
+                    case LanguageTypeCode.Object:
+                        return arg.ConvertToObject();
+                }
+            }
             var obj = new LObject(environment);
             obj.Class = "Object";
             obj.Extensible = true;
@@ -51,22 +63,22 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("getPrototypeOf", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic GetPrototypeOf(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
+            var obj = args[0].ConvertToObject();
             return obj.Prototype;
         }
 
         [NativeFunction("getOwnPropertyDescriptor", "O", "P"), DataDescriptor(true, false, true)]
         internal static IDynamic GetOwnPropertyDescriptor(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
+            var obj = args[0].ConvertToObject();
             var p = args[1].ConvertToString().BaseValue;
             var desc = obj.GetOwnProperty(p);
             return environment.FromPropertyDescriptor(desc);
@@ -75,12 +87,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("getOwnPropertyNames", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic GetOwnPropertyNames(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             var array = environment.CreateArray();
             var index = 0;
 
@@ -97,12 +108,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("create", "O", "Properties"), DataDescriptor(true, false, true)]
         internal static IDynamic Create(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             var newObj = environment.CreateObject();
             newObj.Prototype = obj;
             if (args.Count > 1)
@@ -119,12 +129,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("defineProperty", "O", "P", "Attributes"), DataDescriptor(true, false, true)]
         internal static IDynamic DefineProperty(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             var name = args[1].ConvertToString().BaseValue;
 
             if (args.Count < 2)
@@ -137,7 +146,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
                 var attributes = args[2] as IObject;
                 if (attributes == null)
                 {
-                    // Type Error
+                    throw environment.CreateTypeError("");
                 }
                 var desc = environment.ToPropertyDescriptor(attributes);
                 obj.DefineOwnProperty(name, desc, true);
@@ -149,12 +158,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("defineProperties", "O", "Properties"), DataDescriptor(true, false, true)]
         internal static IDynamic DefineProperties(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             var props = args[1].ConvertToObject();
             foreach (var name in props)
             {
@@ -167,12 +175,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("seal", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Seal(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             foreach (var name in obj)
             {
                 var desc = obj.GetOwnProperty(name);
@@ -187,12 +194,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("freeze", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Freeze(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             foreach (var name in obj)
             {
                 var desc = obj.GetOwnProperty(name);
@@ -211,11 +217,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("preventExtensions", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic PreventExtensions(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
+            var obj = args[0].ConvertToObject();
             obj.Extensible = false;
             return obj;
         }
@@ -223,12 +229,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("isSealed", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsSealed(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             foreach (var name in obj)
             {
                 var desc = obj.GetOwnProperty(name);
@@ -244,12 +249,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("isFrozen", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsFrozen(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             foreach (var name in obj)
             {
                 var desc = obj.GetOwnProperty(name);
@@ -273,23 +277,22 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
         [NativeFunction("isExtensible", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsExtensible(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
+            var obj = args[0].ConvertToObject();
             return environment.CreateBoolean(obj.Extensible);
         }
 
         [NativeFunction("keys", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Keys(IEnvironment environment, IArgs args)
         {
-            var obj = args[0] as IObject;
-            if (obj == null)
+            if (args[0].TypeCode != LanguageTypeCode.Object)
             {
-                // Type Error
+                throw environment.CreateTypeError("");
             }
-
+            var obj = args[0].ConvertToObject();
             var array = environment.CreateArray();
             var index = 0;
 
@@ -298,6 +301,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
                 var desc = obj.GetOwnProperty(name);
                 if (desc.Enumerable ?? false)
                 {
+                    desc = environment.CreateDataDescriptor(environment.CreateString(name), true, true, true);
                     array.DefineOwnProperty((index++).ToString(), desc, false);
                 }
             }
