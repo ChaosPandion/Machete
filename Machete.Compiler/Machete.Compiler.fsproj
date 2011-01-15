@@ -89,7 +89,9 @@
     <Compile Include="StringNumericLiteral.fs" />
     <Compile Include="SourceElement.fs" />
     <Compile Include="Reflection.fs" />
+    <Compile Include="InputElementParsers.fs" />
     <Compile Include="CompilerService.fs" />
+    <Compile Include="JsonParser.fs" />
     <Compile Include="IntParser.fs" />
     <Compile Include="FloatParser.fs" />
     <Compile Include="DateParser.fs" />

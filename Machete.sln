@@ -5,8 +5,6 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.RegExp", "Machete.R
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.Compiler", "Machete.Compiler\Machete.Compiler.fsproj", "{F4056A29-8845-4DFA-B551-35D7B27D5954}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.Json", "Machete.Json\Machete.Json.fsproj", "{014029A0-36AD-4049-94D2-C0A5D107A2C1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Runtime", "Machete.Runtime\Machete.Runtime.csproj", "{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete", "Machete\Machete.fsproj", "{882914A4-65AF-444B-9C79-362361998E70}"
@@ -47,15 +45,6 @@ Global
 		{F4056A29-8845-4DFA-B551-35D7B27D5954}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{F4056A29-8845-4DFA-B551-35D7B27D5954}.Release|x86.ActiveCfg = Release|x86
 		{F4056A29-8845-4DFA-B551-35D7B27D5954}.Release|x86.Build.0 = Release|x86
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Release|x86.ActiveCfg = Release|x86
-		{014029A0-36AD-4049-94D2-C0A5D107A2C1}.Release|x86.Build.0 = Release|x86
 		{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU

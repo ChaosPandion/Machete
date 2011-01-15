@@ -1,291 +1,291 @@
 ﻿namespace Machete.Compiler
 
 
-module Tools =
-
-    module TreeTraverser = 
-
-        type NodeTest<'a, 'b> = 'a -> option<'b>
-
-        type TreeTraverser() =
-            member x.Bind (f:NodeTest<'a, 'b>, g:unit -> NodeTest<'b, 'c>) (v:'a) = 
-                match f v with
-                | Some v -> g () v
-                | None -> None               
-            member x.Delay (f:unit -> NodeTest<'a, 'b>) = f()
-            member x.Return v1 v2 = Some v1
-            member x.ReturnFrom (f:NodeTest<'a, 'b>) v = f v
-        
-        let traverse = TreeTraverser()
-
-    open System
-    open System.Collections.Generic
-    open System.Diagnostics
-    open LazyList 
-    
-    [<DebuggerStepThrough>]
-    type ParseException (message) =
-        inherit Exception (message)
-
-    [<Struct;DebuggerStepThrough>]
-    type State<'a, 'b> (input:LazyList<'a>, data:'b) =
-        member this.Input = input
-        member this.Data = data
-
-    type Result<'a, 'b, 'c> =
-    | Success of 'c * State<'a, 'b>
-    | Failure of list<string> * State<'a, 'b>
-    | Empty of State<'a, 'b>
-    | End of State<'a, 'b>
-
-
-    type Parser<'a, 'b, 'c> = 
-        State<'a, 'b> -> Result<'a, 'b, 'c>
-
-    let zero<'a, 'b, 'c> (state:State<'a, 'b>) =
-        Result<'a, 'b, 'c>.Empty (state)
-
-    let item<'a, 'b> (state:State<'a, 'b>) : Result<'a, 'b, 'a> = 
-        match state.Input with
-        | Cons (head, tail) ->
-            Success(head, State (tail, state.Data))
-        | Nil ->
-            End (state)    
-
-    let result<'a, 'b, 'c> (value:'c) (state:State<'a, 'b>) =
-        Success (value, state)
-    
-    let (>>=) (parser:Parser<'a, 'b, 'c>) (next:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
-        let result = parser state
-        match result with
-        | Success (value, state) ->
-            next value state
-        | Failure (messages, state) ->
-            Result<'a, 'b, 'd>.Failure (messages, state)
-        | Empty (state) ->
-            Result<'a, 'b, 'd>.Empty (state)
-        | End (state) ->
-            Result<'a, 'b, 'd>.End (state)  
-
-    let (<|>) (left:Parser<'a, 'b, 'c>) (right:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) =
-        let result = left state
-        match result with
-        | Empty (_) -> right state
-        | Failure (messages, _) -> right state
-        | _ -> result 
-
-    let run p i d =
-        p (State(i, d)) 
-
-    type ParseMonad() =        
-        member this.Bind (parser:Parser<'a, 'b, 'c>, next:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) = 
-            (parser >>= next) state     
-        member this.Combine (left:Parser<'a, 'b, 'c>, right:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
-            (left <|> right) state     
-        member this.Delay (delayer:unit -> Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
-            delayer () state
-        member this.Return (value:'c) (state:State<'a, 'b>) = 
-            result value state
-        member this.ReturnFrom (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
-            parser state 
-        member this.Zero () (state:State<'a, 'b>) = 
-            zero state
-    
-    let parse = ParseMonad()
-
-    let fail (message:string) (state:State<'a, 'b>) =
-        raise (ParseException(message))
-
-    let (|>>) (parser:Parser<'a, 'b, 'c>) (f:'c -> 'd) = parse {
-        let! v = parser
-        return f v   
-    }
-
-    let satisfy (predicate:'a -> bool) = parse {
-        let! value = item
-        if predicate value then
-            return value 
-    }
-
-    let maybe (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
-        ((parser |>> Some) <|> result None) state 
-
-    let choice (ps:seq<Parser<'a, 'b, 'c>>) (state:State<'a, 'b>) =
-        (ps |> Seq.reduce (<|>)) state
-
-
-    let between left right parser =
-        parse {
-            let! _ = left
-            let! v = parser
-            let! _ = right
-            return v
-        }
-
-    let skip p = parse {
-        let! v = p
-        return ()
-    }
-
-    let many (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
-        let rec many result (state:State<'a, 'b>) =
-            let r = parser state
-            match r with
-            | Success (value, state) -> many (value::result) state
-            | _ -> Success(result, state)     
-        many [] state
-
-    let many1 parser = parse {
-        let! r = many parser
-        if not r.IsEmpty then
-            return r
-    }
-
-    let manyFold parser start (f:_ -> _ -> _) = parse {
-        let! r = many parser
-        return r |> List.rev |> List.fold f start
-    }
-
-    let many1Fold parser start (f:_ -> _ -> _) = parse {
-        let! r = many1 parser
-        return r |> List.fold f start
-    } 
-    
-    let manyWithSepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'd * 'c -> 'c) (d:'c) (sepStart:'d) (state:State<'a, 'b>) =
-        let firstResult = par state
-        match firstResult with
-        | Success (firstValue, firstState) ->
-            let rec run (result:list<'d * 'c>) state =
-                let sepResult = sep state
-                match sepResult with                
-                | Success (sepValue, sepState) -> 
-                    let nextResult = par sepState
-                    match nextResult with
-                    | Success (nextValue, nextState) ->
-                        run ((sepValue, nextValue)::result) nextState
-                    | _ -> failwith ""
-                | _ -> result, state
-            let result, state = run [] firstState
-            let first = f (d, sepStart, firstValue)
-            Success (result |> Seq.fold (fun x (y, z) -> f (x, y, z)) first, state) 
-        | r -> r
-
-    let manySepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'c -> 'c) (d:'c) (state:State<'a, 'b>) =
-        let firstResult = par state
-        match firstResult with
-        | Success (firstValue, firstState) ->
-            let rec run (result:list<'c>) state =
-                let sepResult = sep state
-                match sepResult with                
-                | Success (sepValue, sepState) -> 
-                    let nextResult = par sepState
-                    match nextResult with
-                    | Success (nextValue, nextState) ->
-                        run (nextValue::result) nextState
-                    | _ -> failwith ""
-                | _ -> result, state
-            let result, state = run [] firstState
-            let first = f (d, firstValue)
-            Success (result |> List.rev |> List.fold (fun x y -> f (x, y)) first, state) 
-        | r -> r
-
-    let manySep (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
-        let firstResult = par state
-        match firstResult with
-        | Success (firstValue, firstState) ->
-            let rec run (result:list<'c>) state =
-                let sepResult = sep state
-                match sepResult with                
-                | Success (sepValue, sepState) -> 
-                    let nextResult = par sepState
-                    match nextResult with
-                    | Success (nextValue, nextState) ->
-                        run (nextValue::result) nextState
-                    | _ -> failwith ""
-                | _ -> result, state
-            let result, state = run [] firstState
-            Success (firstValue::(result |> List.rev), state) 
-        | _ -> Empty(state)
-        
-    let isNotFollowedBy p (state:State<'a,'b>) : Result<'a, 'b, unit> =
-        (parse {
-            let! v = maybe p
-            if v.IsNone then
-                return ()
-        }) state
-
-    let pipe2 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (f:'c -> 'd -> 'e) = 
-        parse {
-            let! v1 = p1
-            let! v2 = p2
-            return f v1 v2
-        }
-
-    let pipe3 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (f:'c -> 'd -> 'e -> 'f) = 
-        parse {
-            let! v1 = p1
-            let! v2 = p2
-            let! v3 = p3
-            return f v1 v2 v3
-        }
-
-    let pipe4 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (f:'c -> 'd -> 'e -> 'f -> 'g) = 
-        parse {
-            let! v1 = p1
-            let! v2 = p2
-            let! v3 = p3
-            let! v4 = p4
-            return f v1 v2 v3 v4
-        }
-
-    let pipe5 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (p5:Parser<'a, 'b, 'g>) (f:'c -> 'd -> 'e -> 'f -> 'g -> 'h) = 
-        parse {
-            let! v1 = p1
-            let! v2 = p2
-            let! v3 = p3
-            let! v4 = p4
-            let! v5 = p5
-            return f v1 v2 v3 v4 v5
-        }
-
-    let tuple2<'a, 'b, 'c, 'd, 'e> (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (f:'c * 'd -> 'e) = 
-        parse {
-            let! v1 = p1
-            let! v2 = p2
-            return f (v1, v2)
-        }
-
-    let tuple3 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (f:'c * 'd * 'e -> 'f) = 
-        parse {
-            let! v1 = p1
-            let! v2 = p2
-            let! v3 = p3
-            return f (v1, v2, v3)
-        }
-
-    let tuple4 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (f:'c * 'd * 'e * 'f -> 'g) = 
-        parse {
-            let! v1 = p1
-            let! v2 = p2
-            let! v3 = p3
-            let! v4 = p4
-            return f (v1, v2, v3, v4)
-        }
-
-    let tuple5 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (p5:Parser<'a, 'b, 'g>) (f:'c * 'd * 'e * 'f * 'g -> 'h) = 
-        parse {
-            let! v1 = p1
-            let! v2 = p2
-            let! v3 = p3
-            let! v4 = p4
-            let! v5 = p5
-            return f (v1, v2, v3, v4, v5)
-        }
-
-    let createParserRef<'a, 'b, 'c> () =
-        let dummyParser = fun state -> failwith "a parser was not initialized"
-        let r = ref dummyParser
-        (fun state -> !r state), r : Parser<'a, 'b, 'c> * Parser<'a, 'b, 'c> ref
+//module Tools =
+//
+//    module TreeTraverser = 
+//
+//        type NodeTest<'a, 'b> = 'a -> option<'b>
+//
+//        type TreeTraverser() =
+//            member x.Bind (f:NodeTest<'a, 'b>, g:unit -> NodeTest<'b, 'c>) (v:'a) = 
+//                match f v with
+//                | Some v -> g () v
+//                | None -> None               
+//            member x.Delay (f:unit -> NodeTest<'a, 'b>) = f()
+//            member x.Return v1 v2 = Some v1
+//            member x.ReturnFrom (f:NodeTest<'a, 'b>) v = f v
+//        
+//        let traverse = TreeTraverser()
+//
+//    open System
+//    open System.Collections.Generic
+//    open System.Diagnostics
+//    open LazyList 
+//    
+//    [<DebuggerStepThrough>]
+//    type ParseException (message) =
+//        inherit Exception (message)
+//
+//    [<Struct;DebuggerStepThrough>]
+//    type State<'a, 'b> (input:LazyList<'a>, data:'b) =
+//        member this.Input = input
+//        member this.Data = data
+//
+//    type Result<'a, 'b, 'c> =
+//    | Success of 'c * State<'a, 'b>
+//    | Failure of list<string> * State<'a, 'b>
+//    | Empty of State<'a, 'b>
+//    | End of State<'a, 'b>
+//
+//
+//    type Parser<'a, 'b, 'c> = 
+//        State<'a, 'b> -> Result<'a, 'b, 'c>
+//
+//    let zero<'a, 'b, 'c> (state:State<'a, 'b>) =
+//        Result<'a, 'b, 'c>.Empty (state)
+//
+//    let item<'a, 'b> (state:State<'a, 'b>) : Result<'a, 'b, 'a> = 
+//        match state.Input with
+//        | Cons (head, tail) ->
+//            Success(head, State (tail, state.Data))
+//        | Nil ->
+//            End (state)    
+//
+//    let result<'a, 'b, 'c> (value:'c) (state:State<'a, 'b>) =
+//        Success (value, state)
+//    
+//    let (>>=) (parser:Parser<'a, 'b, 'c>) (next:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
+//        let result = parser state
+//        match result with
+//        | Success (value, state) ->
+//            next value state
+//        | Failure (messages, state) ->
+//            Result<'a, 'b, 'd>.Failure (messages, state)
+//        | Empty (state) ->
+//            Result<'a, 'b, 'd>.Empty (state)
+//        | End (state) ->
+//            Result<'a, 'b, 'd>.End (state)  
+//
+//    let (<|>) (left:Parser<'a, 'b, 'c>) (right:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) =
+//        let result = left state
+//        match result with
+//        | Empty (_) -> right state
+//        | Failure (messages, _) -> right state
+//        | _ -> result 
+//
+//    let run p i d =
+//        p (State(i, d)) 
+//
+//    type ParseMonad() =        
+//        member this.Bind (parser:Parser<'a, 'b, 'c>, next:'c -> Parser<'a, 'b, 'd>) (state:State<'a, 'b>) = 
+//            (parser >>= next) state     
+//        member this.Combine (left:Parser<'a, 'b, 'c>, right:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
+//            (left <|> right) state     
+//        member this.Delay (delayer:unit -> Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
+//            delayer () state
+//        member this.Return (value:'c) (state:State<'a, 'b>) = 
+//            result value state
+//        member this.ReturnFrom (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
+//            parser state 
+//        member this.Zero () (state:State<'a, 'b>) = 
+//            zero state
+//    
+//    let parse = ParseMonad()
+//
+//    let fail (message:string) (state:State<'a, 'b>) =
+//        raise (ParseException(message))
+//
+//    let (|>>) (parser:Parser<'a, 'b, 'c>) (f:'c -> 'd) = parse {
+//        let! v = parser
+//        return f v   
+//    }
+//
+//    let satisfy (predicate:'a -> bool) = parse {
+//        let! value = item
+//        if predicate value then
+//            return value 
+//    }
+//
+//    let maybe (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
+//        ((parser |>> Some) <|> result None) state 
+//
+//    let choice (ps:seq<Parser<'a, 'b, 'c>>) (state:State<'a, 'b>) =
+//        (ps |> Seq.reduce (<|>)) state
+//
+//
+//    let between left right parser =
+//        parse {
+//            let! _ = left
+//            let! v = parser
+//            let! _ = right
+//            return v
+//        }
+//
+//    let skip p = parse {
+//        let! v = p
+//        return ()
+//    }
+//
+//    let many (parser:Parser<'a, 'b, 'c>) (state:State<'a, 'b>) = 
+//        let rec many result (state:State<'a, 'b>) =
+//            let r = parser state
+//            match r with
+//            | Success (value, state) -> many (value::result) state
+//            | _ -> Success(result, state)     
+//        many [] state
+//
+//    let many1 parser = parse {
+//        let! r = many parser
+//        if not r.IsEmpty then
+//            return r
+//    }
+//
+//    let manyFold parser start (f:_ -> _ -> _) = parse {
+//        let! r = many parser
+//        return r |> List.rev |> List.fold f start
+//    }
+//
+//    let many1Fold parser start (f:_ -> _ -> _) = parse {
+//        let! r = many1 parser
+//        return r |> List.fold f start
+//    } 
+//    
+//    let manyWithSepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'd * 'c -> 'c) (d:'c) (sepStart:'d) (state:State<'a, 'b>) =
+//        let firstResult = par state
+//        match firstResult with
+//        | Success (firstValue, firstState) ->
+//            let rec run (result:list<'d * 'c>) state =
+//                let sepResult = sep state
+//                match sepResult with                
+//                | Success (sepValue, sepState) -> 
+//                    let nextResult = par sepState
+//                    match nextResult with
+//                    | Success (nextValue, nextState) ->
+//                        run ((sepValue, nextValue)::result) nextState
+//                    | _ -> failwith ""
+//                | _ -> result, state
+//            let result, state = run [] firstState
+//            let first = f (d, sepStart, firstValue)
+//            Success (result |> Seq.fold (fun x (y, z) -> f (x, y, z)) first, state) 
+//        | r -> r
+//
+//    let manySepFold (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (f:'c * 'c -> 'c) (d:'c) (state:State<'a, 'b>) =
+//        let firstResult = par state
+//        match firstResult with
+//        | Success (firstValue, firstState) ->
+//            let rec run (result:list<'c>) state =
+//                let sepResult = sep state
+//                match sepResult with                
+//                | Success (sepValue, sepState) -> 
+//                    let nextResult = par sepState
+//                    match nextResult with
+//                    | Success (nextValue, nextState) ->
+//                        run (nextValue::result) nextState
+//                    | _ -> failwith ""
+//                | _ -> result, state
+//            let result, state = run [] firstState
+//            let first = f (d, firstValue)
+//            Success (result |> List.rev |> List.fold (fun x y -> f (x, y)) first, state) 
+//        | r -> r
+//
+//    let manySep (par:Parser<'a, 'b, 'c>) (sep:Parser<'a, 'b, 'd>) (state:State<'a, 'b>) =
+//        let firstResult = par state
+//        match firstResult with
+//        | Success (firstValue, firstState) ->
+//            let rec run (result:list<'c>) state =
+//                let sepResult = sep state
+//                match sepResult with                
+//                | Success (sepValue, sepState) -> 
+//                    let nextResult = par sepState
+//                    match nextResult with
+//                    | Success (nextValue, nextState) ->
+//                        run (nextValue::result) nextState
+//                    | _ -> failwith ""
+//                | _ -> result, state
+//            let result, state = run [] firstState
+//            Success (firstValue::(result |> List.rev), state) 
+//        | _ -> Empty(state)
+//        
+//    let isNotFollowedBy p (state:State<'a,'b>) : Result<'a, 'b, unit> =
+//        (parse {
+//            let! v = maybe p
+//            if v.IsNone then
+//                return ()
+//        }) state
+//
+//    let pipe2 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (f:'c -> 'd -> 'e) = 
+//        parse {
+//            let! v1 = p1
+//            let! v2 = p2
+//            return f v1 v2
+//        }
+//
+//    let pipe3 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (f:'c -> 'd -> 'e -> 'f) = 
+//        parse {
+//            let! v1 = p1
+//            let! v2 = p2
+//            let! v3 = p3
+//            return f v1 v2 v3
+//        }
+//
+//    let pipe4 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (f:'c -> 'd -> 'e -> 'f -> 'g) = 
+//        parse {
+//            let! v1 = p1
+//            let! v2 = p2
+//            let! v3 = p3
+//            let! v4 = p4
+//            return f v1 v2 v3 v4
+//        }
+//
+//    let pipe5 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (p5:Parser<'a, 'b, 'g>) (f:'c -> 'd -> 'e -> 'f -> 'g -> 'h) = 
+//        parse {
+//            let! v1 = p1
+//            let! v2 = p2
+//            let! v3 = p3
+//            let! v4 = p4
+//            let! v5 = p5
+//            return f v1 v2 v3 v4 v5
+//        }
+//
+//    let tuple2<'a, 'b, 'c, 'd, 'e> (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (f:'c * 'd -> 'e) = 
+//        parse {
+//            let! v1 = p1
+//            let! v2 = p2
+//            return f (v1, v2)
+//        }
+//
+//    let tuple3 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (f:'c * 'd * 'e -> 'f) = 
+//        parse {
+//            let! v1 = p1
+//            let! v2 = p2
+//            let! v3 = p3
+//            return f (v1, v2, v3)
+//        }
+//
+//    let tuple4 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (f:'c * 'd * 'e * 'f -> 'g) = 
+//        parse {
+//            let! v1 = p1
+//            let! v2 = p2
+//            let! v3 = p3
+//            let! v4 = p4
+//            return f (v1, v2, v3, v4)
+//        }
+//
+//    let tuple5 (p1:Parser<'a, 'b, 'c>) (p2:Parser<'a, 'b, 'd>) (p3:Parser<'a, 'b, 'e>) (p4:Parser<'a, 'b, 'f>) (p5:Parser<'a, 'b, 'g>) (f:'c * 'd * 'e * 'f * 'g -> 'h) = 
+//        parse {
+//            let! v1 = p1
+//            let! v2 = p2
+//            let! v3 = p3
+//            let! v4 = p4
+//            let! v5 = p5
+//            return f (v1, v2, v3, v4, v5)
+//        }
+//
+//    let createParserRef<'a, 'b, 'c> () =
+//        let dummyParser = fun state -> failwith "a parser was not initialized"
+//        let r = ref dummyParser
+//        (fun state -> !r state), r : Parser<'a, 'b, 'c> * Parser<'a, 'b, 'c> ref
 
 //module Tools1 =
 //

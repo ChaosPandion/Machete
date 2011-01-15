@@ -1,193 +1,141 @@
-﻿namespace Machete.Json
+﻿namespace Machete.Compiler
 
 open System
 open System.Globalization
 open System.Text
+open FParsec.Primitives
+open FParsec.CharParsers
+open InputElementParsers
 open Machete.Interfaces
-open Machete.Compiler
 
-module Evaluator =
+module JsonParser =
 
-    let rec private evalJSONEscapeCharacter (environment:IEnvironment) value =
-        match value with
-        | JsonEscapeCharacter c ->
-            match c with  
-            | '\"' -> '\u0022' 
-            | '/' -> '/'
-            | '\\' -> '\u005C'         
-            | 'b' -> '\u0008'
-            | 'f' -> '\u000C'
-            | 'n' -> '\u000A'
-            | 'r' -> '\u000D'
-            | 't' -> '\u0009'
+    type private ParseState = {
+        environment:IEnvironment
+    }    
 
-    and evalJSONEscapeSequence (environment:IEnvironment) value =
-        match value with
-        | JsonEscapeSequence (JsonInputElement e) ->
-            Lexer.StringLiteralParser.evalUnicodeEscapeSequence e
-        | JsonEscapeSequence e ->
-            evalJSONEscapeCharacter environment e
+    type private StringifyState = {
+        environment:IEnvironment
+        stack:list<IDynamic>
+        indent:string
+        gap:string
+        propertyList:list<string>
+        replacerFunction:IDynamic
+        space:string
+    }
 
-    and evalJSONStringCharacter (environment:IEnvironment) value =
-        match value with
-        | JsonStringCharacter (c, Token.JsonNil) -> c
-        | JsonStringCharacter ('\\', e) ->
-            evalJSONEscapeSequence environment e
+    let rec private evalJsonWhiteSpace state =
+        (anyOf "\t\r\n " |>> string) state
 
-    and evalJSONStringCharacters (environment:IEnvironment) value =
-        match value with
-        | JsonStringCharacters (e, Token.JsonNil) ->
-            (evalJSONStringCharacter environment e).ToString()
-        | JsonStringCharacters (e1, e2) ->
-            let head = evalJSONStringCharacter environment e1
-            let tail = evalJSONStringCharacters environment e2
-            head.ToString() + tail
+    and private evalJsonString (state:FParsec.State<ParseState>) =
+        ((pchar '\"' >>. evalJsonStringCharacters .>> pchar '\"') |>> fun s -> (state.UserState.environment.CreateString s) :> IDynamic) state
+        
+    and private evalJsonStringCharacters state =
+        manyStrings evalJsonStringCharacter state
 
-    and evalJSONString (environment:IEnvironment) value =
-        match value with
-        | JsonString Token.JsonNil ->
-            environment.CreateString ""
-        | JsonString v ->
-            environment.CreateString (evalJSONStringCharacters environment v)
-
-    and evalJSONFraction (environment:IEnvironment) value =
-        match value with
-        | JsonFraction e ->
-            let n = Lexer.NumericLiteralParser.countDecimalDigits e 0 |> double
-            let fractional = Lexer.NumericLiteralParser.evalDecimalDigits e |> double
-            fractional * (10.0 ** -n)
-
-    and evalJSONNumber (environment:IEnvironment) value =
-        match value with
-        | JsonNumber (None, e, Token.JsonNil, InputElement.Nil)
-        | JsonNumber (Some '+', e, Token.JsonNil, InputElement.Nil) ->
-            environment.CreateNumber (Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e |> double)
-        | JsonNumber (Some '-', e, Token.JsonNil, InputElement.Nil) ->
-            environment.CreateNumber (-Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e |> double)
-        | JsonNumber (None, e1, e2, InputElement.Nil) 
-        | JsonNumber (Some '+', e1, e2, InputElement.Nil) ->
-            let integral = Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e1 |> double
-            let fractional = evalJSONFraction environment e2
-            environment.CreateNumber (integral + fractional)
-        | JsonNumber (Some '-', e1, e2, InputElement.Nil) ->
-            let integral = Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e1 |> double
-            let fractional = evalJSONFraction environment e2
-            environment.CreateNumber (-(integral + fractional))        
-        | JsonNumber (None, e1, Token.JsonNil, e2) 
-        | JsonNumber (Some '+', e1, Token.JsonNil, e2) ->
-            let integral = Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e1 |> double
-            let e = Lexer.NumericLiteralParser.evalExponentPart e2 |> double
-            environment.CreateNumber (integral * (10.0 ** e))
-        | JsonNumber (Some '-', e1, Token.JsonNil, e2) ->
-            let integral = Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e1 |> double
-            let e = Lexer.NumericLiteralParser.evalExponentPart e2 |> double
-            environment.CreateNumber (-(integral * (10.0 ** e)))            
-        | JsonNumber (None, e1, e2, e3) 
-        | JsonNumber (Some '+', e1, e2, e3) ->
-            let integral = Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e1 |> double
-            let fractional = evalJSONFraction environment e2
-            let e = Lexer.NumericLiteralParser.evalExponentPart e3 |> double
-            environment.CreateNumber ((integral + fractional) * (10.0 ** e))
-        | JsonNumber (Some '-', e1, e2, e3) ->
-            let integral = Lexer.NumericLiteralParser.evalDecimalIntegerLiteral e1 |> double
-            let fractional = evalJSONFraction environment e2
-            let e = Lexer.NumericLiteralParser.evalExponentPart e3 |> double
-            environment.CreateNumber (-((integral + fractional) * (10.0 ** e)))
-
-    and evalJSONNullLiteral (environment:IEnvironment) value =
-        match value with
-        | JsonNullLiteral "null" ->
-            environment.Null
+    and private evalJsonStringCharacter state =
+        ((satisfy (fun c -> c <> '\"' && c <> '\\' && c > '\u001F') |>> string) <|> (pchar '\\' >>. evalJsonEscapeSequence)) state
+        
+    and private evalJsonEscapeSequence state =
+        (evalJsonEscapeCharacter <|> evalUnicodeEscapeSequence) state
+        
+    and private evalJsonEscapeCharacter state =
+        (anyOf "\"/\\bfnrt" |>> convertJsonEscapeCharacter) state
+        
+    and private convertJsonEscapeCharacter c =        
+        match c with
+        | '\"' -> "\u0022"
+        | '/' -> "/"
+        | '\\' -> "\u005C"
+        | 'b' -> "\u0008"
+        | 'f' -> "\u000C"
+        | 'n' -> "\u000A"
+        | 'r' -> "\u000D"
+        | 't' -> "\u0009"
+        
+    and private evalJsonNumber (state:FParsec.State<ParseState>) =
+        pipe4 evalSign evalDecimalIntegerLiteral evalJsonFraction evalExponentPart (completeJsonNumber state.UserState.environment) state
             
-    and evalJSONBooleanLiteral (environment:IEnvironment) value =
-        match value with
-        | JsonBooleanLiteral "true" ->
-            environment.True
-        | JsonBooleanLiteral "false" ->
-            environment.False
+    and private completeJsonNumber environment signPart integralPart fractionalPart exponentPart  =
+        environment.CreateNumber (signPart * (integralPart + fractionalPart) * (10.0 ** exponentPart)) :> IDynamic
 
-    and evalJSONElementList (environment:IEnvironment) (value:Node) (index:int) (array:IObject) =
-        match value with
-        | JsonElementList (Node.JsonNil, e1) ->
-            let v1 = evalJSONValue environment e1
-            let nTrue = Nullable<bool>(true)
-            let desc = environment.CreateDataDescriptor (v1, nTrue, nTrue, nTrue)
-            array.DefineOwnProperty (index.ToString(), desc, false) |> ignore
-            array, (index + 1)
-        | JsonElementList (e1, e2) ->
-            let array, index = evalJSONElementList environment e1 index array
-            let v = evalJSONValue environment e2
-            let nTrue = Nullable<bool>(true)
-            let desc = environment.CreateDataDescriptor (v, nTrue, nTrue, nTrue)
-            array.DefineOwnProperty (index.ToString(), desc, false) |> ignore
-            array, (index + 1)
+    and private evalJsonFraction state =
+        (pchar '.' >>. evalDecimalDigits -1.0 1.0) state
 
-    and evalJSONArray (environment:IEnvironment) value =
-        match value with
-        | JsonArray Node.JsonNil ->
-            environment.ArrayConstructor.Op_Construct(environment.EmptyArgs)
-        | JsonArray e ->
-            let array = environment.ArrayConstructor.Op_Construct(environment.EmptyArgs)
-            let array, index = evalJSONElementList environment e 0 array
-            array
+    and private evalSign state =
+        ((pchar '-' |>> fun _ -> -1.0) <|> preturn 1.0) state
+        
+    and private evalJsonNullLiteral (state:FParsec.State<ParseState>) =
+        (attempt <| parse {
+            let! s = evalIdentifierName
+            match s with
+            | "null" -> return state.UserState.environment.Null :> IDynamic   
+        }) state
+        
+    and private evalJsonBooleanLiteral (state:FParsec.State<ParseState>) =
+        (attempt <| parse {
+            let! s = evalIdentifierName
+            match s with
+            | "true" -> return state.UserState.environment.True :> IDynamic
+            | "false" -> return state.UserState.environment.False :> IDynamic  
+        }) state
 
-    and evalJSONMember (environment:IEnvironment) value =
-        match value with
-        | JsonMember (JsonToken e1, e2) ->
-            let name = evalJSONString environment e1
-            let value = evalJSONValue environment e2
-            name, value 
+    let private skipEval parser state =
+        (skipMany evalWhiteSpace >>. parser) state
 
-    and evalJSONMemberList (environment:IEnvironment) value (obj:IObject) =
-        match value with
-        | JsonMemberList (Node.JsonNil, e1) ->
-            let name, value  = evalJSONMember environment e1
-            let nTrue = Nullable<bool>(true)
-            let desc = environment.CreateDataDescriptor (value, nTrue, nTrue, nTrue)
-            obj.DefineOwnProperty (name.BaseValue, desc, false) |> ignore
-            obj
-        | JsonMemberList (e1, e2) ->
-            let obj = evalJSONMemberList environment e1 obj
-            let name, value  = evalJSONMember environment e2
-            let nTrue = Nullable<bool>(true)
-            let desc = environment.CreateDataDescriptor (value, nTrue, nTrue, nTrue)
-            obj.DefineOwnProperty (name.BaseValue, desc, false) |> ignore
-            obj
+    let rec private evalJsonText state =
+        evalJsonValue state
+        
+    and private evalJsonValue state =
+        choice [|
+            evalJsonNullLiteral
+            evalJsonBooleanLiteral
+            evalJsonObject
+            evalJsonArray
+            evalJsonString
+            evalJsonNumber
+        |] state
+        
+    and private evalJsonObject state = 
+        ((skipEval (pchar '{') >>. (skipEval evalJsonMemberList) .>> skipEval (pchar '}')) |>> completeJsonObject state.UserState.environment) state
 
-    and evalJSONObject (environment:IEnvironment) value =
-        match value with
-        | JsonObject Node.JsonNil ->
-            environment.ObjectConstructor.Op_Construct(environment.EmptyArgs)
-        | JsonObject e ->
-            let obj = environment.ObjectConstructor.Op_Construct(environment.EmptyArgs)
-            let obj = evalJSONMemberList environment e obj
-            obj
+    and private completeJsonObject environment (elements:list<IDynamic * IDynamic>) =
+        let nTrue = Nullable<bool>(true) 
+        let rec completeJsonObject (elements:list<IDynamic * IDynamic>) (result:IObject) =
+            match elements with
+            | [] -> result :> IDynamic
+            | (name, value)::elements ->
+                let desc = environment.CreateDataDescriptor (value, nTrue, nTrue, nTrue)
+                result.DefineOwnProperty ((name :?> IString).BaseValue, desc, false) |> ignore
+                completeJsonObject elements result
+        let result = environment.ObjectConstructor.Op_Construct(environment.EmptyArgs)
+        completeJsonObject elements result  
+    
+    and private evalJsonMember state = 
+        (tuple2 (skipEval evalJsonString) (skipEval (pchar ':') >>. skipEval evalJsonValue)) state
+    
+    and private evalJsonMemberList state = 
+        sepBy (skipEval evalJsonMember) (skipEval (pchar ',')) state
+    
+    and private evalJsonArray state = 
+        ((skipEval (pchar '[') >>. (skipEval evalJsonElementList) .>> skipEval (pchar ']')) |>> completeJsonArray state.UserState.environment) state
+    
+    and private completeJsonArray environment (elements:list<IDynamic>) =
+        let nTrue = Nullable<bool>(true) 
+        let rec completeJsonArray index elements (result:IObject) =
+            match elements with
+            | [] -> result :> IDynamic
+            | element::elements ->
+                let desc = environment.CreateDataDescriptor (element, nTrue, nTrue, nTrue)
+                result.DefineOwnProperty (index.ToString(), desc, false) |> ignore
+                completeJsonArray (index + 1) elements result
+        let result = environment.ArrayConstructor.Op_Construct(environment.EmptyArgs)
+        completeJsonArray 0 elements result
 
-    and evalJSONValue (environment:IEnvironment) value =
-        match value with
-        | JsonValue e ->
-            match e with
-            | JsonToken e -> 
-                match e with
-                | JsonNullLiteral _ ->
-                    evalJSONNullLiteral environment e :> IDynamic 
-                | JsonBooleanLiteral _ ->
-                    evalJSONBooleanLiteral environment e :> IDynamic 
-                | JsonString _ ->
-                    evalJSONString environment e :> IDynamic 
-                | JsonNumber (_, _, _, _) ->
-                    evalJSONNumber environment e :> IDynamic 
-            | JsonObject _ ->
-                evalJSONObject environment e :> IDynamic 
-            | JsonArray _ ->
-                evalJSONArray environment e :> IDynamic       
+    and private evalJsonElementList state =
+        sepBy (skipEval evalJsonValue) (skipEval (pchar ',')) state
 
-    and evalJSONText (environment:IEnvironment) value : IDynamic =
-        match value with
-        | JsonText e ->
-            evalJSONValue environment e 
-
-    let rec private walk (environment:IEnvironment) (reviver:IFunction) (holder:IObject) (name:string) : IDynamic =
+    let rec private walk (environment:IEnvironment) (reviver:ICallable) (holder:IObject) (name:string) : IDynamic =
         let value = holder.Get name
         match value with
         | :? IObject as value ->
@@ -218,17 +166,6 @@ module Evaluator =
         let name = environment.CreateString name :> IDynamic
         let args = environment.CreateArgs ([| name; value |])
         reviver.Call (environment, holder, args)
-
-
-    type private StringifyState = {
-        environment:IEnvironment
-        stack:list<IDynamic>
-        indent:string
-        gap:string
-        propertyList:list<string>
-        replacerFunction:IDynamic
-        space:string
-    }
 
     let rec private ja (state:StringifyState) (value:IObject) : string =
         if not state.stack.IsEmpty && (state.stack.Head = (value :> IDynamic)) then 
@@ -369,23 +306,24 @@ module Evaluator =
                 second value
         first (holder.Get key)
 
-    let ParseForEnvironment (environment:IEnvironment, text:IDynamic, reviver:IDynamic) : IDynamic =
-        let jText = text.ConvertToString().BaseValue
-        let jsonText = Machete.Json.Parser.parse jText 
-        match jsonText with
-        |  JsonText _ ->
-            let unfiltered = evalJSONText environment jsonText//(jsonText.[0])    
+    let Parse (environment:IEnvironment, text:IDynamic, reviver:IDynamic) =
+        let text = text.ConvertToString().BaseValue
+        let (state:ParseState) = { environment = environment }
+        let result = runParserOnString evalJsonText state "JSON" text
+        match result with
+        | Success (unfiltered, state, position) -> 
             match reviver with
-            | :? IFunction as reviver ->
+            | :? ICallable as reviver ->
                 let root = environment.ObjectConstructor.Op_Construct(environment.EmptyArgs)
                 let nTrue = Nullable<bool>(true)
                 let desc = environment.CreateDataDescriptor (unfiltered, nTrue, nTrue, nTrue)
                 root.DefineOwnProperty ("", desc, false) |> ignore
                 walk environment reviver root "" 
-            | _ -> unfiltered  
-        | _ -> raise (environment.CreateSyntaxError "The text supplied could not be parsed as JSON.")
+            | _ -> unfiltered
+        | Failure (message, errors, state) ->
+            raise (environment.CreateSyntaxError message)
 
-    let StringifyForEnvironment (environment:IEnvironment, value:IDynamic, replacer:IDynamic, space:IDynamic) : IDynamic =
+    let Stringify (environment:IEnvironment, value:IDynamic, replacer:IDynamic, space:IDynamic) : IDynamic =
         let space =            
             match space with
             | :? INumber as v ->
@@ -405,13 +343,10 @@ module Evaluator =
             indent = ""
             space = space 
             gap = space
-
             replacerFunction =                 
                 match replacer with
                 | :? ICallable -> replacer
                 | _ -> environment.Undefined :> IDynamic
-
-
             propertyList =
                 match replacer with
                 | :? IObject as o when o.Class = "Array" ->
@@ -432,4 +367,4 @@ module Evaluator =
         let nTrue = Nullable<bool>(true)
         let desc = environment.CreateDataDescriptor (value, nTrue, nTrue, nTrue)
         wrapper.DefineOwnProperty ("", desc, false) |> ignore               
-        str state "" wrapper  
+        str state "" wrapper

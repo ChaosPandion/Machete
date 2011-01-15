@@ -17,6 +17,38 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         private readonly Dictionary<string, IPropertyDescriptor> _map = new Dictionary<string, IPropertyDescriptor>();
 
 
+        public class Builder
+        {
+            public LObject Obj { get; set; }
+            public bool Strict { get; set; }
+            public bool? Writable { get; set; }
+            public bool? Enumerable { get; set; }
+            public bool? Configurable { get; set; }
+
+            public Builder SetAttributes(bool? writable, bool? enumerable, bool? configurable)
+            {
+                Writable = writable;
+                Enumerable = enumerable;
+                Configurable = configurable;
+                return this;
+            }
+
+            public Builder AppendDataProperty(string name, IDynamic value)
+            {
+                var desc = Obj.Environment.CreateDataDescriptor(value, Writable, Enumerable, Configurable);
+                Obj._map.Add(name, desc);
+                return this;
+            }
+
+            public Builder AppendAccessorProperty(string name, IDynamic get, IDynamic set)
+            {
+                var desc = Obj.Environment.CreateAccessorDescriptor(get, set, Enumerable, Configurable);
+                Obj._map.Add(name, desc);
+                return this;
+            }
+        }
+
+
         public LObject(IEnvironment environment)
         {
             _environment = environment;

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Interfaces;
-using Machete.Json;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects
 {
@@ -29,7 +28,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         {
             var text = args[0];
             var reviver = args[1];
-            return Evaluator.ParseForEnvironment(environment, text, reviver);
+            return Machete.Compiler.JsonParser.Parse(environment, text, reviver);
         }
 
         [NativeFunction("stringify", "value", "replacer", "space"), DataDescriptor(true, false, true)]
@@ -38,7 +37,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             var value = args[0];
             var replacer = args[1];
             var space = args[2];
-            return Evaluator.StringifyForEnvironment(environment, value, replacer, space);
+            return Machete.Compiler.JsonParser.Stringify(environment, value, replacer, space);
         }
     }
 }

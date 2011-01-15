@@ -58,47 +58,5 @@ namespace Machete.Tests
         {
             Assert.True(false);
         }
-
-        [Fact(DisplayName = "15.3.4.5.1 [[Call]]")]
-        public void Test153451()
-        {
-            Assert.True(false);
-        }
-
-        [Fact(DisplayName = "15.3.4.5.2 [[Construct]]")]
-        public void Test153452()
-        {
-            Assert.True(false);
-        }
-
-        [Fact(DisplayName = "15.3.4.5.3 [[HasInstance]] (V) ")]
-        public void Test153453()
-        {
-            Assert.True(false);
-        }
-
-        [Fact(DisplayName = "15.3.5.1 length")]
-        public void Test15351()
-        {
-            Assert.True(false);
-        }
-
-        [Fact(DisplayName = "15.3.5.2 prototype")]
-        public void Test15352()
-        {
-            Assert.True(false);
-        }
-
-        [Fact(DisplayName = "15.3.5.3 [[HasInstance]] (V)")]
-        public void Test15353()
-        {
-            Assert.True(false);
-        }
-
-        [Fact(DisplayName = "15.3.5.4 [[Get]] (P)")]
-        public void Test15354()
-        {
-            Assert.True(false);
-        }
     }
 }
