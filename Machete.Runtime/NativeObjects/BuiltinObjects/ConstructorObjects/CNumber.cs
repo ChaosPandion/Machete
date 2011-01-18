@@ -13,6 +13,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         public sealed override void Initialize()
         {
+            base.Initialize();
             DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(1.0), false, false, false), false);
             DefineOwnProperty("prototype", Environment.CreateDataDescriptor(Environment.NumberPrototype, false, false, false), false);
             DefineOwnProperty("MAX_VALUE", Environment.CreateDataDescriptor(Environment.CreateNumber(double.MaxValue), false, false, false), false);
@@ -20,7 +21,6 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             DefineOwnProperty("NaN", Environment.CreateDataDescriptor(Environment.CreateNumber(double.NaN), false, false, false), false);
             DefineOwnProperty("NEGATIVE_INFINITY", Environment.CreateDataDescriptor(Environment.CreateNumber(double.NegativeInfinity), false, false, false), false);
             DefineOwnProperty("POSITIVE_INFINITY", Environment.CreateDataDescriptor(Environment.CreateNumber(double.PositiveInfinity), false, false, false), false);
-            base.Initialize();
         }
 
         protected sealed override IDynamic Call(IEnvironment environment, IArgs args)

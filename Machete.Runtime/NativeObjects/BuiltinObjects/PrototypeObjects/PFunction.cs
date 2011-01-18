@@ -32,9 +32,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
-            var func = environment.Context.ThisBinding as NFunction;
-            var formalParameters = string.Join(", ", func.FormalParameters);
-            return environment.CreateString(string.Format("function {0}({1}) {{\n\t[body]\n}}", environment.Context.CurrentFunction, formalParameters));
+            return environment.CreateString("[object, Function]");
         }
 
         [BuiltinFunction("apply", "thisArg", "argArray"), DataDescriptor(true, false, true)]
@@ -53,6 +51,8 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
                 case LanguageTypeCode.Null:
                     return callable.Call(environment, thisArg, environment.EmptyArgs);
                 case LanguageTypeCode.Object:
+                    break;
+                default:
                     throw environment.CreateTypeError("");
             }
             var argList = new List<IDynamic>();

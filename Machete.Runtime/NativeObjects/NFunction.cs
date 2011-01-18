@@ -25,7 +25,7 @@ namespace Machete.Runtime.NativeObjects
 
         }
 
-        public IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
+        public virtual IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
         {
             var oldContext = environment.Context;
             var newEnvironment = Scope.NewDeclarativeEnvironment();
@@ -52,17 +52,12 @@ namespace Machete.Runtime.NativeObjects
                     }
                 }
 
-                return Call(environment, args);
+                BindFormalParameters(args);
+                Environment.BindFunctionDeclarations(ExecutableCode.FunctionDeclarations, ExecutableCode.Strict, true);
+                BindArgumentsObject(args);
+                Environment.BindVariableDeclarations(ExecutableCode.VariableDeclarations, ExecutableCode.Strict, true);
+                return ExecutableCode.Code(environment, args);
             }
-        }
-
-        protected virtual IDynamic Call(IEnvironment environment, IArgs args)
-        {
-            BindFormalParameters(args);
-            Environment.BindFunctionDeclarations(ExecutableCode.FunctionDeclarations, ExecutableCode.Strict, true);
-            BindArgumentsObject(args);
-            Environment.BindVariableDeclarations(ExecutableCode.VariableDeclarations, ExecutableCode.Strict, true);
-            return ExecutableCode.Code(environment, args);
         }
 
         public virtual IObject Construct(IEnvironment environment, IArgs args)

@@ -14,7 +14,7 @@ namespace Machete.Runtime.NativeObjects
 
         }
 
-        protected override IDynamic Call(IEnvironment environment, IArgs args)
+        public override IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
         {
             var func = TargetFunction as NFunction;
             return func.Call(environment, BoundThis, environment.ConcatArgs(BoundArguments, args));

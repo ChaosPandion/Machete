@@ -12,9 +12,9 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         public override void Initialize()
         {
+            base.Initialize();
             DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(1.0), false, false, false), false);
             DefineOwnProperty("prototype", Environment.CreateDataDescriptor(Environment.BooleanPrototype, false, false, false), false);
-            base.Initialize();
         }
 
         protected override IDynamic Call(IEnvironment environment, IArgs args)

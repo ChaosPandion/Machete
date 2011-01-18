@@ -13,15 +13,10 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
         {
             _code = code;
             _formalParameters = formalParameters;
-        }
-
-        public sealed override void Initialize()
-        {
             Class = "Function";
             Extensible = true;
             Prototype = Environment.FunctionPrototype;
             DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(_formalParameters.Count), false, false, false), false);
-            base.Initialize();
         }
 
         public IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
