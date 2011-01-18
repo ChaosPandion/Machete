@@ -33,7 +33,8 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var func = environment.Context.ThisBinding as NFunction;
-            return environment.CreateString(string.Format("function({0})", string.Join(", ", func.FormalParameterList)));
+            var formalParameters = string.Join(", ", func.FormalParameters);
+            return environment.CreateString(string.Format("function {0}({1}) {{\n\t[body]\n}}", environment.Context.CurrentFunction, formalParameters));
         }
 
         [NativeFunction("apply", "thisArg", "argArray"), DataDescriptor(true, false, true)]
@@ -103,7 +104,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             var target = (IObject)callable;
             var thisArg = args[0];
             var callArgs = environment.EmptyArgs;
-            var func = new NFunction(environment);
+            var func = new NBoundFunction(environment);
 
             if (args.Count > 1)
             {
@@ -116,7 +117,6 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             func.TargetFunction = target;
             func.BoundThis = thisArg;
             func.BoundArguments = callArgs;
-            func.BindFunction = true;
 
             var length = 0.0;
             if (target.Class == "Function")

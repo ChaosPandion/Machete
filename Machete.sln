@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.RegExp", "Machete.RegExp\Machete.RegExp.fsproj", "{1EA61ADA-ED82-4268-96FC-A5DF92F85964}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.Compiler", "Machete.Compiler\Machete.Compiler.fsproj", "{F4056A29-8845-4DFA-B551-35D7B27D5954}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Runtime", "Machete.Runtime\Machete.Runtime.csproj", "{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}"
@@ -25,15 +23,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Release|x86.ActiveCfg = Release|x86
-		{1EA61ADA-ED82-4268-96FC-A5DF92F85964}.Release|x86.Build.0 = Release|x86
 		{F4056A29-8845-4DFA-B551-35D7B27D5954}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F4056A29-8845-4DFA-B551-35D7B27D5954}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F4056A29-8845-4DFA-B551-35D7B27D5954}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU

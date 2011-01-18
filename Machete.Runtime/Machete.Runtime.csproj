@@ -103,6 +103,7 @@
     <Compile Include="Environment.cs" />
     <Compile Include="ExecutionContext.cs" />
     <Compile Include="HostObjects\HOutput.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\BuiltinFunction.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CBoolean.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CDate.cs" />
@@ -110,6 +111,7 @@
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CEvalError.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CFunction.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CNumber.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\BuiltinConstructor.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CRangeError.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CReferenceError.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CRegExp.cs" />
@@ -138,6 +140,7 @@
     <Compile Include="NativeObjects\NArguments.cs" />
     <Compile Include="NativeObjects\NArray.cs" />
     <Compile Include="NativeObjects\NBoolean.cs" />
+    <Compile Include="NativeObjects\NBoundFunction.cs" />
     <Compile Include="NativeObjects\NDate.cs" />
     <Compile Include="NativeObjects\NError.cs" />
     <Compile Include="NativeObjects\NEvalError.cs" />
@@ -175,10 +178,6 @@
     <ProjectReference Include="..\Machete.Interfaces\Machete.Interfaces.csproj">
       <Project>{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}</Project>
       <Name>Machete.Interfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Machete.RegExp\Machete.RegExp.fsproj">
-      <Project>{1EA61ADA-ED82-4268-96FC-A5DF92F85964}</Project>
-      <Name>Machete.RegExp</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

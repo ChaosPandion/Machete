@@ -3,7 +3,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CObject : LObject, IBuiltinFunction
+    public sealed class CObject : BuiltinConstructor
     {
         public CObject(IEnvironment environment)
             : base(environment)
@@ -11,17 +11,14 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         }
 
-        public override void Initialize()
+        public sealed override void Initialize()
         {
-            Class = "Function";
-            Extensible = true;
-            Prototype = Environment.FunctionPrototype;
             DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(1.0), false, false, false), false);
             DefineOwnProperty("prototype", Environment.CreateDataDescriptor(Environment.ObjectPrototype, false, false, false), false);
             base.Initialize();
         }
 
-        IDynamic ICallable.Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
+        protected sealed override IDynamic Call(IEnvironment environment, IArgs args)
         {
             var value = args[0];
             switch (value.TypeCode)
@@ -34,7 +31,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             }
         }
 
-        IObject IConstructable.Construct(IEnvironment environment, IArgs args)
+        public sealed override IObject Construct(IEnvironment environment, IArgs args)
         {
             if (args.Count > 0)
             {
@@ -53,11 +50,6 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             obj.Extensible = true;
             obj.Prototype = environment.ObjectPrototype;
             return obj;
-        }
-
-        public bool HasInstance(IDynamic value)
-        {
-            return Environment.Instanceof(value, this);
         }
 
         [NativeFunction("getPrototypeOf", "O"), DataDescriptor(true, false, true)]

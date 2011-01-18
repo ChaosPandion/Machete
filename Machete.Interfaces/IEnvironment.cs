@@ -77,9 +77,9 @@ namespace Machete.Interfaces
 
         IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict);
 
-        IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code);
-        IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
-        IFunction CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameterList, ILexicalEnvironment scope);
+        //IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code);
+        //IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
+        IObject CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameters, ILexicalEnvironment scope);
 
 
         IPropertyDescriptor CreateGenericDescriptor();

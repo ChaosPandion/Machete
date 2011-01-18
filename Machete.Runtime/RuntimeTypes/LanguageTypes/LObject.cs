@@ -8,6 +8,7 @@ using Machete.Interfaces;
 using System.Reflection;
 using System.Collections;
 using System.Diagnostics;
+using Machete.Runtime.NativeObjects.BuiltinObjects;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {
@@ -700,16 +701,8 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 if (nf == null || dd == null)
                     continue;
 
-                var func = Environment.CreateFunction(
-                    new ExecutableCode(
-                        (Code)Delegate.CreateDelegate(typeof(Code), m), 
-                        nf.FormalParameterList, 
-                        ReadOnlyList<FunctionDeclaration>.Empty, 
-                        true
-                    ), 
-                    nf.FormalParameterList, 
-                    Environment.GlobalEnvironment
-                ); 
+                var code = (Code)Delegate.CreateDelegate(typeof(Code), m);
+                var func = new BuiltinFunction(Environment, code, nf.FormalParameterList);
                 var desc = Environment.CreateDataDescriptor(func, dd.Writable, dd.Enumerable, dd.Configurable);
 
                 DefineOwnProperty(nf.Identifier, desc, false);

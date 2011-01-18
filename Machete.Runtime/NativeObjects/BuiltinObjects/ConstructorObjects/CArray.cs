@@ -4,7 +4,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CArray : LObject, IBuiltinFunction
+    public sealed class CArray : BuiltinConstructor
     {
         public CArray(IEnvironment environment)
             : base(environment)
@@ -14,22 +14,19 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         public override void Initialize()
         {
-            Class = "Function";
-            Extensible = true;
-            Prototype = Environment.FunctionPrototype;
             DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(1.0), false, false, false), false);
             DefineOwnProperty("prototype", Environment.CreateDataDescriptor(Environment.ArrayPrototype, false, false, false), false);
             base.Initialize();
         }
 
-        public IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
+        protected override IDynamic Call(IEnvironment environment, IArgs args)
         {
             // 15.4.1.1 Array ( [ item1 [ , item2 [ , … ] ] ] ) 
 
             return Construct(environment, args);
         }
 
-        public IObject Construct(IEnvironment environment, IArgs args)
+        public override IObject Construct(IEnvironment environment, IArgs args)
         {
             var array = new NArray(Environment);
             array.Initialize();
@@ -67,12 +64,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
             return array;
         }
-
-        public bool HasInstance(IDynamic value)
-        {
-            return Environment.Instanceof(value, this);
-        }
-        
+                
         [NativeFunction("isArray", "arg"), DataDescriptor(true, false, true)]
         internal static IDynamic IsArray(IEnvironment environment, IArgs args)
         {

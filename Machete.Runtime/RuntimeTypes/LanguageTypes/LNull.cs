@@ -230,7 +230,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
         public IDynamic Op_Call(IArgs args)
         {
-            return LType.Op_Call(_environment, this, args);
+            throw _environment.CreateTypeError("The null value is not a callable object.");
         }
 
         public IObject Op_Construct(IArgs args)

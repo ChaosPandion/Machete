@@ -170,3 +170,29 @@ module CharSets =
 
     let reservedWordSet =
         Set.union (Set.union keyWordSet futureReservedWordSet) (Set.union booleanLiteralSet nullLiteralSet)
+
+
+    
+    let wordCharSet = 
+        set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+
+    let decimalDigitCharsRegExp =
+        "0123456789"
+
+    let nonDecimalDigitCharsRegExp =
+        String([| Char.MinValue..Char.MaxValue |] |> Array.filter (fun c -> not(isDecimalDigit c)))
+
+    let wordCharsRegExp = 
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+
+    let nonWordCharsRegExp = 
+        String([| Char.MinValue..Char.MaxValue |] |> Array.filter (fun c -> not(wordCharSet.Contains c)))
+
+    let whiteSpaceCharsRegExp = 
+        String (whiteSpaceChars @ lineTerminatorChars |> List.toArray)
+
+    let nonWhiteSpaceCharsRegExp = 
+        String ([| Char.MinValue..Char.MaxValue |] |> Array.filter (fun c -> not(isWhiteSpace c) && not(isLineTerminator c)))
+
+
+

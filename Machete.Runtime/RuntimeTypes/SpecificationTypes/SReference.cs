@@ -296,6 +296,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 throw _environment.CreateTypeError("'" + _referencedName + "' is not a callable object.");
             }
+            _environment.Context.CurrentFunction = _referencedName;
             if (IsPropertyReference)
             {
                 return c.Call(_environment, (IDynamic)_base, args);
@@ -310,6 +311,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 throw _environment.CreateTypeError("'" + _referencedName + "' is not a constructable object.");
             }
+            _environment.Context.CurrentFunction = _referencedName;
             return c.Construct(_environment, args);
         }
 

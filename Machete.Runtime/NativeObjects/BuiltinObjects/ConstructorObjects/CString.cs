@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CString : LObject, IBuiltinFunction
+    public sealed class CString : BuiltinConstructor
     {
         public CString(IEnvironment environment)
             : base(environment)
@@ -12,17 +12,14 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         }
 
-        public override void Initialize()
+        public sealed override void Initialize()
         {
-            Class = "Function";
-            Extensible = true;
-            Prototype = Environment.FunctionPrototype;
             DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(1.0), false, false, false), false);
             DefineOwnProperty("prototype", Environment.CreateDataDescriptor(Environment.StringPrototype, false, false, false), false);
             base.Initialize();
         }
 
-        public IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
+        protected sealed override IDynamic Call(IEnvironment environment, IArgs args)
         {
             if (args.Count > 0)
             {
@@ -31,7 +28,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.CreateString("");
         }
 
-        public IObject Construct(IEnvironment environment, IArgs args)
+        public sealed override IObject Construct(IEnvironment environment, IArgs args)
         {
             var obj = new NString(environment);
             {
@@ -46,11 +43,6 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
                 obj.DefineOwnProperty("length", lenDesc, false);
             }
             return obj;
-        }
-
-        public bool HasInstance(IDynamic value)
-        {
-            return Environment.Instanceof(value, this);
         }
 
         [NativeFunction("fromCharCode", "char0"), DataDescriptor(true, false, true)]

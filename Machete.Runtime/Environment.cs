@@ -238,7 +238,14 @@ namespace Machete.Runtime
                 return executableCode.Code(this, EmptyArgs);
             }
         }
- 
+
+        public void Unwind()
+        {
+            foreach (var context in _contextStack)
+            {
+                Output.Write(context.CurrentFunction);
+            }
+        }
         
         public IBoolean CreateBoolean(bool value)
         {
@@ -292,25 +299,25 @@ namespace Machete.Runtime
         }
 
 
-        public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code)
-        {
-            return CreateFunction(formalParameterList, strict, code, GlobalEnvironment);
-        }
+        //public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code)
+        //{
+        //    return CreateFunction(formalParameterList, strict, code, GlobalEnvironment);
+        //}
 
-        public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope)
-        {
-            // 13.2 Creating Function Objects 
+        //public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope)
+        //{
+        //    // 13.2 Creating Function Objects 
 
-            var f = new NFunction(this);
-            {
-                f.FormalParameterList = formalParameterList;
-                f.Code = code;
-                f.Strict = strict;
-                f.Scope = scope;
-                f.Initialize();
-            }
-            return f;
-        }
+        //    var f = new NFunction(this);
+        //    {
+        //        f.FormalParameterList = formalParameterList;
+        //        f.Code = code;
+        //        f.Strict = strict;
+        //        f.Scope = scope;
+        //        f.Initialize();
+        //    }
+        //    return f;
+        //}
 
 
 
@@ -384,6 +391,10 @@ namespace Machete.Runtime
 
         public IExecutionContext EnterContext()
         {
+            if (Context == null)
+            {
+                return Context = new ExecutionContext(() => { });
+            }
             _contextStack.Push(Context);
             return Context = new ExecutionContext(() => Context = _contextStack.Pop());
         }
@@ -742,16 +753,29 @@ namespace Machete.Runtime
         }
 
 
-        public IFunction CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameterList, ILexicalEnvironment scope)
+        public IObject CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameters, ILexicalEnvironment scope)
         {
             // 13.2 Creating Function Objects 
 
             var f = new NFunction(this);
             {
+                f.Class = "Function";
+                f.Extensible = true;
+                f.Prototype = FunctionPrototype;
                 f.ExecutableCode = executableCode;
-                f.FormalParameterList = formalParameterList;
+                f.FormalParameters = formalParameters;
                 f.Scope = scope;
-                f.Initialize();
+
+                f.DefineOwnProperty("length", CreateDataDescriptor(CreateNumber(f.FormalParameters.Count), false, false ,false), false);
+                f.DefineOwnProperty("constructor", CreateDataDescriptor(f, true, false, true), false);
+                f.DefineOwnProperty("prototype", CreateDataDescriptor(ObjectConstructor.Op_Construct(EmptyArgs), true, false, false), false);
+
+                if (executableCode.Strict)
+                {
+                    var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
+                    f.DefineOwnProperty("caller", desc, false);
+                    f.DefineOwnProperty("arguments", desc, false);
+                }
             }
             return f;
         }

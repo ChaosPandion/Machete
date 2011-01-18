@@ -3,7 +3,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CNumber : LObject, IBuiltinFunction
+    public sealed class CNumber : BuiltinConstructor
     {
         public CNumber(IEnvironment environment)
             : base(environment)
@@ -11,11 +11,8 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         }
 
-        public override void Initialize()
+        public sealed override void Initialize()
         {
-            Class = "Function";
-            Extensible = true;
-            Prototype = Environment.FunctionPrototype;
             DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(1.0), false, false, false), false);
             DefineOwnProperty("prototype", Environment.CreateDataDescriptor(Environment.NumberPrototype, false, false, false), false);
             DefineOwnProperty("MAX_VALUE", Environment.CreateDataDescriptor(Environment.CreateNumber(double.MaxValue), false, false, false), false);
@@ -26,7 +23,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             base.Initialize();
         }
 
-        public IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
+        protected sealed override IDynamic Call(IEnvironment environment, IArgs args)
         {
             if (args.Count > 0)
             {
@@ -35,7 +32,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.CreateNumber(0.0);
         }
 
-        public IObject Construct(IEnvironment environment, IArgs args)
+        public sealed override IObject Construct(IEnvironment environment, IArgs args)
         {
             var obj = new NNumber(environment);
             obj.Class = "Number";
@@ -50,11 +47,6 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
                 obj.PrimitiveValue = environment.CreateNumber(0.0);
             }
             return obj;
-        }
-
-        public bool HasInstance(IDynamic value)
-        {
-            return Environment.Instanceof(value, this);
         }
     }
 }

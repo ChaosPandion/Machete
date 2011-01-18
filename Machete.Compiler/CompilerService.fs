@@ -28,7 +28,6 @@ type Label = {
 
 type internal State1 = {
     strict : list<bool * bool>
-    element : SourceElement
     labels : list<Map<string, Label>>
     functions : list<FunctionDeclaration>
     variables : list<string>
@@ -622,15 +621,16 @@ type CompilerService (environment:IEnvironment) as this =
                         | "getter" when getterSet.Contains name ->
                             raise (environment.CreateSyntaxError "")
                         | "getter" ->
-                            let formalParams = exp.Constant (ReadOnlyList<string>.Empty) :> exp
-                            let strict = exp.Constant (strict) :> exp
-                            let code = exp.Constant (lazy(functionBody.Value.Compile)) :> exp
-                            let args = [| formalParams; strict; code; propLexicalEnviroment |]  
-                            let createFunction = exp.Call (environmentParam, Reflection.IEnvironment.createFunction2, args) :> exp
-                            let args = [| createFunction; trueNullableBool; trueNullableBool; trueNullableBool  |]
-                            let createDesc = exp.Call (environmentParam, Reflection.IEnvironment.createAccessorDescriptor3, args) :> exp
-                            let result = (defineOwnProperty name createDesc):>exp :: result
-                            build result items.Tail dataSet (getterSet.Add name) setterSet
+                            failwith ""
+//                            let formalParams = exp.Constant (ReadOnlyList<string>.Empty) :> exp
+//                            let strict = exp.Constant (strict) :> exp
+//                            let code = exp.Constant (lazy(functionBody.Value.Compile)) :> exp
+//                            let args = [| formalParams; strict; code; propLexicalEnviroment |]  
+//                            let createFunction = exp.Call (environmentParam, Reflection.IEnvironment.createFunction2, args) :> exp
+//                            let args = [| createFunction; trueNullableBool; trueNullableBool; trueNullableBool  |]
+//                            let createDesc = exp.Call (environmentParam, Reflection.IEnvironment.createAccessorDescriptor3, args) :> exp
+//                            let result = (defineOwnProperty name createDesc):>exp :: result
+//                            build result items.Tail dataSet (getterSet.Add name) setterSet
                         | "setter" when dataSet.Contains name ->
                             raise (environment.CreateSyntaxError "")
                         | "setter" when setterSet.Contains name ->
@@ -638,15 +638,16 @@ type CompilerService (environment:IEnvironment) as this =
                         | "setter" when strict && (formalParams.Value.[0] = "eval" || formalParams.Value.[0] = "arguments") ->
                             raise (environment.CreateSyntaxError "")
                         | "setter" ->
-                            let formalParams = exp.Constant (formalParams.Value) :> exp
-                            let strict = exp.Constant (strict) :> exp
-                            let code = exp.Constant (lazy(functionBody.Value.Compile)) :> exp
-                            let args = [| formalParams; strict; code; propLexicalEnviroment |]  
-                            let createFunction = exp.Call (environmentParam, Reflection.IEnvironment.createFunction2, args) :> exp
-                            let args = [| createFunction; trueNullableBool; trueNullableBool; trueNullableBool  |]
-                            let createDesc = exp.Call (environmentParam, Reflection.IEnvironment.createAccessorDescriptor3, args) :> exp
-                            let result = (defineOwnProperty name createDesc):>exp :: result
-                            build result items.Tail dataSet getterSet (setterSet.Add name)
+                            failwith ""
+//                            let formalParams = exp.Constant (formalParams.Value) :> exp
+//                            let strict = exp.Constant (strict) :> exp
+//                            let code = exp.Constant (lazy(functionBody.Value.Compile)) :> exp
+//                            let args = [| formalParams; strict; code; propLexicalEnviroment |]  
+//                            let createFunction = exp.Call (environmentParam, Reflection.IEnvironment.createFunction2, args) :> exp
+//                            let args = [| createFunction; trueNullableBool; trueNullableBool; trueNullableBool  |]
+//                            let createDesc = exp.Call (environmentParam, Reflection.IEnvironment.createAccessorDescriptor3, args) :> exp
+//                            let result = (defineOwnProperty name createDesc):>exp :: result
+//                            build result items.Tail dataSet getterSet (setterSet.Add name)
                 let body = assign :: (objectVar :> exp :: build [] e Set.empty Set.empty Set.empty |> List.rev)
                 return exp.Block ([| objectVar |], body) :> exp
         }) state
@@ -1669,7 +1670,7 @@ type CompilerService (environment:IEnvironment) as this =
             let strict = newState.strict.Head |> fst
             let exC = ExecutableCode (functionBody.Compile(), variableDeclarations, functionDeclarations, strict)
             let args = [| exp.Constant(exC):>exp; exp.Constant(formalParameterList) :> exp; propLexicalEnviroment |]
-            let func = exp.Call (environmentParam, Reflection.IEnvironment.createFunction3, args) :> exp
+            let func = exp.Call (environmentParam, Reflection.IEnvironment.createFunction, args) :> exp
             return func
         }) state
 
@@ -1720,7 +1721,7 @@ type CompilerService (environment:IEnvironment) as this =
 
     let createInitialState (strict:bool) =
         let returnLabel = { labelExpression = exp.Label(exp.Label(typeof<IDynamic>, "return"), exp.Constant (environment.Undefined)) }
-        { strict = [strict, false]; element = Nil; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }        
+        { strict = [strict, false]; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }        
 
     let compile (parser:Parser<Expression<Code>, State1>) (input:string) (strict:bool) (streamName:string) =
         let initialState = createInitialState strict

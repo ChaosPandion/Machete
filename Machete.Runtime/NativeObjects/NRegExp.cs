@@ -1,27 +1,20 @@
 ﻿using Machete.Interfaces;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
+using RegExpMatcher = Machete.Compiler.RegExpParser.RegExpMatcher;
 
 namespace Machete.Runtime.NativeObjects
 {
     public sealed class NRegExp : LObject
     {
-        public RegExp.RegExp RegExp { get; set; }
+        public RegExpMatcher RegExpMatcher { get; set; }
+        public string Body { get; set; }
+        public string Flags { get; set; }
 
 
         public NRegExp(IEnvironment environment)
             : base(environment)
         {
 
-        }
-
-        public override void Put(string p, IDynamic value, bool @throw)
-        {
-            if (p == "lastIndex")
-            {
-                var lastIndex = (int)value.Value.ConvertToInt32().BaseValue;
-                RegExp.LastIndex = lastIndex;
-            }
-            base.Put(p, value, @throw);
         }
     }
 }

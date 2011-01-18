@@ -1,6 +1,7 @@
 ﻿using Machete.Interfaces;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System;
+using MatchResult = Machete.Compiler.RegExpParser.MatchResult;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -24,24 +25,50 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         [NativeFunction("exec", "string"), DataDescriptor(true, false, true)]
         internal static IDynamic Exec(IEnvironment environment, IArgs args)
         {
-            var regExpObj = (NRegExp)environment.Context.ThisBinding;
-            var result = regExpObj.RegExp.Exec(args[0].ConvertToString().BaseValue);
-            if (regExpObj.RegExp.Global)
+            var r = (NRegExp)environment.Context.ThisBinding;
+            var s = args[0].ConvertToString().BaseValue;
+            var length = s.Length;
+            var global = r.Get("global").ConvertToBoolean().BaseValue;
+            var i = !global ? 0 : (int)r.Get("lastIndex").ConvertToInteger().BaseValue;
+            int beginIndex = i;
+            MatchResult result;
+
+            while (true)
             {
-                regExpObj.Put("lastIndex", environment.CreateNumber(regExpObj.RegExp.LastIndex), true);
+                if (i < 0 || i > length)
+                {
+                    r.Put("length", environment.CreateNumber(0.0), true);
+                    return environment.Null;
+                }
+                result = r.RegExpMatcher(s, i);
+                if (result.success) break;
+                i++;
             }
-            if (!result.Succeeded)
+
+            if (global)
             {
-                return environment.Null;
+                r.Put("length", environment.CreateNumber(result.matchState.endIndex), true);
             }
+
+            var captures = result.matchState.captures;
+            var n = captures.Length;
             var array = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
-            array.DefineOwnProperty("index", environment.CreateDataDescriptor(environment.CreateNumber(result.Index), true, true, true), true);
-            array.DefineOwnProperty("input", environment.CreateDataDescriptor(environment.CreateString(result.Input), true, true, true), true);
-            array.DefineOwnProperty("length", environment.CreateDataDescriptor(environment.CreateNumber(result.Length)), true);
-            for (int i = 0; i < result.Length; i++)
+
+            array.DefineOwnProperty("index", environment.CreateDataDescriptor(environment.CreateNumber(beginIndex), true, true, true), true);
+            array.DefineOwnProperty("input", environment.CreateDataDescriptor(environment.CreateString(s), true, true, true), true);
+            array.DefineOwnProperty("length", environment.CreateDataDescriptor(environment.CreateNumber(n + 1)), true);
+
+            var str = environment.CreateString(result.matchState.input.Substring(beginIndex, result.matchState.endIndex - beginIndex));
+            var desc = environment.CreateDataDescriptor(str, true, true, true);
+            array.DefineOwnProperty("0", desc, true);
+
+            for (int index = 0; index < n; index++)
             {
-                array.DefineOwnProperty(i.ToString(), environment.CreateDataDescriptor(environment.CreateString(result[i]), true, true, true), true);
+                str = environment.CreateString(captures[index]);
+                desc = environment.CreateDataDescriptor(str, true, true, true);
+                array.DefineOwnProperty((index + 1).ToString(), desc, true);
             }
+
             return array;
         }
 
@@ -49,14 +76,22 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         internal static IDynamic Test(IEnvironment environment, IArgs args)
         {
             var regExpObj = (NRegExp)environment.Context.ThisBinding;
-            return environment.CreateBoolean(regExpObj.RegExp.Test(args[0].ConvertToString().BaseValue));
+            var func = regExpObj.Get("exec") as ICallable;
+            var result = func.Call(environment, regExpObj, args);
+            switch (result.TypeCode)
+            {
+                case LanguageTypeCode.Null:
+                    return environment.False;
+                default:
+                    return environment.True;
+            }
         }
 
         [NativeFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var regExpObj = (NRegExp)environment.Context.ThisBinding;
-            return environment.CreateString(regExpObj.RegExp.ToString());
+            return environment.CreateString("/" + regExpObj.Body + "/" + regExpObj.Flags);
         }
     }
 }

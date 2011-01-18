@@ -13,8 +13,8 @@ namespace Machete.Runtime
     {
         private readonly Action _dispose;
 
+        public string CurrentFunction { get; set; }
         public bool Strict { get; set; }
-        public IFunction CurrentFunction { get; set; }
         public ILexicalEnvironment LexicalEnviroment { get; set; }
         public ILexicalEnvironment VariableEnviroment { get; set; }
         public IDynamic ThisBinding { get; set; }

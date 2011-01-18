@@ -82,15 +82,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Tools.fs" />
     <Compile Include="CharSets.fs" />
-    <Compile Include="InputElement.fs" />
-    <Compile Include="Lexer.fs" />
-    <Compile Include="StringNumericLiteral.fs" />
-    <Compile Include="SourceElement.fs" />
     <Compile Include="Reflection.fs" />
     <Compile Include="InputElementParsers.fs" />
     <Compile Include="CompilerService.fs" />
+    <Compile Include="StringNumericLiteral.fs" />
+    <Compile Include="RegExpParser.fs" />
     <Compile Include="JsonParser.fs" />
     <Compile Include="IntParser.fs" />
     <Compile Include="FloatParser.fs" />
