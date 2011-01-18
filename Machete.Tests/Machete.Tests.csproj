@@ -120,7 +120,7 @@
     <Compile Include="TestBase.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Machete.Interfaces\Machete.Core.csproj">
+    <ProjectReference Include="..\Machete.Core\Machete.Core.csproj">
       <Project>{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}</Project>
       <Name>Machete.Core</Name>
     </ProjectReference>

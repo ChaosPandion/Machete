@@ -94,7 +94,7 @@
     <Compile Include="DateParser.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Machete.Interfaces\Machete.Core.csproj">
+    <ProjectReference Include="..\Machete.Core\Machete.Core.csproj">
       <Name>Machete.Core</Name>
       <Project>{eb3133fc-6fd5-4056-a11b-e5dead22a0a3}</Project>
       <Private>True</Private>
