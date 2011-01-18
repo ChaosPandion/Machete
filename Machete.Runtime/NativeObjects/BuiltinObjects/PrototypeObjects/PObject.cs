@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
@@ -19,14 +19,14 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             base.Initialize();
         }
 
-        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             return environment.CreateString(string.Format("[object, {0}]", obj.Class));
         }
 
-        [NativeFunction("toLocaleString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toLocaleString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -38,13 +38,13 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return func.Call(environment, obj, environment.EmptyArgs);
         }
 
-        [NativeFunction("valueOf"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("valueOf"), DataDescriptor(true, false, true)]
         internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
         {
             return environment.Context.ThisBinding.ConvertToObject();
         }
 
-        [NativeFunction("hasOwnProperty", "V"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("hasOwnProperty", "V"), DataDescriptor(true, false, true)]
         internal static IDynamic HasOwnProperty(IEnvironment environment, IArgs args)
         {
             if (args.IsEmpty) return environment.False;
@@ -53,7 +53,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateBoolean(desc != null);
         }
 
-        [NativeFunction("isPrototypeOf", "V"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("isPrototypeOf", "V"), DataDescriptor(true, false, true)]
         internal static IDynamic IsPrototypeOf(IEnvironment environment, IArgs args)
         {
             var value = args[0] as LObject;
@@ -61,7 +61,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateBoolean(value != null && value.Prototype != null && value.Prototype == thisObj);
         }
 
-        [NativeFunction("propertyIsEnumerable", "V"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("propertyIsEnumerable", "V"), DataDescriptor(true, false, true)]
         internal static IDynamic PropertyIsEnumerable(IEnvironment environment, IArgs args)
         {
             if (args.IsEmpty) return environment.False;

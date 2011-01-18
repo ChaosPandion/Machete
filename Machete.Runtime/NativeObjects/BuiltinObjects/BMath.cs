@@ -1,5 +1,5 @@
 ﻿using System;
-using Machete.Interfaces;
+using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects
@@ -28,115 +28,115 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             base.Initialize();
         }
 
-        [NativeFunction("abs", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("abs", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Abs(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("acos", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("acos", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Acos(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("asin", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("asin", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Asin(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("atan", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("atan", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Atan(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("atan2", "y", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("atan2", "y", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Atan2(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("ceil", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("ceil", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Ceil(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("cos", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("cos", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Cos(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("exp", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("exp", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Exp(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("floor", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("floor", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Floor(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("log", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("log", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Log(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("max", "value1", "value2"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("max", "value1", "value2"), DataDescriptor(true, false, true)]
         internal static IDynamic Max(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("min", "value1", "value2"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("min", "value1", "value2"), DataDescriptor(true, false, true)]
         internal static IDynamic Min(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("pow", "x", "y"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("pow", "x", "y"), DataDescriptor(true, false, true)]
         internal static IDynamic Pow(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("random"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("random"), DataDescriptor(true, false, true)]
         internal static IDynamic Random(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("round", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("round", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Round(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("sin", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("sin", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Sin(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("sqrt", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("sqrt", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Sqrt(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("tan", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("tan", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Tan(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("fact", "n"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("fact", "n"), DataDescriptor(true, false, true)]
         internal static IDynamic Fact(IEnvironment environment, IArgs args)
         {
             double r = 1.0, n = Math.Truncate(args[0].ConvertToNumber().BaseValue);

@@ -9,7 +9,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete", "Machete\Machete.
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.Interactive", "Machete.Interactive\Machete.Interactive.fsproj", "{5C16B94B-C4CD-49E8-A153-856A4DB43993}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Interfaces", "Machete.Interfaces\Machete.Interfaces.csproj", "{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Core", "Machete.Interfaces\Machete.Core.csproj", "{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Tests", "Machete.Tests\Machete.Tests.csproj", "{D80B35C0-A5AE-4221-9CBE-950F918002C7}"
 EndProject

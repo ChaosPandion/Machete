@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.HostObjects
@@ -24,7 +24,7 @@ namespace Machete.Runtime.HostObjects
             return Environment.CreateString("[object, Output]");
         }
 
-        [NativeFunction("write", "value"), DataDescriptor(false, false, false)]
+        [BuiltinFunction("write", "value"), DataDescriptor(false, false, false)]
         internal static IDynamic Write(IEnvironment environment, IArgs args)
         {
             var value = args[0].ConvertToString().BaseValue;

@@ -1,5 +1,5 @@
 ﻿using System;
-using Machete.Interfaces;
+using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
@@ -65,7 +65,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return array;
         }
                 
-        [NativeFunction("isArray", "arg"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("isArray", "arg"), DataDescriptor(true, false, true)]
         internal static IDynamic IsArray(IEnvironment environment, IArgs args)
         {
             // 15.4.3.2 Array.isArray ( arg ) 

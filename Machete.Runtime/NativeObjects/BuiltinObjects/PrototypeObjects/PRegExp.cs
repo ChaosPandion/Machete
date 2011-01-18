@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System;
 using MatchResult = Machete.Compiler.RegExpParser.MatchResult;
@@ -22,7 +22,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             base.Initialize();
         }
 
-        [NativeFunction("exec", "string"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("exec", "string"), DataDescriptor(true, false, true)]
         internal static IDynamic Exec(IEnvironment environment, IArgs args)
         {
             var r = (NRegExp)environment.Context.ThisBinding;
@@ -72,7 +72,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return array;
         }
 
-        [NativeFunction("test", "string"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("test", "string"), DataDescriptor(true, false, true)]
         internal static IDynamic Test(IEnvironment environment, IArgs args)
         {
             var regExpObj = (NRegExp)environment.Context.ThisBinding;
@@ -87,7 +87,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             }
         }
 
-        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var regExpObj = (NRegExp)environment.Context.ThisBinding;

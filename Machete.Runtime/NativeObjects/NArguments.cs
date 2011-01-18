@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
-using Machete.Interfaces;
+using Machete.Core;
 
 namespace Machete.Runtime.NativeObjects
 {

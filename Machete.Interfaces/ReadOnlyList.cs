@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
-namespace Machete.Interfaces
+namespace Machete.Core
 {
     public class ReadOnlyList<T> : IEnumerable<T>
     {

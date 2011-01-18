@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
@@ -52,7 +52,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("getPrototypeOf", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("getPrototypeOf", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic GetPrototypeOf(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -63,7 +63,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj.Prototype;
         }
 
-        [NativeFunction("getOwnPropertyDescriptor", "O", "P"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("getOwnPropertyDescriptor", "O", "P"), DataDescriptor(true, false, true)]
         internal static IDynamic GetOwnPropertyDescriptor(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -76,7 +76,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.FromPropertyDescriptor(desc);
         }
 
-        [NativeFunction("getOwnPropertyNames", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("getOwnPropertyNames", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic GetOwnPropertyNames(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -97,7 +97,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return array;
         }
 
-        [NativeFunction("create", "O", "Properties"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("create", "O", "Properties"), DataDescriptor(true, false, true)]
         internal static IDynamic Create(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -118,7 +118,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return newObj;
         }
 
-        [NativeFunction("defineProperty", "O", "P", "Attributes"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("defineProperty", "O", "P", "Attributes"), DataDescriptor(true, false, true)]
         internal static IDynamic DefineProperty(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -147,7 +147,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("defineProperties", "O", "Properties"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("defineProperties", "O", "Properties"), DataDescriptor(true, false, true)]
         internal static IDynamic DefineProperties(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -164,7 +164,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("seal", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("seal", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Seal(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -183,7 +183,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("freeze", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("freeze", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Freeze(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -206,7 +206,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("preventExtensions", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("preventExtensions", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic PreventExtensions(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -218,7 +218,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("isSealed", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("isSealed", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsSealed(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -238,7 +238,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.CreateBoolean(!obj.Extensible);
         }
 
-        [NativeFunction("isFrozen", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("isFrozen", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsFrozen(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -266,7 +266,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.CreateBoolean(!obj.Extensible);
         }
 
-        [NativeFunction("isExtensible", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("isExtensible", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic IsExtensible(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)
@@ -277,7 +277,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return environment.CreateBoolean(obj.Extensible);
         }
 
-        [NativeFunction("keys", "O"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("keys", "O"), DataDescriptor(true, false, true)]
         internal static IDynamic Keys(IEnvironment environment, IArgs args)
         {
             if (args[0].TypeCode != LanguageTypeCode.Object)

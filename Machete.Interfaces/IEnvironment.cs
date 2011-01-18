@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Machete.Interfaces
+namespace Machete.Core
 {
     public interface IEnvironment
     {

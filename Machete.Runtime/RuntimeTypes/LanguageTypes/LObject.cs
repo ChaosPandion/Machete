@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using Machete.Runtime.NativeObjects;
-using Machete.Interfaces;
+using Machete.Core;
 using System.Reflection;
 using System.Collections;
 using System.Diagnostics;
@@ -684,12 +684,12 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         {
             foreach (var m in this.GetType().GetMethods(BindingFlags.Static | BindingFlags.NonPublic))
             {
-                NativeFunctionAttribute nf = null;
+                BuiltinFunctionAttribute nf = null;
                 DataDescriptorAttribute dd = null;
 
                 foreach (var a in m.GetCustomAttributes(false))
                 {
-                    nf = nf ?? a as NativeFunctionAttribute;
+                    nf = nf ?? a as BuiltinFunctionAttribute;
                     dd = dd ?? a as DataDescriptorAttribute;
                     if (nf != null && dd != null)
                     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 
-namespace Machete.Interfaces
+namespace Machete.Core
 {
     public sealed class Output : IDisposable
     {

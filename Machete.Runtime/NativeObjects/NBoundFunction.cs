@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 
 namespace Machete.Runtime.NativeObjects
 {

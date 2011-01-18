@@ -3,7 +3,7 @@
 open System
 open FParsec.Primitives
 open FParsec.CharParsers
-open Machete.Interfaces
+open Machete.Core
 
 module RegExpParser = 
 

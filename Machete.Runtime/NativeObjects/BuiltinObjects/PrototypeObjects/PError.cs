@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
@@ -21,7 +21,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         }
 
 
-        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();

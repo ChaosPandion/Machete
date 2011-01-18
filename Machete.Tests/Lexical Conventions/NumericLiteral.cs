@@ -1,6 +1,6 @@
 ﻿using System;
 using Xunit;
-using Machete.Interfaces;
+using Machete.Core;
 
 namespace Machete.Tests
 {

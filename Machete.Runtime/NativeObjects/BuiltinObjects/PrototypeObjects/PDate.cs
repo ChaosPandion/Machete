@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System;
 
@@ -32,7 +32,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             base.Initialize();
         }
 
-        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var time = LocalTime(GetTimeValue(environment));
@@ -50,7 +50,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             );
         }
 
-        [NativeFunction("toDateString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toDateString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToDateString(IEnvironment environment, IArgs args)
         {
             var time = LocalTime(GetTimeValue(environment));
@@ -65,7 +65,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             );
         }
 
-        [NativeFunction("toTimeString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toTimeString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToTimeString(IEnvironment environment, IArgs args)
         {
             var time = LocalTime(GetTimeValue(environment));
@@ -79,25 +79,25 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             );
         }
 
-        [NativeFunction("toLocaleString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toLocaleString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
         {
             return null;
         }
 
-        [NativeFunction("toLocaleDateString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toLocaleDateString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleDateString(IEnvironment environment, IArgs args)
         {
             return null;
         }
 
-        [NativeFunction("toLocaleTimeString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toLocaleTimeString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleTimeString(IEnvironment environment, IArgs args)
         {
             return null;
         }
 
-        [NativeFunction("valueOf"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("valueOf"), DataDescriptor(true, false, true)]
         internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
         {
             return null;

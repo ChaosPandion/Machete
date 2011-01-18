@@ -1,14 +1,14 @@
 ﻿using System;
 
-namespace Machete.Interfaces
+namespace Machete.Core
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-    public sealed class NativeFunctionAttribute : Attribute
+    public sealed class BuiltinFunctionAttribute : Attribute
     {
         public string Identifier { get; private set; }
         public ReadOnlyList<string> FormalParameterList { get; private set; }
 
-        public NativeFunctionAttribute(string identifier, params string[] formalParameterList)
+        public BuiltinFunctionAttribute(string identifier, params string[] formalParameterList)
         {
             Identifier = identifier;
             FormalParameterList = new ReadOnlyList<string>(formalParameterList);

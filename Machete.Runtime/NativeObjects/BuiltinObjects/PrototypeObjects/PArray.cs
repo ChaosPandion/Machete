@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System;
 using System.Text;
@@ -24,7 +24,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             base.Initialize();
         }
 
-        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var array = environment.Context.ThisBinding.ConvertToObject();
@@ -36,7 +36,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return func.Call(environment, array, args);
         }
 
-        [NativeFunction("toLocaleString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toLocaleString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding.ConvertToObject();
@@ -79,7 +79,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(sb.ToString());
         }
 
-        [NativeFunction("concat", "item1"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("concat", "item1"), DataDescriptor(true, false, true)]
         internal static IDynamic Concat(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -116,7 +116,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return array;
         }
 
-        [NativeFunction("join", "separator"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("join", "separator"), DataDescriptor(true, false, true)]
         internal static IDynamic Join(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -154,7 +154,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(sb.ToString());
         }
 
-        [NativeFunction("pop"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("pop"), DataDescriptor(true, false, true)]
         internal static IDynamic Pop(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -167,7 +167,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return element;
         }
 
-        [NativeFunction("push", "item1"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("push", "item1"), DataDescriptor(true, false, true)]
         internal static IDynamic Push(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -183,7 +183,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber(length);
         }
 
-        [NativeFunction("reverse"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("reverse"), DataDescriptor(true, false, true)]
         internal static IDynamic Reverse(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -227,7 +227,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return obj;
         }
 
-        [NativeFunction("shift"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("shift"), DataDescriptor(true, false, true)]
         internal static IDynamic Shift(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -257,7 +257,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return first;
         }
 
-        [NativeFunction("slice", "start", "end"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("slice", "start", "end"), DataDescriptor(true, false, true)]
         internal static IDynamic Slice(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -282,7 +282,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //return result;
         }
 
-        [NativeFunction("sort", "comparefn"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("sort", "comparefn"), DataDescriptor(true, false, true)]
         internal static IDynamic Sort(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -342,19 +342,19 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //defined = (isSparse && (hasNonConfigurable || hasNonWritable || hasAccessor || protoHasProp));
         }
 
-        [NativeFunction("slice", "start", "deleteCount"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("slice", "start", "deleteCount"), DataDescriptor(true, false, true)]
         internal static IDynamic Splice(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("unshift", "item1"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("unshift", "item1"), DataDescriptor(true, false, true)]
         internal static IDynamic Unshift(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [NativeFunction("indexOf", "searchElement"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("indexOf", "searchElement"), DataDescriptor(true, false, true)]
         internal static IDynamic IndexOf(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -388,7 +388,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber(-1);
         }
 
-        [NativeFunction("lastIndexOf", "searchElement"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("lastIndexOf", "searchElement"), DataDescriptor(true, false, true)]
         internal static IDynamic LastIndexOf(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -430,7 +430,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber(-1);
         }
 
-        [NativeFunction("every", "callbackfn"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("every", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Every(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -461,7 +461,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.True;
         }
 
-        [NativeFunction("some", "callbackfn"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("some", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Some(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -492,7 +492,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.False;
         }
 
-        [NativeFunction("forEach", "callbackfn"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("forEach", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic ForEach(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -520,7 +520,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.Undefined;
         }
 
-        [NativeFunction("map", "callbackfn"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("map", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Map(IEnvironment environment, IArgs args)
         {
             var result = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
@@ -550,7 +550,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return result;
         }
 
-        [NativeFunction("filter", "callbackfn"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("filter", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Filter(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -585,7 +585,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //return result;
         }
 
-        [NativeFunction("reduce", "callbackfn"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("reduce", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic Reduce(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
@@ -637,7 +637,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //return accumulator;
         }
 
-        [NativeFunction("reduceRight", "callbackfn"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("reduceRight", "callbackfn"), DataDescriptor(true, false, true)]
         internal static IDynamic ReduceRight(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();

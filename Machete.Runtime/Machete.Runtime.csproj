@@ -175,9 +175,9 @@
       <Name>Machete.Compiler</Name>
       <Aliases>global</Aliases>
     </ProjectReference>
-    <ProjectReference Include="..\Machete.Interfaces\Machete.Interfaces.csproj">
+    <ProjectReference Include="..\Machete.Interfaces\Machete.Core.csproj">
       <Project>{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}</Project>
-      <Name>Machete.Interfaces</Name>
+      <Name>Machete.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -5,7 +5,7 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Threading;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
-using Machete.Interfaces;
+using Machete.Core;
 using Machete.Runtime.HostObjects;
 using Machete.Compiler;
 
@@ -57,7 +57,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             return Environment.CreateString("[object, Core]");
         }
 
-        [NativeFunction("eval", "x"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("eval", "x"), DataDescriptor(true, false, true)]
         internal static IDynamic Eval(IEnvironment environment, IArgs args)
         {
             var x = args[0];
@@ -83,7 +83,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             }
         }
 
-        [NativeFunction("parseInt", "string", "radix"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("parseInt", "string", "radix"), DataDescriptor(true, false, true)]
         internal static IDynamic ParseInt(IEnvironment environment, IArgs args)
         {
             var text = args[0].ConvertToString().BaseValue;
@@ -101,28 +101,28 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             return environment.CreateNumber(Compiler.IntParser.Parse(text, (int)radix));
         }
 
-        [NativeFunction("parseFloat", "string"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("parseFloat", "string"), DataDescriptor(true, false, true)]
         internal static IDynamic ParseFloat(IEnvironment environment, IArgs args)
         {
             var text = args[0].ConvertToString().BaseValue;
             return environment.CreateNumber(Compiler.FloatParser.Parse(text));
         }
 
-        [NativeFunction("isNaN", "number"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("isNaN", "number"), DataDescriptor(true, false, true)]
         internal static IDynamic IsNan(IEnvironment environment, IArgs args)
         {
             var n = args[0].ConvertToNumber().BaseValue;
             return environment.CreateBoolean(double.IsNaN(n));
         }
 
-        [NativeFunction("isFinite", "number"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("isFinite", "number"), DataDescriptor(true, false, true)]
         internal static IDynamic IsFinite(IEnvironment environment, IArgs args)
         {
             var n = args[0].ConvertToNumber().BaseValue;
             return environment.CreateBoolean(!double.IsNaN(n) && !double.IsInfinity(n));
         }
 
-        [NativeFunction("decodeURI", "encodedURI"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("decodeURI", "encodedURI"), DataDescriptor(true, false, true)]
         internal static IDynamic DecodeUri(IEnvironment environment, IArgs args)
         {
             const string reservedURISet = ";/?:@&=+$,#";
@@ -130,14 +130,14 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             return environment.CreateString(Decode(environment, uriString, reservedURISet));
         }
 
-        [NativeFunction("decodeURIComponent", "encodedURIComponent"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("decodeURIComponent", "encodedURIComponent"), DataDescriptor(true, false, true)]
         internal static IDynamic DecodeUriComponent(IEnvironment environment, IArgs args)
         {
             var componentString = args[0].ConvertToString().BaseValue;
             return environment.CreateString(Decode(environment, componentString, ""));
         }
 
-        [NativeFunction("encodeURI", "uri"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("encodeURI", "uri"), DataDescriptor(true, false, true)]
         internal static IDynamic EncodeUri(IEnvironment environment, IArgs args)
         {
             const string unescapedURISet = ";/?:@&=+$,abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.!~*'()#";
@@ -145,7 +145,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             return environment.CreateString(Encode(environment, uriString, unescapedURISet));
         }
 
-        [NativeFunction("encodeURIComponent", "uriComponent"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("encodeURIComponent", "uriComponent"), DataDescriptor(true, false, true)]
         internal static IDynamic EncodeUriComponent(IEnvironment environment, IArgs args)
         {
             const string unescapedURIComponentSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.!~*'()";

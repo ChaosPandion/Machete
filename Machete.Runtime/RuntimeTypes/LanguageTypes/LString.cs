@@ -1,6 +1,6 @@
 ﻿using System;
 using Machete.Runtime.NativeObjects;
-using Machete.Interfaces;
+using Machete.Core;
 
 namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 {

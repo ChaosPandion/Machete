@@ -6,7 +6,7 @@ open System.Text
 open FParsec.Primitives
 open FParsec.CharParsers
 open InputElementParsers
-open Machete.Interfaces
+open Machete.Core
 
 module JsonParser =
 

@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Text;
 
@@ -45,7 +45,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             return obj;
         }
 
-        [NativeFunction("fromCharCode", "char0"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("fromCharCode", "char0"), DataDescriptor(true, false, true)]
         internal static IDynamic FromCharCode(IEnvironment environment, IArgs args)
         {
             var sb = new StringBuilder(args.Count);

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Machete.Interfaces
+namespace Machete.Core
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public sealed class DataDescriptorAttribute : Attribute

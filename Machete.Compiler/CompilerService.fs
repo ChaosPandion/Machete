@@ -9,7 +9,7 @@ open System.Linq.Expressions
 open System.Reflection
 open FParsec.CharParsers
 open FParsec.Primitives
-open Machete.Interfaces
+open Machete.Core
 open InputElementParsers
 
 type internal exp = System.Linq.Expressions.Expression

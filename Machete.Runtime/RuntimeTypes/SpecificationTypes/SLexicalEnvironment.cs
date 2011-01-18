@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Diagnostics;
-using Machete.Interfaces;
+using Machete.Core;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {

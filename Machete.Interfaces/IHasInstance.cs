@@ -1,4 +1,4 @@
-﻿namespace Machete.Interfaces
+﻿namespace Machete.Core
 {
     public interface IHasInstance
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
-using Machete.Interfaces;
+using Machete.Core;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects
 {
@@ -23,7 +23,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             base.Initialize();
         }
 
-        [NativeFunction("parse", "text", "reviver"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("parse", "text", "reviver"), DataDescriptor(true, false, true)]
         internal static IDynamic Parse(IEnvironment environment, IArgs args)
         {
             var text = args[0];
@@ -31,7 +31,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             return Machete.Compiler.JsonParser.Parse(environment, text, reviver);
         }
 
-        [NativeFunction("stringify", "value", "replacer", "space"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("stringify", "value", "replacer", "space"), DataDescriptor(true, false, true)]
         internal static IDynamic Stringify(IEnvironment environment, IArgs args)
         {
             var value = args[0];

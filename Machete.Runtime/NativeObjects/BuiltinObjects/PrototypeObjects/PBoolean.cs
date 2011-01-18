@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
@@ -20,7 +20,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             base.Initialize();
         }
 
-        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var v = environment.Context.ThisBinding;
@@ -39,7 +39,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             throw environment.CreateTypeError("");
         }
 
-        [NativeFunction("valueOf"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("valueOf"), DataDescriptor(true, false, true)]
         internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
         {
             var v = environment.Context.ThisBinding;

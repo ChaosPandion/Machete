@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Machete.Interfaces
+namespace Machete.Core
 {
     public interface IObject : IDynamic, IReferenceBase, IEnumerable<string>
     {

@@ -10,7 +10,7 @@ using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
 using Machete.Runtime.NativeObjects;
 using Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
-using Machete.Interfaces;
+using Machete.Core;
 using Machete.Compiler;
 using System.Diagnostics;
 using System.IO;

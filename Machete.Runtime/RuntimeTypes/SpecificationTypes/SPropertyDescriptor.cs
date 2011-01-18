@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using Machete.Interfaces;
+using Machete.Core;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {

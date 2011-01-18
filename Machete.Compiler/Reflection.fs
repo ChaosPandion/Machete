@@ -5,10 +5,10 @@ module Reflection =
     open System
     open System.Collections
     open System.Collections.Generic
-    open Machete.Interfaces
+    open Machete.Core
 
     module IEnvironment = 
-        let t = typeof<Machete.Interfaces.IEnvironment>
+        let t = typeof<Machete.Core.IEnvironment>
         let get_Context = t.GetMethod "get_Context"
         let get_Undefined = t.GetMethod "get_Undefined"
         let get_Null = t.GetMethod "get_Null"
@@ -17,8 +17,8 @@ module Reflection =
         let createString = t.GetMethod "CreateString"
         let createNumber = t.GetMethod "CreateNumber"
         let concatArgs = t.GetMethod "ConcatArgs"
-        let createArgsSingle = t.GetMethod ("CreateArgs", [| typeof<Machete.Interfaces.IDynamic> |])
-        let createArgsMany = t.GetMethod ("CreateArgs", [| typeof<System.Collections.Generic.IEnumerable<Machete.Interfaces.IDynamic>> |])
+        let createArgsSingle = t.GetMethod ("CreateArgs", [| typeof<Machete.Core.IDynamic> |])
+        let createArgsMany = t.GetMethod ("CreateArgs", [| typeof<System.Collections.Generic.IEnumerable<Machete.Core.IDynamic>> |])
         let createDeclarativeEnvironmentRecord = t.GetMethod "CreateDeclarativeEnvironmentRecord"
         let createObjectEnvironmentRecord = t.GetMethod "CreateObjectEnvironmentRecord"
         let createArray = t.GetMethod "CreateArray"
@@ -55,7 +55,7 @@ module Reflection =
         let get_Thrown = t.GetMethod "get_Thrown"
 
     module IExecutionContext =
-        let t = typeof<Machete.Interfaces.IExecutionContext>
+        let t = typeof<Machete.Core.IExecutionContext>
         let get_LexicalEnviroment = t.GetMethod "get_LexicalEnviroment"
         let set_LexicalEnviroment = t.GetMethod "set_LexicalEnviroment"
         let get_VariableEnviroment = t.GetMethod "get_VariableEnviroment"
@@ -64,7 +64,7 @@ module Reflection =
         let set_ThisBinding = t.GetMethod "set_ThisBinding"
 
     module ILexicalEnvironment =
-        let t = typeof<Machete.Interfaces.ILexicalEnvironment>
+        let t = typeof<Machete.Core.ILexicalEnvironment>
         let get_Record = t.GetMethod "get_Record"
         let get_Parent = t.GetMethod "get_Parent"
         let getIdentifierReference = t.GetMethod "GetIdentifierReference"    
@@ -72,7 +72,7 @@ module Reflection =
         let newObjectEnvironment = t.GetMethod "NewObjectEnvironment" 
 
     module IDynamic = 
-        let t = typeof<Machete.Interfaces.IDynamic>
+        let t = typeof<Machete.Core.IDynamic>
         let get_Value = t.GetMethod "get_Value"
         let set_Value = t.GetMethod "set_Value"
         let op_Void = t.GetMethod "Op_Void"
@@ -127,27 +127,27 @@ module Reflection =
         let op_Delete = t.GetMethod "Op_Delete"
 
     module IUndefined = 
-        let t = typeof<Machete.Interfaces.IUndefined>
+        let t = typeof<Machete.Core.IUndefined>
 
 
     module INull = 
-        let t = typeof<Machete.Interfaces.INull>
+        let t = typeof<Machete.Core.INull>
 
 
     module IBoolean = 
-        let t = typeof<Machete.Interfaces.IBoolean>
+        let t = typeof<Machete.Core.IBoolean>
         let get_BaseValue = t.GetMethod "get_BaseValue"
 
     module IString = 
-        let t = typeof<Machete.Interfaces.IString>
+        let t = typeof<Machete.Core.IString>
         let get_BaseValue = t.GetMethod "get_BaseValue"
 
     module INumber = 
-        let t = typeof<Machete.Interfaces.INumber>
+        let t = typeof<Machete.Core.INumber>
         let get_BaseValue = t.GetMethod "get_BaseValue"
 
     module IObject = 
-        let t = typeof<Machete.Interfaces.IObject>
+        let t = typeof<Machete.Core.IObject>
         let get_Prototype = t.GetMethod "get_Prototype"
         let set_Prototype = t.GetMethod "set_Prototype"
         let get_Class = t.GetMethod "get_Class"
@@ -164,13 +164,13 @@ module Reflection =
         let defineOwnProperty = t.GetMethod "DefineOwnProperty"
 
     module IArgs = 
-        let t = typeof<Machete.Interfaces.IArgs>
+        let t = typeof<Machete.Core.IArgs>
         let get_Item = t.GetMethod "get_Item"
         let get_Count = t.GetMethod "get_Count"
         let get_IsEmpty = t.GetMethod "get_IsEmpty"
 
     module IPropertyDescriptor = 
-        let t = typeof<Machete.Interfaces.IPropertyDescriptor>
+        let t = typeof<Machete.Core.IPropertyDescriptor>
         let get_Value = t.GetMethod "get_Value"
         let set_Value = t.GetMethod "set_Value"
         let get_Writable = t.GetMethod "get_Writable"
@@ -206,12 +206,12 @@ module Reflection =
         let dispose = t.GetMethod "Dispose"
 
     module IReferenceBase = 
-        let t = typeof<Machete.Interfaces.IReferenceBase>
+        let t = typeof<Machete.Core.IReferenceBase>
         let get = t.GetMethod "Get"
         let set = t.GetMethod "Set"
 
     module IEnvironmentRecord = 
-        let t = typeof<Machete.Interfaces.IEnvironmentRecord>
+        let t = typeof<Machete.Core.IEnvironmentRecord>
         let hasBinding = t.GetMethod "HasBinding"
         let createMutableBinding = t.GetMethod "CreateMutableBinding"
         let setMutableBinding = t.GetMethod "SetMutableBinding"
@@ -220,23 +220,23 @@ module Reflection =
         let implicitThisValue = t.GetMethod "ImplicitThisValue"
 
     module IDeclarativeEnvironmentRecord = 
-        let t = typeof<Machete.Interfaces.IDeclarativeEnvironmentRecord>
+        let t = typeof<Machete.Core.IDeclarativeEnvironmentRecord>
         let createImmutableBinding = t.GetMethod "CreateImmutableBinding"
         let initializeImmutableBinding = t.GetMethod "InitializeImmutableBinding"
 
     module IObjectEnvironmentRecord = 
-        let t = typeof<Machete.Interfaces.IObjectEnvironmentRecord>
+        let t = typeof<Machete.Core.IObjectEnvironmentRecord>
 
 
     module ICallable = 
-        let t = typeof<Machete.Interfaces.ICallable>
+        let t = typeof<Machete.Core.ICallable>
         let call = t.GetMethod "Call"
 
     module IConstructable = 
-        let t = typeof<Machete.Interfaces.IConstructable>
+        let t = typeof<Machete.Core.IConstructable>
         let construct = t.GetMethod "Construct"
 
     module IPrimitiveWrapper = 
-        let t = typeof<Machete.Interfaces.IPrimitiveWrapper>
+        let t = typeof<Machete.Core.IPrimitiveWrapper>
         let get_PrimitiveValue = t.GetMethod "get_PrimitiveValue"
         let set_PrimitiveValue = t.GetMethod "set_PrimitiveValue"

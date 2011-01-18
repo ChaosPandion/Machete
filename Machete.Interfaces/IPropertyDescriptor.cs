@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Machete.Interfaces
+namespace Machete.Core
 {
     public interface IPropertyDescriptor : IEquatable<IPropertyDescriptor>
     {

@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System;
 using System.Linq;
@@ -29,7 +29,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.Undefined;
         }
 
-        [NativeFunction("toString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var func = environment.Context.ThisBinding as NFunction;
@@ -37,7 +37,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(string.Format("function {0}({1}) {{\n\t[body]\n}}", environment.Context.CurrentFunction, formalParameters));
         }
 
-        [NativeFunction("apply", "thisArg", "argArray"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("apply", "thisArg", "argArray"), DataDescriptor(true, false, true)]
         internal static IDynamic Apply(IEnvironment environment, IArgs args)
         {
             var callable = environment.Context.ThisBinding as ICallable;
@@ -75,7 +75,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return callable.Call(environment, thisArg, callArgs);
         }
 
-        [NativeFunction("call", "thisArg"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("call", "thisArg"), DataDescriptor(true, false, true)]
         internal static IDynamic Call(IEnvironment environment, IArgs args)
         {
             var callable = environment.Context.ThisBinding as ICallable;
@@ -92,7 +92,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return callable.Call(environment, thisArg, callArgs);
         }
 
-        [NativeFunction("bind", "thisArg"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("bind", "thisArg"), DataDescriptor(true, false, true)]
         internal static IDynamic Bind(IEnvironment environment, IArgs args)
         {
             var callable = environment.Context.ThisBinding as ICallable;

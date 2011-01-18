@@ -1,7 +1,7 @@
 ﻿namespace Machete
 
 open System
-open Machete.Interfaces
+open Machete.Core
 open Machete.Runtime
 open Machete.Compiler
 

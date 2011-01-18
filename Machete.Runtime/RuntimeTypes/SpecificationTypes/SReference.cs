@@ -6,7 +6,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.NativeObjects.BuiltinObjects;
 using Machete.Runtime.NativeObjects;
 using Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects;
-using Machete.Interfaces;
+using Machete.Core;
 
 namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 {

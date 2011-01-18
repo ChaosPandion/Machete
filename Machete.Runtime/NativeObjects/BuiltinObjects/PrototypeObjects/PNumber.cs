@@ -1,4 +1,4 @@
-﻿using Machete.Interfaces;
+﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Text;
 using System;
@@ -26,7 +26,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         }
 
 
-        [NativeFunction("valueOf"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("valueOf"), DataDescriptor(true, false, true)]
         internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
         {
             var thisBinding = environment.Context.ThisBinding;
@@ -45,7 +45,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             throw environment.CreateTypeError("");
         }
 
-        [NativeFunction("toString", "radix"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toString", "radix"), DataDescriptor(true, false, true)]
         internal static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             const string rangeErrorFormat = "The value supplied for radix ({0}) must be between 2 and 36.";
@@ -139,13 +139,13 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(sign + result + "." + sb.ToString());
         }
 
-        [NativeFunction("toLocaleString"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toLocaleString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
         {
             return environment.CreateString(ValueOf(environment, args).ConvertToNumber().BaseValue.ToString()); 
         }
 
-        [NativeFunction("toFixed", "fractionDigits"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toFixed", "fractionDigits"), DataDescriptor(true, false, true)]
         internal static IDynamic ToFixed(IEnvironment environment, IArgs args)
         {
             const string rangeErrorFormat = "The value supplied for fractionDigits ({0}) must be between 0 and 20.";
@@ -201,7 +201,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s + m);
         }
 
-        [NativeFunction("toExponential", "fractionDigits"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toExponential", "fractionDigits"), DataDescriptor(true, false, true)]
         internal static IDynamic ToExponential(IEnvironment environment, IArgs args)
         {
             const string rangeErrorFormat = "The value supplied for fractionDigits ({0}) must be between 0 and 20.";
@@ -298,7 +298,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s + m + "e" + c + d);
         }
 
-        [NativeFunction("toPrecision", "precision"), DataDescriptor(true, false, true)]
+        [BuiltinFunction("toPrecision", "precision"), DataDescriptor(true, false, true)]
         internal static IDynamic ToPrecision(IEnvironment environment, IArgs args)
         {
             const string rangeErrorFormat = "The value supplied for precision ({0}) must be between 1 and 21.";

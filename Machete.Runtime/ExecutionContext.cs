@@ -5,7 +5,7 @@ using System.Text;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using System.Reflection;
-using Machete.Interfaces;
+using Machete.Core;
 
 namespace Machete.Runtime
 {

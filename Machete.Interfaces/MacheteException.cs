@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Machete.Interfaces
+namespace Machete.Core
 {
     public class MacheteException : Exception
     {
