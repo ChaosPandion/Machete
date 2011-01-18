@@ -4,7 +4,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CArray : BuiltinConstructor
+    public sealed class CArray : BConstructor
     {
         public CArray(IEnvironment environment)
             : base(environment)

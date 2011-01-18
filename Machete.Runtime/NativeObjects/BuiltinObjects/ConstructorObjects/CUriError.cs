@@ -3,7 +3,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CUriError : BuiltinConstructor
+    public sealed class CUriError : BConstructor
     {
         public CUriError(IEnvironment environment)
             : base(environment)

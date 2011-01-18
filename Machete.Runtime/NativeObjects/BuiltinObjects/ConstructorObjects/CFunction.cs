@@ -5,7 +5,7 @@ using Machete.Compiler;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CFunction : BuiltinConstructor
+    public sealed class CFunction : BConstructor
     {
         public CFunction(IEnvironment environment)
             : base(environment)

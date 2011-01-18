@@ -3,7 +3,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CTypeError : BuiltinConstructor
+    public sealed class CTypeError : BConstructor
     {
         public CTypeError(IEnvironment environment)
             : base(environment)

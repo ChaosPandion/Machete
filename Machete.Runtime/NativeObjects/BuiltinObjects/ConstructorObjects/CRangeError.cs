@@ -3,7 +3,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CRangeError : BuiltinConstructor
+    public sealed class CRangeError : BConstructor
     {
         public CRangeError(IEnvironment environment)
             : base(environment)

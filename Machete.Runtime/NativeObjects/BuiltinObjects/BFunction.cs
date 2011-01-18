@@ -3,12 +3,12 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects
 {
-    public sealed class BuiltinFunction : LObject, ICallable
+    public sealed class BFunction : LObject, ICallable
     {
         private readonly Code _code;
         private readonly ReadOnlyList<string> _formalParameters;
 
-        public BuiltinFunction(IEnvironment environment, Code code, ReadOnlyList<string> formalParameters)
+        public BFunction(IEnvironment environment, Code code, ReadOnlyList<string> formalParameters)
             : base (environment)
         {
             _code = code;

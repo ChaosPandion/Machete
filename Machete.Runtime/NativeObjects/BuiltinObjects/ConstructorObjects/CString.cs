@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CString : BuiltinConstructor
+    public sealed class CString : BConstructor
     {
         public CString(IEnvironment environment)
             : base(environment)

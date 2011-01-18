@@ -4,7 +4,7 @@ using System;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CDate : BuiltinConstructor
+    public sealed class CDate : BConstructor
     {
         public CDate(IEnvironment environment)
             : base(environment)

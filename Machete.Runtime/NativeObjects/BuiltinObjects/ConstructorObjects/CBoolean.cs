@@ -3,7 +3,7 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
-    public sealed class CBoolean : BuiltinConstructor
+    public sealed class CBoolean : BConstructor
     {
         public CBoolean(IEnvironment environment)
             : base(environment)

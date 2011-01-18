@@ -1,11 +1,11 @@
 ﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
-namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
+namespace Machete.Runtime.NativeObjects.BuiltinObjects
 {
-    public abstract class BuiltinConstructor : LObject, ICallable, IConstructable, IHasInstance
+    public abstract class BConstructor : LObject, ICallable, IConstructable, IHasInstance
     {
-        public BuiltinConstructor(IEnvironment environment)
+        public BConstructor(IEnvironment environment)
             : base (environment)
         {
 
