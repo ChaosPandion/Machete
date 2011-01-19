@@ -56,12 +56,13 @@ namespace Machete.Core
         IString CreateString(string value);
         INumber CreateNumber(double value);
 
-        IArgs CreateArgs(IDynamic value);
         IArgs CreateArgs(IEnumerable<IDynamic> values);
         IArgs ConcatArgs(IArgs first, IArgs second);
 
         IDynamic FromPropertyDescriptor(IPropertyDescriptor desc);
         IPropertyDescriptor ToPropertyDescriptor(IObject obj);
+
+        IObjectBuilder CreateObjectBuilder();
 
         IObject CreateArray();
         IObject CreateObject();
@@ -75,24 +76,15 @@ namespace Machete.Core
         MacheteRuntimeException CreateTypeError(string message);
         MacheteRuntimeException CreateUriError(string message);
 
-        IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict);
+        //IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict);
 
         //IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code);
         //IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
         IObject CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameters, ILexicalEnvironment scope);
 
 
-        IPropertyDescriptor CreateGenericDescriptor();
-        IPropertyDescriptor CreateGenericDescriptor(bool? enumerable);
         IPropertyDescriptor CreateGenericDescriptor(bool? enumerable, bool? configurable);
-
-        IPropertyDescriptor CreateDataDescriptor(IDynamic value);
-        IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable);
-        IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable);
         IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable, bool? configurable);
-
-        IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set);
-        IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable);
         IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable, bool? configurable);
 
         IExecutionContext EnterContext();
@@ -105,8 +97,8 @@ namespace Machete.Core
         void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings);
         void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings);
 
-        void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
-        void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
-        void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args);
+        //void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
+        //void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
+        //void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args);
     }
 }

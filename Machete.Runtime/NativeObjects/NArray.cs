@@ -90,7 +90,7 @@ namespace Machete.Runtime.NativeObjects
 
                 if (!newWritable)
                 {
-                    base.DefineOwnProperty("length", Environment.CreateDataDescriptor(null, false), false);
+                    base.DefineOwnProperty("length", Environment.CreateDataDescriptor(null, false, null, null), false);
                 }
 
                 return true;

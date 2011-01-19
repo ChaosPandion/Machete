@@ -15,7 +15,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         {
             Class = "Object";
             Extensible = true;
-            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.ObjectConstructor), false);
+            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.ObjectConstructor, true, false, true), false);
             base.Initialize();
         }
 

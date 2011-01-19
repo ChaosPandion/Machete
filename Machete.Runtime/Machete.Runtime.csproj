@@ -103,7 +103,7 @@
     <Compile Include="Environment.cs" />
     <Compile Include="ExecutionContext.cs" />
     <Compile Include="HostObjects\HOutput.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\BuiltinFunction.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\BFunction.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CBoolean.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CDate.cs" />
@@ -111,7 +111,7 @@
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CEvalError.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CFunction.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CNumber.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\BuiltinConstructor.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\BConstructor.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CRangeError.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CReferenceError.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CRegExp.cs" />

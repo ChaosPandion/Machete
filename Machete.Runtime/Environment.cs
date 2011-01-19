@@ -27,10 +27,8 @@ namespace Machete.Runtime
         public Environment()
         {
             _contextStack = new Stack<IExecutionContext>();
-            //_compiler = new Compiler.Compiler(this);
 
             Output = new Output();
-
             EmptyArgs = new SArgs(this);
             True = new LBoolean(this, true);
             False = new LBoolean(this, false);
@@ -39,12 +37,6 @@ namespace Machete.Runtime
 
             GlobalObject = new BGlobal(this);
             GlobalEnvironment = new SLexicalEnvironment(this, new SObjectEnvironmentRecord(this, GlobalObject, false), null);
-
-            //var environment = new SLexicalEnvironment(this, record, null);
-            //Context = new ExecutionContext(() => { });
-            //Context.LexicalEnviroment = Context.VariableEnviroment = environment;
-            //Context.ThisBinding = GlobalObject;
-
             MathObject = new BMath(this);
             JsonObject = new BJson(this);
             ObjectConstructor = new CObject(this);
@@ -62,7 +54,6 @@ namespace Machete.Runtime
             SyntaxErrorConstructor = new CSyntaxError(this);
             TypeErrorConstructor = new CTypeError(this);
             UriErrorConstructor = new CUriError(this);
-
             ObjectPrototype = new PObject(this);
             FunctionPrototype = new PFunction(this);
             ArrayPrototype = new PArray(this);
@@ -78,68 +69,6 @@ namespace Machete.Runtime
             SyntaxErrorPrototype = new PSyntaxError(this);
             TypeErrorPrototype = new PTypeError(this);
             UriErrorPrototype = new PUriError(this);
-
-            ObjectConstructor.Prototype = FunctionPrototype;
-            FunctionConstructor.Prototype = FunctionPrototype;
-            ArrayConstructor.Prototype = FunctionPrototype;
-            StringConstructor.Prototype = FunctionPrototype;
-            BooleanConstructor.Prototype = FunctionPrototype;
-            NumberConstructor.Prototype = FunctionPrototype;
-            DateConstructor.Prototype = FunctionPrototype;
-            RegExpConstructor.Prototype = FunctionPrototype;
-            ErrorConstructor.Prototype = FunctionPrototype;
-            EvalErrorConstructor.Prototype = FunctionPrototype;
-            RangeErrorConstructor.Prototype = FunctionPrototype;
-            ReferenceErrorConstructor.Prototype = FunctionPrototype;
-            SyntaxErrorConstructor.Prototype = FunctionPrototype;
-            TypeErrorConstructor.Prototype = FunctionPrototype;
-            UriErrorConstructor.Prototype = FunctionPrototype;
-
-            ObjectPrototype.Prototype = null;
-            FunctionPrototype.Prototype = ObjectPrototype;
-            ArrayPrototype.Prototype = ObjectPrototype;
-            StringPrototype.Prototype = ObjectPrototype;
-            BooleanPrototype.Prototype = ObjectPrototype;
-            NumberPrototype.Prototype = ObjectPrototype;
-            DatePrototype.Prototype = ObjectPrototype;
-            RegExpPrototype.Prototype = ObjectPrototype;
-            ErrorPrototype.Prototype = ObjectPrototype;
-            EvalErrorPrototype.Prototype = ErrorPrototype;
-            RangeErrorPrototype.Prototype = ErrorPrototype;
-            ReferenceErrorPrototype.Prototype = ErrorPrototype;
-            SyntaxErrorPrototype.Prototype = ErrorPrototype;
-            TypeErrorPrototype.Prototype = ErrorPrototype;
-            UriErrorPrototype.Prototype = ErrorPrototype;
-
-            ObjectConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ObjectPrototype), false);
-            FunctionConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(FunctionPrototype), false);
-            StringConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(StringPrototype), false);
-            BooleanConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(BooleanPrototype), false);
-            NumberConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(NumberPrototype), false);
-            DateConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(DatePrototype), false);
-            ErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ErrorPrototype), false);
-            EvalErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(EvalErrorPrototype), false);
-            RangeErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(RangeErrorPrototype), false);
-            ReferenceErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(ReferenceErrorPrototype), false);
-            SyntaxErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(SyntaxErrorPrototype), false);
-            TypeErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(TypeErrorPrototype), false);
-            UriErrorConstructor.DefineOwnProperty("prototype", CreateDataDescriptor(UriErrorPrototype), false);
-
-            FunctionPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(FunctionConstructor), false);
-            ArrayPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ArrayConstructor), false);
-            StringPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(StringConstructor), false);
-            BooleanPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(BooleanConstructor), false);
-            DatePrototype.DefineOwnProperty("constructor", CreateDataDescriptor(DateConstructor), false);
-            RegExpPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(RegExpConstructor), false);
-            ErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ErrorConstructor), false);
-            EvalErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(EvalErrorConstructor), false);
-            RangeErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(RangeErrorConstructor), false);
-            ReferenceErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(ReferenceErrorConstructor), false);
-            SyntaxErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(SyntaxErrorConstructor), false);
-            TypeErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(TypeErrorConstructor), false);
-            UriErrorPrototype.DefineOwnProperty("constructor", CreateDataDescriptor(UriErrorConstructor), false);
-
-
 
             GlobalObject.Initialize();
             MathObject.Initialize();
@@ -261,11 +190,6 @@ namespace Machete.Runtime
         {
             return new LNumber(this, value);
         }
-        
-        public IArgs CreateArgs(IDynamic value)
-        {
-            return new SArgs(this, value);
-        }
 
         public IArgs CreateArgs(IEnumerable<IDynamic> values)
         {
@@ -323,15 +247,15 @@ namespace Machete.Runtime
 
 
 
-        public IPropertyDescriptor CreateGenericDescriptor()
-        {
-            throw new NotImplementedException();
-        }
+        //public IPropertyDescriptor CreateGenericDescriptor()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        public IPropertyDescriptor CreateGenericDescriptor(bool? enumerable)
-        {
-            throw new NotImplementedException();
-        }
+        //public IPropertyDescriptor CreateGenericDescriptor(bool? enumerable)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public IPropertyDescriptor CreateGenericDescriptor(bool? enumerable, bool? configurable)
         {
@@ -339,20 +263,20 @@ namespace Machete.Runtime
         }
 
 
-        public IPropertyDescriptor CreateDataDescriptor(IDynamic value)
-        {
-            return CreateDataDescriptor(value, false, false, false);
-        }
+        //public IPropertyDescriptor CreateDataDescriptor(IDynamic value)
+        //{
+        //    return CreateDataDescriptor(value, false, false, false);
+        //}
 
-        public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable)
-        {
-            return CreateDataDescriptor(value, writable, false, false);
-        }
+        //public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable)
+        //{
+        //    return CreateDataDescriptor(value, writable, false, false);
+        //}
 
-        public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable)
-        {
-            return CreateDataDescriptor(value, writable, enumerable, false);
-        }
+        //public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable)
+        //{
+        //    return CreateDataDescriptor(value, writable, enumerable, false);
+        //}
 
         public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable, bool? configurable)
         {
@@ -366,15 +290,15 @@ namespace Machete.Runtime
         }
 
 
-        public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set)
-        {
-            return CreateAccessorDescriptor(get, set, false, false);
-        }
+        //public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set)
+        //{
+        //    return CreateAccessorDescriptor(get, set, false, false);
+        //}
 
-        public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable)
-        {
-            return CreateAccessorDescriptor(get, set, enumerable, false);
-        }
+        //public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable)
+        //{
+        //    return CreateAccessorDescriptor(get, set, enumerable, false);
+        //}
 
         public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable, bool? configurable)
         {
@@ -408,61 +332,61 @@ namespace Machete.Runtime
 
 
 
-        public IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict)
-        {
-            return null;
-            //var obj = new NArguments(this);
-            //var len = CreateNumber(args.Count);
-            //var lenDesc = CreateDataDescriptor(len, true, false, true);
-            //var map = ObjectConstructor.Op_Construct(EmptyArgs);
-            //var mappedNames = new List<string>();
-            //var index = args.Count - 1;
+        //public IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict)
+        //{
+        //    return null;
+        //    //var obj = new NArguments(this);
+        //    //var len = CreateNumber(args.Count);
+        //    //var lenDesc = CreateDataDescriptor(len, true, false, true);
+        //    //var map = ObjectConstructor.Op_Construct(EmptyArgs);
+        //    //var mappedNames = new List<string>();
+        //    //var index = args.Count - 1;
 
-            //obj.Class = "Arguments";
-            //obj.Extensible = true;
-            //obj.Prototype = ObjectPrototype;
-            //obj.DefineOwnProperty("length", lenDesc, false);
+        //    //obj.Class = "Arguments";
+        //    //obj.Extensible = true;
+        //    //obj.Prototype = ObjectPrototype;
+        //    //obj.DefineOwnProperty("length", lenDesc, false);
 
-            //while (--index >= 0)
-            //{
-            //    var val = args[index];
-            //    var valDesc = CreateDataDescriptor(val, true, true, true);
+        //    //while (--index >= 0)
+        //    //{
+        //    //    var val = args[index];
+        //    //    var valDesc = CreateDataDescriptor(val, true, true, true);
 
-            //    obj.DefineOwnProperty(index.ToString(), valDesc, false);
-            //    if (index < formalParameterList.Count)
-            //    {
-            //        var name = formalParameterList[index];
-            //        if (!strict)
-            //        {
-            //            //var g = MakeArgGetter(name);
-            //            //var p = MakeArgSetter(name);
-            //            //var desc = CreateAccessorDescriptor(g, p, false, true);
+        //    //    obj.DefineOwnProperty(index.ToString(), valDesc, false);
+        //    //    if (index < formalParameterList.Count)
+        //    //    {
+        //    //        var name = formalParameterList[index];
+        //    //        if (!strict)
+        //    //        {
+        //    //            //var g = MakeArgGetter(name);
+        //    //            //var p = MakeArgSetter(name);
+        //    //            //var desc = CreateAccessorDescriptor(g, p, false, true);
 
-            //            //map.DefineOwnProperty(name, desc, false);
-            //            mappedNames.Add(name);
-            //        }
-            //    }
-            //}
+        //    //            //map.DefineOwnProperty(name, desc, false);
+        //    //            mappedNames.Add(name);
+        //    //        }
+        //    //    }
+        //    //}
 
-            //if (mappedNames.Count > 0)
-            //{
-            //    obj.ParameterMap = map;
-            //}
+        //    //if (mappedNames.Count > 0)
+        //    //{
+        //    //    obj.ParameterMap = map;
+        //    //}
 
-            //if (!strict)
-            //{
-            //    var desc = CreateDataDescriptor(Context.CurrentFunction, true, false, true);
-            //    obj.DefineOwnProperty("callee", desc, false);
-            //}
-            //else
-            //{
-            //    var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
-            //    obj.DefineOwnProperty("caller", desc, false);
-            //    obj.DefineOwnProperty("callee", desc, false);
-            //}
+        //    //if (!strict)
+        //    //{
+        //    //    var desc = CreateDataDescriptor(Context.CurrentFunction, true, false, true);
+        //    //    obj.DefineOwnProperty("callee", desc, false);
+        //    //}
+        //    //else
+        //    //{
+        //    //    var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
+        //    //    obj.DefineOwnProperty("caller", desc, false);
+        //    //    obj.DefineOwnProperty("callee", desc, false);
+        //    //}
 
-            //return obj;
-        }
+        //    //return obj;
+        //}
 
         //private IObject MakeArgGetter(string name)
         //{
@@ -580,49 +504,49 @@ namespace Machete.Runtime
 
         public MacheteRuntimeException CreateError(string message)
         {
-            var args = CreateArgs(CreateString(message));
+            var args = CreateArgs(new[] { CreateString(message) });
             var error = ErrorConstructor.Op_Construct(args);
             return new MacheteRuntimeException(error);
         }
 
         public MacheteRuntimeException CreateEvalError(string message)
         {
-            var args = CreateArgs(CreateString(message));
+            var args = CreateArgs(new [] { CreateString(message) });
             var error = EvalErrorConstructor.Op_Construct(args);
             return new MacheteRuntimeException(error);
         }
 
         public MacheteRuntimeException CreateRangeError(string message)
         {
-            var args = CreateArgs(CreateString(message));
+            var args = CreateArgs(new [] { CreateString(message) });
             var error = RangeErrorConstructor.Op_Construct(args);
             return new MacheteRuntimeException(error);
         }
 
         public MacheteRuntimeException CreateReferenceError(string message)
         {
-            var args = CreateArgs(CreateString(message));
+            var args = CreateArgs(new [] { CreateString(message) });
             var error = ReferenceErrorConstructor.Op_Construct(args);
             return new MacheteRuntimeException(error);
         }
 
         public MacheteRuntimeException CreateSyntaxError(string message)
         {
-            var args = CreateArgs(CreateString(message));
+            var args = CreateArgs(new [] { CreateString(message) });
             var error = SyntaxErrorConstructor.Op_Construct(args);
             return new MacheteRuntimeException(error);
         }
 
         public MacheteRuntimeException CreateTypeError(string message)
         {
-            var args = CreateArgs(CreateString(message));
+            var args = CreateArgs(new [] { CreateString(message) });
             var error = TypeErrorConstructor.Op_Construct(args);
             return new MacheteRuntimeException(error);
         }
 
         public MacheteRuntimeException CreateUriError(string message)
         {
-            var args = CreateArgs(CreateString(message));
+            var args = CreateArgs(new [] { CreateString(message) });
             var error = UriErrorConstructor.Op_Construct(args);
             return new MacheteRuntimeException(error);
         }
@@ -673,55 +597,55 @@ namespace Machete.Runtime
 
 
 
-        public void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
-        {
-            BindFunctionDeclarations(functionDeclarations, strict, true);
-            BindVariableDeclarations(variableDeclarations, strict, true);
-        }
+        //public void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
+        //{
+        //    BindFunctionDeclarations(functionDeclarations, strict, true);
+        //    BindVariableDeclarations(variableDeclarations, strict, true);
+        //}
 
-        public void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
-        {
-            BindFunctionDeclarations(functionDeclarations, strict, false);
-            BindVariableDeclarations(variableDeclarations, strict, false);
-        }
+        //public void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
+        //{
+        //    BindFunctionDeclarations(functionDeclarations, strict, false);
+        //    BindVariableDeclarations(variableDeclarations, strict, false);
+        //}
 
-        public void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args)
-        {
-            //var currentFunction = Context.CurrentFunction;
-            //var formalParameterList = currentFunction.FormalParameterList;
-            //var strict = currentFunction.Strict;
-            //var record = (IDeclarativeEnvironmentRecord)Context.VariableEnviroment.Record;
-            //{
-            //    for (int i = 0; i < formalParameterList.Count; i++)
-            //    {
-            //        var name = formalParameterList[i];
-            //        if (!record.HasBinding(name))
-            //        {
-            //            record.CreateMutableBinding(name, false);
-            //        }
-            //        record.SetMutableBinding(name, args[i], strict);
-            //    }
-            //}
+        //public void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args)
+        //{
+        //    //var currentFunction = Context.CurrentFunction;
+        //    //var formalParameterList = currentFunction.FormalParameterList;
+        //    //var strict = currentFunction.Strict;
+        //    //var record = (IDeclarativeEnvironmentRecord)Context.VariableEnviroment.Record;
+        //    //{
+        //    //    for (int i = 0; i < formalParameterList.Count; i++)
+        //    //    {
+        //    //        var name = formalParameterList[i];
+        //    //        if (!record.HasBinding(name))
+        //    //        {
+        //    //            record.CreateMutableBinding(name, false);
+        //    //        }
+        //    //        record.SetMutableBinding(name, args[i], strict);
+        //    //    }
+        //    //}
 
-            //BindFunctionDeclarations(functionDeclarations, strict, true);
+        //    //BindFunctionDeclarations(functionDeclarations, strict, true);
 
-            //if (!record.HasBinding("arguments"))
-            //{
-            //    var argumentsObj = CreateArguments(formalParameterList, args, strict);                
-            //    if (strict) 
-            //    {
-            //        record.CreateImmutableBinding ("arguments");
-            //        record.InitializeImmutableBinding ("arguments", argumentsObj);
-            //    }
-            //    else
-            //    {
-            //        record.CreateMutableBinding ("arguments", false);
-            //        record.SetMutableBinding("arguments", argumentsObj, false);
-            //    }
-            //}
+        //    //if (!record.HasBinding("arguments"))
+        //    //{
+        //    //    var argumentsObj = CreateArguments(formalParameterList, args, strict);                
+        //    //    if (strict) 
+        //    //    {
+        //    //        record.CreateImmutableBinding ("arguments");
+        //    //        record.InitializeImmutableBinding ("arguments", argumentsObj);
+        //    //    }
+        //    //    else
+        //    //    {
+        //    //        record.CreateMutableBinding ("arguments", false);
+        //    //        record.SetMutableBinding("arguments", argumentsObj, false);
+        //    //    }
+        //    //}
 
-            //BindVariableDeclarations(variableDeclarations, strict, true);
-        }
+        //    //BindVariableDeclarations(variableDeclarations, strict, true);
+        //}
 
 
 
@@ -778,6 +702,12 @@ namespace Machete.Runtime
                 }
             }
             return f;
+        }
+
+
+        public IObjectBuilder CreateObjectBuilder()
+        {
+            throw new NotImplementedException();
         }
     }
 }

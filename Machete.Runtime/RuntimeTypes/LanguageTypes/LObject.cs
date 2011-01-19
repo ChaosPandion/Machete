@@ -18,34 +18,43 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         private readonly Dictionary<string, IPropertyDescriptor> _map = new Dictionary<string, IPropertyDescriptor>();
 
 
-        public class Builder
+        public class Builder : IObjectBuilder
         {
-            public LObject Obj { get; set; }
-            public bool Strict { get; set; }
-            public bool? Writable { get; set; }
-            public bool? Enumerable { get; set; }
-            public bool? Configurable { get; set; }
+            private readonly LObject _obj;
+            private bool? _writable;
+            private bool? _enumerable;
+            private bool? _configurable;
 
-            public Builder SetAttributes(bool? writable, bool? enumerable, bool? configurable)
+            public Builder(IObject obj)
             {
-                Writable = writable;
-                Enumerable = enumerable;
-                Configurable = configurable;
+                _obj = (LObject)obj;
+            }
+
+            public IObjectBuilder SetAttributes(bool? writable, bool? enumerable, bool? configurable)
+            {
+                _writable = writable;
+                _enumerable = enumerable;
+                _configurable = configurable;
                 return this;
             }
 
-            public Builder AppendDataProperty(string name, IDynamic value)
+            public IObjectBuilder AppendDataProperty(string name, IDynamic value)
             {
-                var desc = Obj.Environment.CreateDataDescriptor(value, Writable, Enumerable, Configurable);
-                Obj._map.Add(name, desc);
+                var desc = _obj.Environment.CreateDataDescriptor(value, _writable, _enumerable, _configurable);
+                _obj._map.Add(name, desc);
                 return this;
             }
 
-            public Builder AppendAccessorProperty(string name, IDynamic get, IDynamic set)
+            public IObjectBuilder AppendAccessorProperty(string name, IDynamic get, IDynamic set)
             {
-                var desc = Obj.Environment.CreateAccessorDescriptor(get, set, Enumerable, Configurable);
-                Obj._map.Add(name, desc);
+                var desc = _obj.Environment.CreateAccessorDescriptor(get, set, _enumerable, _configurable);
+                _obj._map.Add(name, desc);
                 return this;
+            }
+
+            public IObject ToObject()
+            {
+                return _obj;
             }
         }
 

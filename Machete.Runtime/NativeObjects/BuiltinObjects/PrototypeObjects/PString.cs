@@ -140,10 +140,10 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             {
                 var constructor = (IConstructable)environment.RegExpConstructor;
                 var pattern = regexpArg.ConvertToString();
-                regexpObj = (NRegExp)constructor.Construct(environment, environment.CreateArgs(pattern));
+                regexpObj = (NRegExp)constructor.Construct(environment, environment.CreateArgs(new [] { pattern }));
             }
             var exec = ((ICallable)regexpObj.Get("exec"));
-            var execArgs = environment.CreateArgs(dynS);
+            var execArgs = environment.CreateArgs(new [] { dynS });
             if (!regexpObj.Get("global").ConvertToBoolean().BaseValue)
             {
                 return exec.Call(environment, regexpObj, execArgs);

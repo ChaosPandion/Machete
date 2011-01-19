@@ -130,7 +130,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
             if (args.Count < 2)
             {
-                var desc = environment.CreateGenericDescriptor();
+                var desc = environment.CreateGenericDescriptor(null, null);
                 obj.DefineOwnProperty(name, desc, true);
             }
             else  

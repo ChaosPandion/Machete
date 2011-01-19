@@ -83,7 +83,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CharSets.fs" />
-    <Compile Include="Reflection.fs" />
     <Compile Include="InputElementParsers.fs" />
     <Compile Include="CompilerService.fs" />
     <Compile Include="StringNumericLiteral.fs" />
