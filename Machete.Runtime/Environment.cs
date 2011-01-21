@@ -20,14 +20,12 @@ namespace Machete.Runtime
 {
     public sealed class Environment : IEnvironment
     {
-        private readonly Stack<IExecutionContext> _contextStack;
-        //private readonly Machete.Compiler.Compiler _compiler;
+        private readonly Stack<IExecutionContext> _contextStack = new Stack<IExecutionContext>();
+        private readonly Stopwatch _stopWatch = new Stopwatch();
     
 
         public Environment()
         {
-            _contextStack = new Stack<IExecutionContext>();
-
             Output = new Output();
             EmptyArgs = new SArgs(this);
             True = new LBoolean(this, true);
@@ -156,6 +154,7 @@ namespace Machete.Runtime
 
         public IDynamic Execute(ExecutableCode executableCode)
         {
+            _stopWatch.Restart();
             using (var context = EnterContext())
             {
                 context.ThisBinding = GlobalObject;
@@ -164,7 +163,9 @@ namespace Machete.Runtime
                 context.Strict = executableCode.Strict;
                 BindFunctionDeclarations(executableCode.FunctionDeclarations, executableCode.Strict, true);
                 BindVariableDeclarations(executableCode.VariableDeclarations, executableCode.Strict, true);
-                return executableCode.Code(this, EmptyArgs);
+                var result = executableCode.Code(this, EmptyArgs);
+                Output.Write("Execution Time: " + _stopWatch.Elapsed);
+                return result;
             }
         }
 

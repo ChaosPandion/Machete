@@ -35,6 +35,8 @@ type internal State1 = {
 
 type CompilerService (environment:IEnvironment) as this =
 
+    let stopwatch = new System.Diagnostics.Stopwatch()
+
     let equalityTestMethod = this.GetType().GetMethod ("equalityTest", BindingFlags.Static ||| BindingFlags.NonPublic)
        
     // Source Elements
@@ -1352,13 +1354,18 @@ type CompilerService (environment:IEnvironment) as this =
     let compile (parser:Parser<Expression<Code>, State1>) (input:string) (strict:bool) (streamName:string) =
         let initialState = createInitialState strict
         let input = input.Trim()
+        stopwatch.Restart ()
         let result = runParserOnString parser initialState streamName input
+        environment.Output.Write ("Parse Time: " + stopwatch.Elapsed.ToString())
         match result with
         | Success (expression, finalState, position) ->
             let variableDeclarations = ReadOnlyList<string>(finalState.variables |> List.rev)
             let functionDeclarations = ReadOnlyList<FunctionDeclaration>(finalState.functions |> List.rev)
             let strict = finalState.strict.Head |> fst
-            ExecutableCode(expression.Compile(), variableDeclarations, functionDeclarations, strict)
+            stopwatch.Restart ()
+            let code = expression.Compile()
+            environment.Output.Write ("Compile Time: " + stopwatch.Elapsed.ToString())
+            ExecutableCode(code, variableDeclarations, functionDeclarations, strict)
         | Failure (message, error, finalState) -> 
             raise (environment.CreateSyntaxError message) 
                     

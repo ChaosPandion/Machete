@@ -1,6 +1,7 @@
 ﻿using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System;
+using Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 {
@@ -26,7 +27,31 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
 
         public override IObject Construct(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
+            var r = new NDate(environment);
+            r.Class = "Date";
+            r.Extensible = true;
+            r.Prototype = environment.DatePrototype;
+
+            double timeValue = 0.0;
+            if (args.Count == 1)
+            {
+                var value = args[0].ConvertToPrimitive(null);
+                if (value.TypeCode == LanguageTypeCode.String)
+                {
+
+                }
+                else
+                {
+                    timeValue = value.ConvertToNumber().BaseValue;
+                }
+            }
+            else
+            {
+
+            }
+
+            r.PrimitiveValue = environment.CreateNumber(PDate.TimeClip(timeValue));
+            return r;
         }
 
         internal static IDynamic Parse(IEnvironment environment, IArgs args)
@@ -71,10 +96,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.ConstructorObjects
             //);
         }
 
+        [BuiltinFunction("now"), DataDescriptor(true, false, true)]
         internal static IDynamic Now(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-            //return Construct(new Args(new NumberPrimitive((DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds)));
+            var value = environment.CreateNumber((DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds);
+            var constructArgs = environment.CreateArgs(new IDynamic[] { value });
+            return ((IConstructable)environment.DateConstructor).Construct(environment, constructArgs);
         }
     }
 }
