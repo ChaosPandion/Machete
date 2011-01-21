@@ -16,5 +16,10 @@ namespace Machete.Runtime.NativeObjects
         {
 
         }
+
+        public override IDynamic DefaultValue(string hint)
+        {
+            return base.DefaultValue(hint ?? "String");
+        }
     }
 }

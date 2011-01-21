@@ -6,6 +6,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
     public sealed class PDate : LObject
     {
+        private const string _invalidDateString = "Invalid Date";
         public const double HoursPerDay = 24.0;
         public const double MinutesPerHour = 60.0;
         public const double SecondsPerMinute = 60.0;
@@ -82,200 +83,385 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         [BuiltinFunction("toLocaleString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            DateTime result;
+            if (DateTime.TryParse(dt.ToString(), out result))
+            {
+                return environment.CreateString(result.ToString());
+            }
+            return environment.CreateString(_invalidDateString);
         }
 
         [BuiltinFunction("toLocaleDateString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleDateString(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            DateTime result;
+            if (DateTime.TryParse(dt.ToString(), out result))
+            {
+                return environment.CreateString(result.ToLongDateString());
+            }
+            return environment.CreateString(_invalidDateString);
         }
 
         [BuiltinFunction("toLocaleTimeString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToLocaleTimeString(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            DateTime result;
+            if (DateTime.TryParse(dt.ToString(), out result))
+            {
+                return environment.CreateString(result.ToLongTimeString());
+            }
+            return environment.CreateString(_invalidDateString);
         }
 
         [BuiltinFunction("valueOf"), DataDescriptor(true, false, true)]
         internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            return dt.PrimitiveValue;
         }
 
-        internal static IDynamic GetDate(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => DateFromTime(LocalTime(t)));
-        }
-
-        internal static IDynamic GetDay(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => WeekDay(LocalTime(t)));
-        }
-
-        internal static IDynamic GetFullYear(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => YearFromTime(LocalTime(t)));
-        }
-
-        internal static IDynamic GetHours(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => HourFromTime(LocalTime(t)));
-        }
-
-        internal static IDynamic GetMilliseconds(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => MsFromTime(LocalTime(t)));
-        }
-
-        internal static IDynamic GetMinutes(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => MinFromTime(LocalTime(t)));
-        }
-
-        internal static IDynamic GetMonth(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => MonthFromTime(LocalTime(t)));
-        }
-
-        internal static IDynamic GetSeconds(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => SecFromTime(LocalTime(t)));
-        }
-
+        [BuiltinFunction("getTime"), DataDescriptor(true, false, true)]
         internal static IDynamic GetTime(IEnvironment environment, IArgs args)
         {
             return Execute(environment, t => t);
         }
 
-        internal static IDynamic GetTimezoneOffset(IEnvironment environment, IArgs args)
+        [BuiltinFunction("getFullYear"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetFullYear(IEnvironment environment, IArgs args)
         {
-            return Execute(environment, t => (t - LocalTime(t)) / MsPerMinute);
+            return Execute(environment, t => YearFromTime(LocalTime(t)));
         }
 
-        internal static IDynamic GetUTCDate(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => DateFromTime(t));
-        }
-
-        internal static IDynamic GetUTCDay(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => WeekDay(t));
-        }
-
+        [BuiltinFunction("getUTCFullYear"), DataDescriptor(true, false, true)]
         internal static IDynamic GetUTCFullYear(IEnvironment environment, IArgs args)
         {
             return Execute(environment, t => YearFromTime(t));
         }
 
-        internal static IDynamic GetUTCHours(IEnvironment environment, IArgs args)
+        [BuiltinFunction("getMonth"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetMonth(IEnvironment environment, IArgs args)
         {
-            return Execute(environment, t => HourFromTime(t));
+            return Execute(environment, t => MonthFromTime(LocalTime(t)));
         }
 
-        internal static IDynamic GetUTCMilliseconds(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => MsFromTime(t));
-        }
-
-        internal static IDynamic GetUTCMinutes(IEnvironment environment, IArgs args)
-        {
-            return Execute(environment, t => MinFromTime(t));
-        }
-
+        [BuiltinFunction("getUTCMonth"), DataDescriptor(true, false, true)]
         internal static IDynamic GetUTCMonth(IEnvironment environment, IArgs args)
         {
             return Execute(environment, t => MonthFromTime(t));
         }
 
+        [BuiltinFunction("getDate"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetDate(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => DateFromTime(LocalTime(t)));
+        }
+
+        [BuiltinFunction("getUTCDate"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetUTCDate(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => DateFromTime(t));
+        }
+
+        [BuiltinFunction("getDay"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetDay(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => WeekDay(LocalTime(t)));
+        }
+
+        [BuiltinFunction("getUTCDay"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetUTCDay(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => WeekDay(t));
+        }
+
+        [BuiltinFunction("getHours"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetHours(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => HourFromTime(LocalTime(t)));
+        }
+
+        [BuiltinFunction("getUTCHours"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetUTCHours(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => HourFromTime(t));
+        }
+
+        [BuiltinFunction("getMinutes"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetMinutes(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => MinFromTime(LocalTime(t)));
+        }
+
+        [BuiltinFunction("getUTCMinutes"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetUTCMinutes(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => MinFromTime(t));
+        }
+
+        [BuiltinFunction("getSeconds"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetSeconds(IEnvironment environment, IArgs args)
+        {
+            return Execute(environment, t => SecFromTime(LocalTime(t)));
+        }
+
+        [BuiltinFunction("getUTCSeconds"), DataDescriptor(true, false, true)]
         internal static IDynamic GetUTCSeconds(IEnvironment environment, IArgs args)
         {
             return Execute(environment, t => SecFromTime(t));
         }
 
-        internal static IDynamic SetDate(IEnvironment environment, IArgs args)
+        [BuiltinFunction("getMilliseconds"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetMilliseconds(IEnvironment environment, IArgs args)
         {
-            return null;
+            return Execute(environment, t => MsFromTime(LocalTime(t)));
         }
 
-        internal static IDynamic SetFullYear(IEnvironment environment, IArgs args)
+        [BuiltinFunction("getUTCMilliseconds"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetUTCMilliseconds(IEnvironment environment, IArgs args)
         {
-            return null;
+            return Execute(environment, t => MsFromTime(t));
         }
 
-        internal static IDynamic SetHours(IEnvironment environment, IArgs args)
+        [BuiltinFunction("getTimezoneOffset"), DataDescriptor(true, false, true)]
+        internal static IDynamic GetTimezoneOffset(IEnvironment environment, IArgs args)
         {
-            return null;
+            return Execute(environment, t => (t - LocalTime(t)) / MsPerMinute);
         }
 
-        internal static IDynamic SetMilliseconds(IEnvironment environment, IArgs args)
-        {
-            return null;
-        }
-
-        internal static IDynamic SetMinutes(IEnvironment environment, IArgs args)
-        {
-            return null;
-        }
-
-        internal static IDynamic SetMonth(IEnvironment environment, IArgs args)
-        {
-            return null;
-        }
-
-        internal static IDynamic SetSeconds(IEnvironment environment, IArgs args)
-        {
-            return null;
-        }
-
+        [BuiltinFunction("setTime", "time"), DataDescriptor(true, false, true)]
         internal static IDynamic SetTime(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            var v = TimeClip(args[0].ConvertToNumber().BaseValue);
+            dt.PrimitiveValue = environment.CreateNumber(v);
+            return dt.PrimitiveValue;
         }
 
-        internal static IDynamic SetUTCDate(IEnvironment environment, IArgs args)
+        [BuiltinFunction("setMilliseconds", "ms"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetMilliseconds(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = LocalTime(((INumber)dt.PrimitiveValue).BaseValue);
+            var ms = args[0].ConvertToNumber().BaseValue;
+            var time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), ms);
+            var v = TimeClip(MakeDate(Day(t), time));
+            dt.PrimitiveValue = environment.CreateNumber(v);
+            return dt.PrimitiveValue;
         }
 
-        internal static IDynamic SetUTCFullYear(IEnvironment environment, IArgs args)
-        {
-            return null;
-        }
-
-        internal static IDynamic SetUTCHours(IEnvironment environment, IArgs args)
-        {
-            return null;
-        }
-
+        [BuiltinFunction("setUTCMilliseconds", "ms"), DataDescriptor(true, false, true)]
         internal static IDynamic SetUTCMilliseconds(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var ms = args[0].ConvertToNumber().BaseValue;
+            var time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), ms);
+            var v = TimeClip(MakeDate(Day(t), time));
+            dt.PrimitiveValue = environment.CreateNumber(v);
+            return dt.PrimitiveValue;
         }
 
-        internal static IDynamic SetUTCMinutes(IEnvironment environment, IArgs args)
+        [BuiltinFunction("setSeconds", "sec", "ms"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetSeconds(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var s = args[0].ConvertToNumber().BaseValue;
+            var milli = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : MsFromTime(t);
+            var date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
+            var u = TimeClip(UTC(date));
+            dt.PrimitiveValue = environment.CreateNumber(u);
+            return dt.PrimitiveValue;
         }
 
-        internal static IDynamic SetUTCMonth(IEnvironment environment, IArgs args)
-        {
-            return null;
-        }
-
+        [BuiltinFunction("setUTCSeconds", "sec", "ms"), DataDescriptor(true, false, true)]
         internal static IDynamic SetUTCSeconds(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var s = args[0].ConvertToNumber().BaseValue;
+            var milli = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : MsFromTime(t);
+            var date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
+            var u = TimeClip(date);
+            dt.PrimitiveValue = environment.CreateNumber(u);
+            return dt.PrimitiveValue;
         }
 
-        internal static IDynamic ToJSON(IEnvironment environment, IArgs args)
+        [BuiltinFunction("setMinutes", "min", "sec", "ms"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetMinutes(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var m = args[0].ConvertToNumber().BaseValue;
+            var s = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : SecFromTime(t);
+            var milli = args.Count > 2 ? args[2].ConvertToNumber().BaseValue : MsFromTime(t);
+            var date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
+            var u = TimeClip(UTC(date));
+            dt.PrimitiveValue = environment.CreateNumber(u);
+            return dt.PrimitiveValue;
         }
 
+        [BuiltinFunction("setUTCMinutes", "min", "sec", "ms"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetUTCMinutes(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var m = args[0].ConvertToNumber().BaseValue;
+            var s = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : SecFromTime(t);
+            var milli = args.Count > 2 ? args[2].ConvertToNumber().BaseValue : MsFromTime(t);
+            var date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
+            var u = TimeClip(date);
+            dt.PrimitiveValue = environment.CreateNumber(u);
+            return dt.PrimitiveValue;
+        }
+
+        [BuiltinFunction("setHours", "hour", "min", "sec", "ms"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetHours(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var h = args[0].ConvertToNumber().BaseValue;
+            var m = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : MinFromTime(t);
+            var s = args.Count > 2 ? args[2].ConvertToNumber().BaseValue : SecFromTime(t);
+            var milli = args.Count > 3 ? args[3].ConvertToNumber().BaseValue : MsFromTime(t);
+            var date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
+            var u = TimeClip(UTC(date));
+            dt.PrimitiveValue = environment.CreateNumber(u);
+            return dt.PrimitiveValue;
+        }
+
+        [BuiltinFunction("setUTCHours", "hour", "min", "sec", "ms"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetUTCHours(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var h = args[0].ConvertToNumber().BaseValue;
+            var m = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : MinFromTime(t);
+            var s = args.Count > 2 ? args[2].ConvertToNumber().BaseValue : SecFromTime(t);
+            var milli = args.Count > 3 ? args[3].ConvertToNumber().BaseValue : MsFromTime(t);
+            var date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
+            var u = TimeClip(date);
+            dt.PrimitiveValue = environment.CreateNumber(u);
+            return dt.PrimitiveValue;
+        }
+
+        [BuiltinFunction("setDate", "date"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetDate(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var date = args[0].ConvertToNumber().BaseValue;
+            var newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), date), TimeWithinDay(t));
+            var v = TimeClip(UTC(newDate));
+            return dt.PrimitiveValue = environment.CreateNumber(v);
+        }
+
+        [BuiltinFunction("setUTCDate", "date"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetUTCDate(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var date = args[0].ConvertToNumber().BaseValue;
+            var newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), date), TimeWithinDay(t));
+            var v = TimeClip(newDate);
+            return dt.PrimitiveValue = environment.CreateNumber(v);
+        }
+
+        [BuiltinFunction("setMonth", "month", "date"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetMonth(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var m = args[0].ConvertToNumber().BaseValue;
+            var date = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : DateFromTime(t);
+            var newDate = MakeDate(MakeDay(YearFromTime(t), m, date), TimeWithinDay(t));
+            var v = TimeClip(UTC(newDate));
+            return dt.PrimitiveValue = environment.CreateNumber(v);
+        }
+
+        [BuiltinFunction("setUTCMonth", "month", "date"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetUTCMonth(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var m = args[0].ConvertToNumber().BaseValue;
+            var date = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : DateFromTime(t);
+            var newDate = MakeDate(MakeDay(YearFromTime(t), m, date), TimeWithinDay(t));
+            var v = TimeClip(newDate);
+            return dt.PrimitiveValue = environment.CreateNumber(v);
+        }
+
+        [BuiltinFunction("setFullYear", "year", "month", "date"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetFullYear(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var y = args[0].ConvertToNumber().BaseValue;
+            var m = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : MonthFromTime(t);
+            var date = args.Count > 2 ? args[2].ConvertToNumber().BaseValue : DateFromTime(t);
+            var newDate = MakeDate(MakeDay(y, m, date), TimeWithinDay(t));
+            var v = TimeClip(UTC(newDate));
+            return dt.PrimitiveValue = environment.CreateNumber(v);
+        }
+
+        [BuiltinFunction("setUTCFullYear", "year", "month", "date"), DataDescriptor(true, false, true)]
+        internal static IDynamic SetUTCFullYear(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            var y = args[0].ConvertToNumber().BaseValue;
+            var m = args.Count > 1 ? args[1].ConvertToNumber().BaseValue : MonthFromTime(t);
+            var date = args.Count > 2 ? args[2].ConvertToNumber().BaseValue : DateFromTime(t);
+            var newDate = MakeDate(MakeDay(y, m, date), TimeWithinDay(t));
+            var v = TimeClip(newDate);
+            return dt.PrimitiveValue = environment.CreateNumber(v);
+        }
+
+        [BuiltinFunction("toUTCString"), DataDescriptor(true, false, true)]
         internal static IDynamic ToUTCString(IEnvironment environment, IArgs args)
         {
-            return null;
+            var dt = (NDate)environment.Context.ThisBinding;
+            DateTime result;
+            if (DateTime.TryParse(dt.ToString(), out result))
+            {
+                return environment.CreateString(result.ToUniversalTime().ToString());
+            }
+            return environment.CreateString(_invalidDateString);
+        }
+
+        [BuiltinFunction("toISOString"), DataDescriptor(true, false, true)]
+        internal static IDynamic toISOString(IEnvironment environment, IArgs args)
+        {
+            var dt = (NDate)environment.Context.ThisBinding;
+            var t = ((INumber)dt.PrimitiveValue).BaseValue;
+            if (double.IsNaN(t) || double.IsInfinity(t))
+                throw environment.CreateRangeError("");
+            DateTime result;
+            if (DateTime.TryParse(dt.ToString(), out result))
+            {
+                return environment.CreateString(result.ToString("yyyy-MM-ddTHH:mm:ss.FFFZ"));
+            }
+            return environment.CreateString(_invalidDateString);
+        }
+
+        [BuiltinFunction("toJSON", "key"), DataDescriptor(true, false, true)]
+        internal static IDynamic ToJSON(IEnvironment environment, IArgs args)
+        {
+            var o = environment.Context.ThisBinding.ConvertToObject();
+            var tv = o.ConvertToPrimitive("Number");
+            if (tv.TypeCode == LanguageTypeCode.Number)
+            {
+                var v = ((INumber)tv).BaseValue;
+                if (double.IsNaN(v) || double.IsInfinity(v))
+                    return environment.Null;
+            }
+            var toISO = o.Get("toISOString") as ICallable;
+            if (toISO == null)
+                throw environment.CreateTypeError("");
+            return toISO.Call(environment, o, environment.EmptyArgs);
         }
 
         internal static double GetTimeValue(IEnvironment environment)
