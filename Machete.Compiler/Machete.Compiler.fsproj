@@ -90,7 +90,6 @@
     <Compile Include="JsonParser.fs" />
     <Compile Include="IntParser.fs" />
     <Compile Include="FloatParser.fs" />
-    <Compile Include="DateParser.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Machete.Core\Machete.Core.csproj">

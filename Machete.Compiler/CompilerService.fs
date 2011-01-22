@@ -41,16 +41,22 @@ type CompilerService (environment:IEnvironment) as this =
        
     // Source Elements
 
+    let skippable = 
+        choice [|
+            evalWhiteSpace
+            evalLineTerminator
+            evalComment |>> ignore
+        |]
+
     let skipIgnorableTokens state =
-        optional (skipMany ((evalWhiteSpace |>> ignore) <|> (evalLineTerminator |>> ignore) <|> (evalComment |>> ignore))) state
+        skipMany skippable state
         
     let skipToken value state =
-        (skipIgnorableTokens >>. skipString value >>. skipIgnorableTokens ) state
+        (skipIgnorableTokens >>. skipString value >>. skipIgnorableTokens) state
         
     let skipStatementTerminator state =
         (parse {
-            do! skipMany evalWhiteSpace
-            let! r = opt (lookAhead (anyOf ";}")) 
+            let! r = skipMany evalWhiteSpace >>. opt (lookAhead (anyOf ";}")) 
             match r with
             | Some r -> return ()
             | None ->
@@ -67,11 +73,7 @@ type CompilerService (environment:IEnvironment) as this =
         }) state
          
     let skipEval parser state =
-        (parse {
-            do! skipIgnorableTokens
-            let! r = parser
-            return r
-        }) state
+        (skipIgnorableTokens >>. parser) state
 
     let betweenParentheses parser state =
         between (skipToken "(") (skipToken ")") (skipEval parser) state
@@ -168,25 +170,14 @@ type CompilerService (environment:IEnvironment) as this =
         skipString "||" |>> fun () -> Reflection.IDynamicMemberInfo.Op_LogicalOr
 
     let rec evalPrimaryExpression state =
-        (parse {
-            do! skipIgnorableTokens
-            let! r = 
-                choice [|
-                    evalThis
-                    evalIdentifierReference
-                    evalLiteral
-                    evalArrayLiteral
-                    evalObjectLiteral
-                    evalGroupingOperator
-                |] 
-            return r
-        }) state
-
-    and evalThis state =
-        (parse {
-            do! skipToken "this"
-            return Expressions.ThisBinding :> exp
-        }) state
+        (skipIgnorableTokens >>. (
+            (skipToken "this" >>. preturn (Expressions.ThisBinding :> exp)) <|>
+            evalIdentifierReference <|>
+            evalLiteral <|>
+            evalArrayLiteral <|>
+            evalObjectLiteral <|>
+            evalGroupingOperator
+        )) state
 
     and evalIdentifierReference state =
         (parse {
@@ -196,7 +187,7 @@ type CompilerService (environment:IEnvironment) as this =
             return exp.Call (Expressions.LexicalEnviroment, Reflection.ILexicalEnvironmentMemberInfo.GetIdentifierReference, args) :> exp
         }) state
     
-    and evalLiteral state =
+    and evalLiteral =
         (choice [|
             skipString "null" |>> fun () -> exp.Constant (environment.Null) :> exp
             skipString "true" |>> fun () -> exp.Constant (environment.True) :> exp
@@ -204,7 +195,7 @@ type CompilerService (environment:IEnvironment) as this =
             evalNumericLiteral |>> fun num -> exp.Constant (environment.CreateNumber num) :> exp
             evalStringLiteral |>> fun str -> exp.Constant (environment.CreateString str) :> exp
             evalRegularExpressionLiteral |>> fun (body, flags) -> exp.Constant (environment.CreateRegExp (body, flags)) :> exp
-        |] |> attempt) state
+        |] |> attempt)
 
     and evalGroupingOperator state =
         (parse {
@@ -455,7 +446,6 @@ type CompilerService (environment:IEnvironment) as this =
 
     and evalCallExpression e1 state =
         (parse {
-            do! skipIgnorableTokens
             let! e2 = evalArguments
             let first = exp.Call (e1, Reflection.IDynamicMemberInfo.Op_Call, [| e2 |]) :> exp
             let! rest = many ((evalArguments |>> fun a -> "args", a) <|> evalBracketNotation <|> evalDotNotation)
@@ -483,12 +473,7 @@ type CompilerService (environment:IEnvironment) as this =
         }) state
 
     and evalArguments state =
-        (parse {
-            do! skipToken "("
-            let! r = evalArgumentList
-            do! skipToken ")"
-            return r
-        }) state
+        (skipToken "(" >>. evalArgumentList .>> skipToken ")") state
 
     and evalArgumentList state =
         (parse {
@@ -502,27 +487,22 @@ type CompilerService (environment:IEnvironment) as this =
         (betweenBrackets evalExpression |>> fun a -> "bracket", a) state
         
     and evalDotNotation state =
-        (parse {
-            do! skipToken "."
-            let! r = evalIdentifierName
-            return "dot", exp.Constant (r) :> exp
-        }) state
+        ((skipToken "." >>. evalIdentifierName) |>> fun e -> "dot", exp.Constant e :> exp) state
 
     and evalLeftHandSideExpression state =
-        choice [| 
+        (
             parse {
                 let! e1 = attempt evalMemberExpression
                 let! e2 = opt (attempt (evalCallExpression e1))
                 return if e2.IsSome then e2.Value else e1
-            }
+            } <|>
             evalNewExpression
-        |]state
+        ) state
 
     and evalPostfixExpression state =
         (parse {
             let! e1 = evalLeftHandSideExpression
-            do! skipIgnorableTokens
-            let! op = opt evalPostfixOperator
+            let! op = skipIgnorableTokens >>. opt evalPostfixOperator
             match op with
             | Some op ->
                 return exp.Call (e1, op, [||]) :> exp
@@ -531,15 +511,16 @@ type CompilerService (environment:IEnvironment) as this =
         }) state
 
     and evalUnaryExpression state =
-        choice [| 
-            parse {
-                let! op = evalUnaryOperator
-                do! skipIgnorableTokens
-                let! e = evalUnaryExpression
-                return exp.Call (e, op, [||]) :> exp
-            }
-            evalPostfixExpression
-        |] state
+        (parse {
+            let! op = opt evalUnaryOperator
+            match op with
+            | Some op ->
+                let! r = skipIgnorableTokens >>. evalUnaryExpression
+                return exp.Call (r, op, [||]) :> exp
+            | None ->
+                let! r = evalPostfixExpression
+                return r
+        }) state
 
     and evalBinaryExpression (p1:Parser<exp, State1>) p2 (state:FParsec.State<State1>) =
         (parse {
@@ -548,14 +529,7 @@ type CompilerService (environment:IEnvironment) as this =
             let folder e1 (op, e2) = 
                 let args = [| exp.Convert(e2, typeof<IDynamic>) :> exp |]
                 exp.Call (e1, op, args) :> exp
-            let parser = attempt <| parse {
-                do! skipIgnorableTokens
-                let! op = p2
-                do! skipIgnorableTokens
-                let! e2 = p1
-                return op, e2
-            }
-            let! r = manyFold e1 folder parser
+            let! r = manyFold e1 folder (attempt (tuple2 (skipIgnorableTokens >>. p2) (skipIgnorableTokens >>. p1)))
             return r
         }) state
 
@@ -1282,7 +1256,6 @@ type CompilerService (environment:IEnvironment) as this =
             let! (oldState:State1) = getUserState
             let! posStart = getPosition
             do! skipToken "function"
-            do! skipIgnorableTokens
             let! identifier = opt evalIdentifier
             do! skipToken "("
             do! skipIgnorableTokens
@@ -1318,7 +1291,7 @@ type CompilerService (environment:IEnvironment) as this =
         }) state
 
     and evalSourceElement state =
-        (attempt evalStatement <|> evalFunctionDeclaration) state
+        (evalFunctionDeclaration <|> evalStatement) state
 
     and evalSourceElements state =
         manyTill (evalSourceElement) eof state      

@@ -18,45 +18,6 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
         private readonly Dictionary<string, IPropertyDescriptor> _map = new Dictionary<string, IPropertyDescriptor>();
 
 
-        public class Builder : IObjectBuilder
-        {
-            private readonly LObject _obj;
-            private bool? _writable;
-            private bool? _enumerable;
-            private bool? _configurable;
-
-            public Builder(IObject obj)
-            {
-                _obj = (LObject)obj;
-            }
-
-            public IObjectBuilder SetAttributes(bool? writable, bool? enumerable, bool? configurable)
-            {
-                _writable = writable;
-                _enumerable = enumerable;
-                _configurable = configurable;
-                return this;
-            }
-
-            public IObjectBuilder AppendDataProperty(string name, IDynamic value)
-            {
-                var desc = _obj.Environment.CreateDataDescriptor(value, _writable, _enumerable, _configurable);
-                _obj._map.Add(name, desc);
-                return this;
-            }
-
-            public IObjectBuilder AppendAccessorProperty(string name, IDynamic get, IDynamic set)
-            {
-                var desc = _obj.Environment.CreateAccessorDescriptor(get, set, _enumerable, _configurable);
-                _obj._map.Add(name, desc);
-                return this;
-            }
-
-            public IObject ToObject()
-            {
-                return _obj;
-            }
-        }
 
 
         public LObject(IEnvironment environment)
@@ -723,6 +684,46 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             return (string)ConvertToString().BaseValue;
         }
 
+
+        public class Builder : IObjectBuilder
+        {
+            private readonly LObject _obj;
+            private bool? _writable;
+            private bool? _enumerable;
+            private bool? _configurable;
+
+            public Builder(IObject obj)
+            {
+                _obj = (LObject)obj;
+            }
+
+            public IObjectBuilder SetAttributes(bool? writable, bool? enumerable, bool? configurable)
+            {
+                _writable = writable;
+                _enumerable = enumerable;
+                _configurable = configurable;
+                return this;
+            }
+
+            public IObjectBuilder AppendDataProperty(string name, IDynamic value)
+            {
+                var desc = _obj.Environment.CreateDataDescriptor(value, _writable, _enumerable, _configurable);
+                _obj._map.Add(name, desc);
+                return this;
+            }
+
+            public IObjectBuilder AppendAccessorProperty(string name, IDynamic get, IDynamic set)
+            {
+                var desc = _obj.Environment.CreateAccessorDescriptor(get, set, _enumerable, _configurable);
+                _obj._map.Add(name, desc);
+                return this;
+            }
+
+            public IObject ToObject()
+            {
+                return _obj;
+            }
+        }
         
     }
 }

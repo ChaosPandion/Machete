@@ -14,11 +14,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 
         }
 
-        public override void Initialize()
+        public sealed override void Initialize()
         {
             Class = "Function";
             Extensible = true;
             Prototype = Environment.ObjectPrototype;
+           
             DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.FunctionConstructor, true, false, true), false);
             DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(0), false, false, false), false);
             base.Initialize();

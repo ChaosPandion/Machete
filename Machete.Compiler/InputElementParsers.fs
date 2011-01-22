@@ -8,72 +8,57 @@ module InputElementParsers =
 
     // White Space
     let rec evalWhiteSpace state =
-        satisfy CharSets.isWhiteSpace state     
+        skipSatisfy CharSets.isWhiteSpace state     
 
     // Line Terminators
     and evalLineTerminator state =
-        satisfy CharSets.isLineTerminator state           
+        skipSatisfy CharSets.isLineTerminator state           
     and evalLineTerminatorSequence state =
-        (newline |>> string <|> (satisfy CharSets.isLineTerminator |>> string)) state       
+        (newline |>> ignore <|> (skipSatisfy CharSets.isLineTerminator)) state       
 
     // Comments
     and evalComment state =
         (evalMultiLineComment <|> evalSingleLineComment) state         
     and evalMultiLineComment state =
-        (parse {
-            do! skipString "/*"
-            let! r = manyCharsTill anyChar (lookAhead (pstring "*/"))
-            do! skipString "*/"
-            return r
-        }) state           
+        (skipString "/*" >>. manyCharsTill anyChar (lookAhead (pstring "*/")) .>> skipString "*/") state           
     and evalSingleLineComment state =
-        (parse {
-            do! skipString "//"
-            let! r = manyCharsTill anyChar (lookAhead (satisfy CharSets.isLineTerminator))
-            return r
-        }) state
+        (skipString "//" >>. manyCharsTill anyChar (lookAhead (satisfy CharSets.isLineTerminator))) state
+
+    
+    let inline evalUnicodeLetter state =
+        (satisfy CharSets.isUnicodeLetter |>> string) state
+    let inline evalUnicodeCombiningMark state =
+        (satisfy CharSets.isUnicodeCombiningMark |>> string) state
+    let inline evalUnicodeDigit state =
+        (satisfy CharSets.isUnicodeDigit |>> string) state
+    let inline evalUnicodeConnectorPunctuation state =
+        (satisfy CharSets.isUnicodeConnectorPunctuation |>> string) state
 
     // Identifier Names    
-    and evalIdentifier state =
+    let rec evalIdentifier state =
         (attempt <| parse {
             let! r = evalIdentifierName
             if not (CharSets.reservedWordSet.Contains r) then
                 return r
         }) state
     and evalIdentifierName state =
-        (parse {
-            let! start = evalIdentifierStart
-            let! rest = manyStrings evalIdentifierPart 
-            return start + rest 
-        }) state
+        pipe2 evalIdentifierStart (manyStrings evalIdentifierPart) (+) state
     and evalIdentifierStart state =
-        choice [|
-            evalUnicodeLetter
-            pstring "$"
-            pstring "_"
-            parse {
-                do! skipChar '\\'
-                let! r = evalUnicodeEscapeSequence
-                return r
-            }
-        |] state
+        (
+            evalUnicodeLetter <|>
+            pstring "$" <|>
+            pstring "_" <|>
+            (skipChar '\\' >>. evalUnicodeEscapeSequence)
+        ) state
     and evalIdentifierPart state =
-        choice [|
-            evalIdentifierStart
-            evalUnicodeCombiningMark
-            evalUnicodeDigit
-            evalUnicodeConnectorPunctuation
-            pstring "\u200C"
+        (
+            evalIdentifierStart <|>
+            evalUnicodeCombiningMark <|>
+            evalUnicodeDigit <|>
+            evalUnicodeConnectorPunctuation <|>
+            pstring "\u200C" <|>
             pstring "\u200D"
-        |] state
-    and evalUnicodeLetter state =
-        (satisfy CharSets.isUnicodeLetter |>> string) state
-    and evalUnicodeCombiningMark state =
-        (satisfy CharSets.isUnicodeCombiningMark |>> string) state
-    and evalUnicodeDigit state =
-        (satisfy CharSets.isUnicodeDigit |>> string) state
-    and evalUnicodeConnectorPunctuation state =
-        (satisfy CharSets.isUnicodeConnectorPunctuation |>> string) state
+        ) state
         
     // Numeric Literal    
     and evalNumericLiteral state =
@@ -183,32 +168,36 @@ module InputElementParsers =
 
     // String Literals
     and evalStringLiteral state =
-        choice [|
-            parse {
-                do! skipChar '\"'
-                let! e = opt evalDoubleStringCharacters
-                do! skipChar '\"'
-                match e with
-                | Some e ->
-                    return e
-                | None ->
-                    return ""
-            }
-            parse {
-                do! skipChar '''
-                let! e = opt evalSingleStringCharacters
-                do! skipChar '''
-                match e with
-                | Some e ->
-                    return e
-                | None ->
-                    return ""
-            }
-        |] state    
+        (
+            (skipChar '\"' >>. evalDoubleStringCharacters .>> skipChar '\"') <|>  
+            (skipChar '\'' >>. evalSingleStringCharacters .>> skipChar '\'') 
+        ) state
+//        choice [|
+//            parse {
+//                do! skipChar '\"'
+//                let! e = opt evalDoubleStringCharacters
+//                do! skipChar '\"'
+//                match e with
+//                | Some e ->
+//                    return e
+//                | None ->
+//                    return ""
+//            }
+//            parse {
+//                do! skipChar '''
+//                let! e = opt evalSingleStringCharacters
+//                do! skipChar '''
+//                match e with
+//                | Some e ->
+//                    return e
+//                | None ->
+//                    return ""
+//            }
+//        |] state    
     and evalDoubleStringCharacters state =
-        many1Strings evalDoubleStringCharacter state
+        manyStrings evalDoubleStringCharacter state
     and evalSingleStringCharacters state =
-        many1Strings evalSingleStringCharacter state        
+        manyStrings evalSingleStringCharacter state        
     and evalDoubleStringCharacter state =
         evalStringCharacter '\"' state
     and evalSingleStringCharacter state =

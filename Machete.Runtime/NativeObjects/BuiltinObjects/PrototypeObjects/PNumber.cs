@@ -8,45 +8,97 @@ using System.Collections.Generic;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
+    /// <summary>
+    /// 15.7.4  Properties of the Number Prototype Object 
+    /// </summary>
     public sealed class PNumber : LObject
     {
+        private BFunction _toString;
+        private BFunction _toLocaleString;
+        private BFunction _valueOf;
+        private BFunction _toFixed;
+        private BFunction _toExponential;
+        private BFunction _toPrecision;
+        
         public PNumber(IEnvironment environment)
             : base(environment)
         {
 
         }
+        
+        /// <summary>
+        /// 15.7.4.2  Number.prototype.toString ( [ radix ] ) 
+        /// </summary>
+        public BFunction ToStringBuiltinFunction
+        {
+            get { return _toString; }
+        }
 
-        public override void Initialize()
+        /// <summary>
+        /// 15.7.4.3  Number.prototype.toLocaleString() 
+        /// </summary>
+        public BFunction ToLocaleStringBuiltinFunction
+        {
+            get { return _toLocaleString; }
+        }
+
+        /// <summary>
+        /// 15.7.4.4  Number.prototype.valueOf ( )  
+        /// </summary>
+        public BFunction ValueOfBuiltinFunction
+        {
+            get { return _valueOf; }
+        }
+
+        /// <summary>
+        /// 15.7.4.5  Number.prototype.toFixed (fractionDigits)  
+        /// </summary>
+        public BFunction ToFixedBuiltinFunction
+        {
+            get { return _toFixed; }
+        }
+
+        /// <summary>
+        /// 15.7.4.6  Number.prototype.toExponential (fractionDigits) 
+        /// </summary>
+        public BFunction ToExponentialBuiltinFunction
+        {
+            get { return _toExponential; }
+        }
+
+        /// <summary>
+        /// 15.7.4.7  Number.prototype.toPrecision (precision) 
+        /// </summary>
+        public BFunction ToPrecisionBuiltinFunction
+        {
+            get { return _toPrecision; }
+        }
+
+        public sealed override void Initialize()
         {
             Class = "Number";
             Extensible = true;
             Prototype = Environment.ObjectPrototype;
-            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.NumberConstructor, true, false, true), false);
-            base.Initialize();
+
+            _toString = new BFunction(Environment, ToString, new ReadOnlyList<string>("radix"));
+            _toLocaleString = new BFunction(Environment, ToLocaleString, new ReadOnlyList<string>());
+            _valueOf = new BFunction(Environment, ValueOf, new ReadOnlyList<string>());
+            _toFixed = new BFunction(Environment, ToFixed, new ReadOnlyList<string>("fractionDigits"));
+            _toExponential = new BFunction(Environment, ToExponential, new ReadOnlyList<string>("fractionDigits"));
+            _toPrecision = new BFunction(Environment, ToPrecision, new ReadOnlyList<string>("precision"));
+
+            new LObject.Builder(this)
+            .SetAttributes(true, false, true)
+            .AppendDataProperty("constructor", Environment.NumberConstructor)
+            .AppendDataProperty("toString", _toString)
+            .AppendDataProperty("toLocaleString", _toLocaleString)
+            .AppendDataProperty("valueOf", _valueOf)
+            .AppendDataProperty("toFixed", _toFixed)
+            .AppendDataProperty("toExponential", _toExponential)
+            .AppendDataProperty("toPrecision", _toPrecision);
         }
 
-
-        [BuiltinFunction("valueOf"), DataDescriptor(true, false, true)]
-        internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
-        {
-            var thisBinding = environment.Context.ThisBinding;
-            switch (thisBinding.TypeCode)
-            {
-                case LanguageTypeCode.Number:
-                    return thisBinding.ConvertToNumber();
-                case LanguageTypeCode.Object:
-                    var number = thisBinding as NNumber;
-                    if (number != null)
-                    {
-                        return number.PrimitiveValue.ConvertToNumber();
-                    }
-                    break;
-            }
-            throw environment.CreateTypeError("");
-        }
-
-        [BuiltinFunction("toString", "radix"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToString(IEnvironment environment, IArgs args)
+        private static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             const string rangeErrorFormat = "The value supplied for radix ({0}) must be between 2 and 36.";
 
@@ -139,14 +191,30 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(sign + result + "." + sb.ToString());
         }
 
-        [BuiltinFunction("toLocaleString"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
+        private static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
         {
             return environment.CreateString(ValueOf(environment, args).ConvertToNumber().BaseValue.ToString()); 
         }
+        
+        private static IDynamic ValueOf(IEnvironment environment, IArgs args)
+        {
+            var thisBinding = environment.Context.ThisBinding;
+            switch (thisBinding.TypeCode)
+            {
+                case LanguageTypeCode.Number:
+                    return thisBinding.ConvertToNumber();
+                case LanguageTypeCode.Object:
+                    var number = thisBinding as NNumber;
+                    if (number != null)
+                    {
+                        return number.PrimitiveValue.ConvertToNumber();
+                    }
+                    break;
+            }
+            throw environment.CreateTypeError("");
+        }
 
-        [BuiltinFunction("toFixed", "fractionDigits"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToFixed(IEnvironment environment, IArgs args)
+        private static IDynamic ToFixed(IEnvironment environment, IArgs args)
         {
             const string rangeErrorFormat = "The value supplied for fractionDigits ({0}) must be between 0 and 20.";
             const double limit = 1000000000000000000000.0;
@@ -201,8 +269,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s + m);
         }
 
-        [BuiltinFunction("toExponential", "fractionDigits"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToExponential(IEnvironment environment, IArgs args)
+        private static IDynamic ToExponential(IEnvironment environment, IArgs args)
         {
             const string rangeErrorFormat = "The value supplied for fractionDigits ({0}) must be between 0 and 20.";
 
@@ -298,8 +365,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s + m + "e" + c + d);
         }
 
-        [BuiltinFunction("toPrecision", "precision"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToPrecision(IEnvironment environment, IArgs args)
+        private static IDynamic ToPrecision(IEnvironment environment, IArgs args)
         {
             const string rangeErrorFormat = "The value supplied for precision ({0}) must be between 1 and 21.";
 

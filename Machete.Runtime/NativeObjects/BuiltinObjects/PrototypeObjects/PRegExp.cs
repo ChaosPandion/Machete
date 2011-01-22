@@ -7,10 +7,38 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
     public sealed class PRegExp : LObject
     {
+        private BFunction _exec;
+        private BFunction _test;
+        private BFunction _toString;
+        
         public PRegExp(IEnvironment environment)
             : base(environment)
         {
 
+        }
+
+        /// <summary>
+        /// 15.10.6.2  RegExp.prototype.exec(string) 
+        /// </summary>
+        public BFunction ExecBuiltinFunction
+        {
+            get { return _exec; }
+        }
+
+        /// <summary>
+        /// 15.10.6.3  RegExp.prototype.test(string) 
+        /// </summary>
+        public BFunction TestBuiltinFunction
+        {
+            get { return _test; }
+        }
+
+        /// <summary>
+        /// 15.10.6.4  RegExp.prototype.toString() 
+        /// </summary>
+        public BFunction ToStringBuiltinFunction
+        {
+            get { return _toString; }
         }
 
         public override void Initialize()
@@ -18,12 +46,18 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             Class = "RegExp";
             Extensible = true;
             Prototype = Environment.ObjectPrototype;
-            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.ArrayConstructor, true, false, true), false);
-            base.Initialize();
+
+            _exec = new BFunction(Environment, Exec, new ReadOnlyList<string>("string"));
+            _test = new BFunction(Environment, Test, new ReadOnlyList<string>("string"));
+            _toString = new BFunction(Environment, ToString, new ReadOnlyList<string>());
+
+            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.RegExpConstructor, true, false, true), false);
+            DefineOwnProperty("exec", Environment.CreateDataDescriptor(_exec, true, false, true), false);
+            DefineOwnProperty("test", Environment.CreateDataDescriptor(_toString, true, false, true), false);
+            DefineOwnProperty("toString", Environment.CreateDataDescriptor(_toString, true, false, true), false);
         }
 
-        [BuiltinFunction("exec", "string"), DataDescriptor(true, false, true)]
-        internal static IDynamic Exec(IEnvironment environment, IArgs args)
+        private static IDynamic Exec(IEnvironment environment, IArgs args)
         {
             var r = (NRegExp)environment.Context.ThisBinding;
             var s = args[0].ConvertToString().BaseValue;
@@ -72,8 +106,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return array;
         }
 
-        [BuiltinFunction("test", "string"), DataDescriptor(true, false, true)]
-        internal static IDynamic Test(IEnvironment environment, IArgs args)
+        private static IDynamic Test(IEnvironment environment, IArgs args)
         {
             var regExpObj = (NRegExp)environment.Context.ThisBinding;
             var func = regExpObj.Get("exec") as ICallable;
@@ -87,8 +120,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             }
         }
 
-        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToString(IEnvironment environment, IArgs args)
+        private static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var regExpObj = (NRegExp)environment.Context.ThisBinding;
             return environment.CreateString("/" + regExpObj.Body + "/" + regExpObj.Flags);
