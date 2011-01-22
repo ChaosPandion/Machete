@@ -1,6 +1,7 @@
 ﻿namespace Machete
 
 open System
+open System.Collections.Generic
 open Machete.Core
 open Machete.Runtime
 open Machete.Compiler
@@ -13,7 +14,7 @@ type Engine () =
 
     let environment = new Environment()
     let compiler = new CompilerService(environment)
-    let handlers = Microsoft.FSharp.Collections.HashMultiMap<Action<string>, MailboxProcessor<Action<string>>>(HashIdentity.Structural)
+    let handlers = Dictionary<Action<string>, MailboxProcessor<Action<string>>>()
 
 
     let checkOutput (inbox:MailboxProcessor<Action<string>>) = async {

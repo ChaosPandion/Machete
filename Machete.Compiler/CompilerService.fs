@@ -11,6 +11,7 @@ open FParsec.CharParsers
 open FParsec.Primitives
 open Machete.Core
 open InputElementParsers
+    
 
 type internal exp = System.Linq.Expressions.Expression
 
@@ -32,6 +33,7 @@ type internal State1 = {
     functions : list<FunctionDeclaration>
     variables : list<string>
 }
+
 
 type CompilerService (environment:IEnvironment) as this =
 
@@ -198,13 +200,7 @@ type CompilerService (environment:IEnvironment) as this =
         |] |> attempt)
 
     and evalGroupingOperator state =
-        (parse {
-            do! skipToken "("
-            do! skipIgnorableTokens
-            let! e = evalExpression
-            do! skipToken ")"    
-            return e
-        }) state
+        (skipToken "(" >>. evalExpression .>> skipToken ")") state
         
     and evalObjectLiteral state =
         (parse {
@@ -676,6 +672,8 @@ type CompilerService (environment:IEnvironment) as this =
      
     and evalStatement state =
         (skipIgnorableTokens >>. choice [|
+            attempt evalEmptyStatement
+            attempt evalExpressionStatement
             attempt evalBlock
             attempt evalVariableStatement
             attempt evalIfStatement
@@ -689,8 +687,6 @@ type CompilerService (environment:IEnvironment) as this =
             attempt evalThrowStatement
             attempt evalTryStatement
             attempt evalDebuggerStatement
-            attempt evalEmptyStatement
-            attempt evalExpressionStatement
         |]) state
 
     and evalBlock state =
