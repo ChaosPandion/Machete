@@ -8,55 +8,55 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.4.1.1 Array ( [ item1 [ , item2 [ , … ] ] ] )")]
         public void Test15411()
         {
-            Assert.True(false);
+            ExpectString("Array(1, 2, 3)", "1,2,3");
         }
 
         [Fact(DisplayName = "15.4.2.1 new Array ( [ item0 [ , item1 [ , … ] ] ] )")]
         public void Test15421()
         {
-            Assert.True(false);
+            ExpectString("new Array(1, 2, 3)", "1,2,3");
         }
 
         [Fact(DisplayName = "15.4.2.2 new Array (len)")]
         public void Test15422()
         {
-            Assert.True(false);
+            ExpectDouble("new Array (5).length", 5.0);
         }
 
         [Fact(DisplayName = "15.4.3.1 Array.prototype")]
         public void Test15431()
         {
-            Assert.True(false);
+            ExpectString("typeof Array.prototype", "object");
         }
 
         [Fact(DisplayName = "15.4.3.2 Array.isArray ( arg )")]
         public void Test15432()
         {
-            Assert.True(false);
+            ExpectBoolean("Array.isArray([])", true);
         }
 
         [Fact(DisplayName = "15.4.4.1 Array.prototype.constructor")]
         public void Test15441()
         {
-            Assert.True(false);
+            ExpectBoolean("Array.prototype.constructor === Array", true);
         }
 
         [Fact(DisplayName = "15.4.4.2 Array.prototype.toString ( )")]
         public void Test15442()
         {
-            Assert.True(false);
+            ExpectString("[1,2,3,4].toString()", "1,2,3,4");
         }
 
         [Fact(DisplayName = "15.4.4.3 Array.prototype.toLocaleString ( )")]
         public void Test15443()
         {
-            Assert.True(false);
+            ExpectString("[1,2,3,4].toLocaleString()", "1,2,3,4");
         }
 
         [Fact(DisplayName = "15.4.4.4 Array.prototype.concat ( [ item1 [ , item2 [ , … ] ] ] )")]
         public void Test15444()
         {
-            Assert.True(false);
+            ExpectString("[1,2].concat([3,4])", "1,2,3,4");
         }
 
         [Fact(DisplayName = "15.4.4.5 Array.prototype.join (separator)")]
@@ -68,13 +68,13 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.4.4.6 Array.prototype.pop ( )")]
         public void Test15446()
         {
-            Assert.True(false);
+            ExpectString("['value'].pop()", "value");
         }
 
         [Fact(DisplayName = "15.4.4.7 Array.prototype.push ( [ item1 [ , item2 [ , … ] ] ] )")]
         public void Test15447()
         {
-            Assert.True(false);
+            ExpectDouble("[1].push(4)", 2.0);
         }
 
         [Fact(DisplayName = "15.4.4.8 Array.prototype.reverse ( )")]
@@ -152,43 +152,45 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.4.4.18 Array.prototype.forEach ( callbackfn [ , thisArg ] )")]
         public void Test154418()
         {
-            Assert.True(false);
+            ExpectDouble(@"
+                var n = 0; 
+                [2, 2, 2, 2, 2].forEach(function(value, index, object) { 
+                    n += value; 
+                });
+                return n;
+            ", 10.0);
         }
 
         [Fact(DisplayName = "15.4.4.19 Array.prototype.map ( callbackfn [ , thisArg ] )")]
         public void Test154419()
         {
-            Assert.True(false);
+            ExpectString(@"
+                [1, 2, 3].map(function(value, index, object) { 
+                    return 'V' + value; 
+                });
+            ", "V1,V2,V3");
         }
 
         [Fact(DisplayName = "15.4.4.20 Array.prototype.filter ( callbackfn [ , thisArg ] )")]
         public void Test154420()
         {
-            Assert.True(false);
+            ExpectString(@"
+                [1, 2, 3].filter(function(value, index, object) { 
+                    return value < 3; 
+                });
+            ", "1,2");
         }
 
         [Fact(DisplayName = "15.4.4.21 Array.prototype.reduce ( callbackfn [ , initialValue ] )")]
         public void Test154421()
         {
-            Assert.True(false);
+            ExpectString(@"['1', '2', '3'].reduce(function(previousValue, value, index, object) { return previousValue + value; });", "123");
         }
 
         [Fact(DisplayName = "15.4.4.22 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )")]
         public void Test154422()
         {
-            Assert.True(false);
-        }
-
-        [Fact(DisplayName = "15.4.5.1 [[DefineOwnProperty]] ( P, Desc, Throw )")]
-        public void Test15451()
-        {
-            Assert.True(false);
-        }
-
-        [Fact(DisplayName = "15.4.5.2 length")]
-        public void Test15452()
-        {
-            Assert.True(false);
+            ExpectString(@"['1', '2', '3'].reduceRight(function(previousValue, value, index, object) { return previousValue + value; });", "321");
         }
     }
 }

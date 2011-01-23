@@ -8,6 +8,28 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
     public sealed class PArray : LObject
     {
+        public BFunction ToStringBuiltinFunction { get; private set; }
+        public BFunction ToLocaleStringBuiltinFunction { get; private set; }
+        public BFunction ConcatBuiltinFunction { get; private set; }
+        public BFunction JoinBuiltinFunction { get; private set; }
+        public BFunction PopBuiltinFunction { get; private set; }
+        public BFunction PushBuiltinFunction { get; private set; }
+        public BFunction ReverseBuiltinFunction { get; private set; }
+        public BFunction ShiftBuiltinFunction { get; private set; }
+        public BFunction SliceBuiltinFunction { get; private set; }
+        public BFunction SortBuiltinFunction { get; private set; }
+        public BFunction SpliceBuiltinFunction { get; private set; }
+        public BFunction UnshiftBuiltinFunction { get; private set; }
+        public BFunction IndexOfBuiltinFunction { get; private set; }
+        public BFunction LastIndexOfBuiltinFunction { get; private set; }
+        public BFunction EveryBuiltinFunction { get; private set; }
+        public BFunction SomeBuiltinFunction { get; private set; }
+        public BFunction ForEachBuiltinFunction { get; private set; }
+        public BFunction MapBuiltinFunction { get; private set; }
+        public BFunction FilterBuiltinFunction { get; private set; }
+        public BFunction ReduceBuiltinFunction { get; private set; }
+        public BFunction ReduceRightBuiltinFunction { get; private set; }
+        
         public PArray(IEnvironment environment)
             : base(environment)
         {
@@ -19,13 +41,58 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             Class = "Array";
             Extensible = true;
             Prototype = Environment.ObjectPrototype;
-            DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(0.0), false, false, false), false);
-            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.ArrayConstructor, true, false, true), false);
-            base.Initialize();
+
+            ToStringBuiltinFunction = new BFunction(Environment, ToString, ReadOnlyList<string>.Empty);
+            ToLocaleStringBuiltinFunction = new BFunction(Environment, ToLocaleString, ReadOnlyList<string>.Empty);
+            ConcatBuiltinFunction = new BFunction(Environment, Concat, new ReadOnlyList<string>("item1"));
+            JoinBuiltinFunction = new BFunction(Environment, Join, new ReadOnlyList<string>("separator"));
+            PopBuiltinFunction = new BFunction(Environment, Pop, ReadOnlyList<string>.Empty);
+            PushBuiltinFunction = new BFunction(Environment, Push, new ReadOnlyList<string>("item1"));
+            ReverseBuiltinFunction = new BFunction(Environment, Reverse, ReadOnlyList<string>.Empty);
+            ShiftBuiltinFunction = new BFunction(Environment, Shift, ReadOnlyList<string>.Empty);
+            SliceBuiltinFunction = new BFunction(Environment, Slice, new ReadOnlyList<string>("start", "end"));
+            SortBuiltinFunction = new BFunction(Environment, Sort, new ReadOnlyList<string>("comparefn"));
+            SpliceBuiltinFunction = new BFunction(Environment, Splice, new ReadOnlyList<string>("start", "deleteCount"));
+            UnshiftBuiltinFunction = new BFunction(Environment, Unshift, new ReadOnlyList<string>("item1"));
+            IndexOfBuiltinFunction = new BFunction(Environment, IndexOf, new ReadOnlyList<string>("searchElement"));
+            LastIndexOfBuiltinFunction = new BFunction(Environment, LastIndexOf, new ReadOnlyList<string>("searchElement"));
+            EveryBuiltinFunction = new BFunction(Environment, Every, new ReadOnlyList<string>("comparefn"));
+            SomeBuiltinFunction = new BFunction(Environment, Some, new ReadOnlyList<string>("comparefn"));
+            ForEachBuiltinFunction = new BFunction(Environment, ForEach, new ReadOnlyList<string>("comparefn"));
+            MapBuiltinFunction = new BFunction(Environment, Map, new ReadOnlyList<string>("comparefn"));
+            FilterBuiltinFunction = new BFunction(Environment, Filter, new ReadOnlyList<string>("comparefn"));
+            ReduceBuiltinFunction = new BFunction(Environment, Reduce, new ReadOnlyList<string>("comparefn"));
+            ReduceRightBuiltinFunction = new BFunction(Environment, ReduceRight, new ReadOnlyList<string>("comparefn"));
+
+            new LObject.Builder(this)
+            .SetAttributes(false, false, false)
+            .AppendDataProperty("length", Environment.CreateNumber(0.0))
+            .SetAttributes(true, false, true)
+            .AppendDataProperty("constructor", Environment.ArrayConstructor)
+            .AppendDataProperty("toString", ToStringBuiltinFunction)
+            .AppendDataProperty("toLocaleString", ToLocaleStringBuiltinFunction)
+            .AppendDataProperty("concat", ConcatBuiltinFunction)
+            .AppendDataProperty("join", JoinBuiltinFunction)
+            .AppendDataProperty("pop", PopBuiltinFunction)
+            .AppendDataProperty("push", PushBuiltinFunction)
+            .AppendDataProperty("reverse", ReverseBuiltinFunction)
+            .AppendDataProperty("shift", ShiftBuiltinFunction)
+            .AppendDataProperty("slice", SliceBuiltinFunction)
+            .AppendDataProperty("sort", SortBuiltinFunction)
+            .AppendDataProperty("splice", SpliceBuiltinFunction)
+            .AppendDataProperty("unshift", UnshiftBuiltinFunction)
+            .AppendDataProperty("indexOf", IndexOfBuiltinFunction)
+            .AppendDataProperty("lastIndexOf", LastIndexOfBuiltinFunction)
+            .AppendDataProperty("every", EveryBuiltinFunction)
+            .AppendDataProperty("some", SomeBuiltinFunction)
+            .AppendDataProperty("forEach", ForEachBuiltinFunction)
+            .AppendDataProperty("map", MapBuiltinFunction)
+            .AppendDataProperty("filter", FilterBuiltinFunction)
+            .AppendDataProperty("reduce", ReduceBuiltinFunction)
+            .AppendDataProperty("reduceRight", ReduceRightBuiltinFunction);
         }
 
-        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToString(IEnvironment environment, IArgs args)
+        private static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             var array = environment.Context.ThisBinding.ConvertToObject();
             var func = array.Get("join") as ICallable;
@@ -36,8 +103,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return func.Call(environment, array, args);
         }
 
-        [BuiltinFunction("toLocaleString"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
+        private static IDynamic ToLocaleString(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding.ConvertToObject();
             var arrayLen = o.Get("length");
@@ -79,8 +145,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(sb.ToString());
         }
 
-        [BuiltinFunction("concat", "item1"), DataDescriptor(true, false, true)]
-        internal static IDynamic Concat(IEnvironment environment, IArgs args)
+        private static IDynamic Concat(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var array = environment.ArrayConstructor.Op_Construct(environment.EmptyArgs);
@@ -116,8 +181,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return array;
         }
 
-        [BuiltinFunction("join", "separator"), DataDescriptor(true, false, true)]
-        internal static IDynamic Join(IEnvironment environment, IArgs args)
+        private static IDynamic Join(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
@@ -154,8 +218,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(sb.ToString());
         }
 
-        [BuiltinFunction("pop"), DataDescriptor(true, false, true)]
-        internal static IDynamic Pop(IEnvironment environment, IArgs args)
+        private static IDynamic Pop(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var length = obj.Get("length").ConvertToUInt32().BaseValue;
@@ -167,8 +230,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return element;
         }
 
-        [BuiltinFunction("push", "item1"), DataDescriptor(true, false, true)]
-        internal static IDynamic Push(IEnvironment environment, IArgs args)
+        private static IDynamic Push(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var length = obj.Get("length").ConvertToUInt32().BaseValue;
@@ -183,8 +245,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber(length);
         }
 
-        [BuiltinFunction("reverse"), DataDescriptor(true, false, true)]
-        internal static IDynamic Reverse(IEnvironment environment, IArgs args)
+        private static IDynamic Reverse(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
@@ -227,8 +288,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return obj;
         }
 
-        [BuiltinFunction("shift"), DataDescriptor(true, false, true)]
-        internal static IDynamic Shift(IEnvironment environment, IArgs args)
+        private static IDynamic Shift(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var length = obj.Get("length").ConvertToUInt32().BaseValue;
@@ -257,8 +317,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return first;
         }
 
-        [BuiltinFunction("slice", "start", "end"), DataDescriptor(true, false, true)]
-        internal static IDynamic Slice(IEnvironment environment, IArgs args)
+        private static IDynamic Slice(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         //    throw new NotImplementedException();
@@ -282,8 +341,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //return result;
         }
 
-        [BuiltinFunction("sort", "comparefn"), DataDescriptor(true, false, true)]
-        internal static IDynamic Sort(IEnvironment environment, IArgs args)
+        private static IDynamic Sort(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
 
@@ -342,20 +400,17 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         //    //defined = (isSparse && (hasNonConfigurable || hasNonWritable || hasAccessor || protoHasProp));
         }
 
-        [BuiltinFunction("slice", "start", "deleteCount"), DataDescriptor(true, false, true)]
-        internal static IDynamic Splice(IEnvironment environment, IArgs args)
+        private static IDynamic Splice(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [BuiltinFunction("unshift", "item1"), DataDescriptor(true, false, true)]
-        internal static IDynamic Unshift(IEnvironment environment, IArgs args)
+        private static IDynamic Unshift(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
         }
 
-        [BuiltinFunction("indexOf", "searchElement"), DataDescriptor(true, false, true)]
-        internal static IDynamic IndexOf(IEnvironment environment, IArgs args)
+        private static IDynamic IndexOf(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
@@ -388,8 +443,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber(-1);
         }
 
-        [BuiltinFunction("lastIndexOf", "searchElement"), DataDescriptor(true, false, true)]
-        internal static IDynamic LastIndexOf(IEnvironment environment, IArgs args)
+        private static IDynamic LastIndexOf(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
@@ -430,8 +484,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber(-1);
         }
 
-        [BuiltinFunction("every", "callbackfn"), DataDescriptor(true, false, true)]
-        internal static IDynamic Every(IEnvironment environment, IArgs args)
+        private static IDynamic Every(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var callArgs = new IDynamic[] { null, null, obj };
@@ -461,8 +514,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.True;
         }
 
-        [BuiltinFunction("some", "callbackfn"), DataDescriptor(true, false, true)]
-        internal static IDynamic Some(IEnvironment environment, IArgs args)
+        private static IDynamic Some(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var callArgs = new IDynamic[] { null, null, obj };
@@ -492,8 +544,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.False;
         }
 
-        [BuiltinFunction("forEach", "callbackfn"), DataDescriptor(true, false, true)]
-        internal static IDynamic ForEach(IEnvironment environment, IArgs args)
+        private static IDynamic ForEach(IEnvironment environment, IArgs args)
         {
             var obj = environment.Context.ThisBinding.ConvertToObject();
             var callArgs = new IDynamic[] { null, null, obj };
@@ -520,8 +571,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.Undefined;
         }
 
-        [BuiltinFunction("map", "callbackfn"), DataDescriptor(true, false, true)]
-        internal static IDynamic Map(IEnvironment environment, IArgs args)
+        private static IDynamic Map(IEnvironment environment, IArgs args)
         {
             var result = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
             var obj = environment.Context.ThisBinding.ConvertToObject();
@@ -550,143 +600,119 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return result;
         }
 
-        [BuiltinFunction("filter", "callbackfn"), DataDescriptor(true, false, true)]
-        internal static IDynamic Filter(IEnvironment environment, IArgs args)
+        private static IDynamic Filter(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var callback = args.Get<ICallable>(0);
-        //    //var thisArg = args[1];
+            var result = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var callbackfn = args[0] as ICallable;
+            var thisArg = args[1];
 
-        //    //if (callback == null)
-        //    //{
-        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-        //    //}
+            if (callbackfn == null)
+                throw environment.CreateTypeError("");
 
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var callbackArgs = new Args(new IDynamic[] { null, null, obj });
-        //    //var key = default(string);
-        //    //var to = 0D;
-        //    //for (int i = 0; i < length; i++)
-        //    //{
-        //    //    key = i.ToString();
-        //    //    if (obj.HasProperty(key))
-        //    //    {
-        //    //        callbackArgs[0] = obj.Get(key);
-        //    //        callbackArgs[1] = new NumberPrimitive(i);
-        //    //        if (callback.Call(thisArg, callbackArgs).ToBooleanPrimitive())
-        //    //        {
-        //    //            result.DefineOwnProperty(to.ToString(), Property.Create(callbackArgs[0], true, true, true), false);
-        //    //            to++;
-        //    //        }
-        //    //    }
-        //    //}
-        //    //return result;
+            for (uint i = 0; i < length; i++)
+            {
+                var key = i.ToString();
+                if (obj.HasProperty(key))
+                {
+                    var value = obj.Get(key);
+                    var callArgs = environment.CreateArgs(new[] { value, environment.CreateNumber(i), obj });
+                    var include = callbackfn.Call(environment, thisArg, callArgs);
+                    if (include.ConvertToBoolean().BaseValue)
+                    {
+                        result.DefineOwnProperty(key, environment.CreateDataDescriptor(value, true, true, true), false);
+                    }
+                }
+            }
+
+            return result;
         }
 
-        [BuiltinFunction("reduce", "callbackfn"), DataDescriptor(true, false, true)]
-        internal static IDynamic Reduce(IEnvironment environment, IArgs args)
+        private static IDynamic Reduce(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var callback = args.Get<ICallable>(0);
-        //    //var initialValue = args[1];
+            var o = environment.Context.ThisBinding.ConvertToObject();
+            var len = (uint)o.Get("length").ConvertToUInt32().BaseValue;
+            var callbackfn = args[0] as ICallable;
 
-        //    //if (callback == null)
-        //    //{
-        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-        //    //}
-        //    //else if (length == 0 && args.Count == 1)
-        //    //{
-        //    //    throw new TypeError("For a zero length array an initial value is required.");
-        //    //}
+            if (callbackfn == null)
+                throw environment.CreateTypeError("");
+            if (len == 0 && args.Count < 2)
+                throw environment.CreateTypeError("");
 
-        //    //var callArgs = new Args(new IDynamic[] { null, null, null, obj });
-        //    //var accumulator = args.Count == 1 ? default(IDynamic) : initialValue;
-        //    //var index = -1;
-        //    //var present = false;
-
-        //    //while (++index < length)
-        //    //{
-        //    //    if ((present = obj.HasProperty(index.ToString())))
-        //    //    {
-        //    //        accumulator = obj.Get(index.ToString());
-        //    //        break;
-        //    //    }
-        //    //}
-
-        //    //if (!present)
-        //    //{
-        //    //    throw new TypeError("An accumulator value could not be found.");
-        //    //}
-
-        //    //while (++index < length)
-        //    //{
-        //    //    if (obj.HasProperty(index.ToString()))
-        //    //    {
-        //    //        callArgs[0] = accumulator;
-        //    //        callArgs[1] = obj.Get(index.ToString());
-        //    //        callArgs[2] = new NumberPrimitive(index);
-        //    //        callArgs[3] = obj;
-        //    //        accumulator = callback.Call(new UndefinedPrimitive(), callArgs);
-        //    //    }
-        //    //}
-
-        //    //return accumulator;
+            uint k = 0;
+            var accumulator = args[1];
+            if (args.Count < 2)
+            {
+                var found = false;
+                for (; k < len; k++)
+                {
+                    var key = k.ToString();
+                    if (o.HasProperty(key))
+                    {
+                        found = true;
+                        accumulator = o.Get(key);
+                        k++;
+                        break;
+                    }
+                }
+                if (!found)
+                    throw environment.CreateTypeError("");
+            }
+            for (; k < len; k++)
+            {
+                var key = k.ToString();
+                if (o.HasProperty(key))
+                {
+                    var callArgs = environment.CreateArgs(new[] { accumulator, o.Get(key), environment.CreateNumber(k), o });
+                    accumulator = callbackfn.Call(environment, environment.Undefined, callArgs);
+                }
+            }
+            return accumulator;
         }
 
-        [BuiltinFunction("reduceRight", "callbackfn"), DataDescriptor(true, false, true)]
-        internal static IDynamic ReduceRight(IEnvironment environment, IArgs args)
+        private static IDynamic ReduceRight(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var callback = args.Get<ICallable>(0);
-        //    //var initialValue = args[1];
+            var o = environment.Context.ThisBinding.ConvertToObject();
+            var len = (uint)o.Get("length").ConvertToUInt32().BaseValue;
+            var callbackfn = args[0] as ICallable;
 
-        //    //if (callback == null)
-        //    //{
-        //    //    throw new TypeError("The first parameter 'callbackfn' must be callable.");
-        //    //}
-        //    //else if (length == 0 && args.Count == 1)
-        //    //{
-        //    //    throw new TypeError("For a zero length array an initial value is required.");
-        //    //}
+            if (callbackfn == null)
+                throw environment.CreateTypeError("");
+            if (len == 0 && args.Count < 2)
+                throw environment.CreateTypeError("");
 
-        //    //var callArgs = new Args(new IDynamic[] { null, null, null, obj });
-        //    //var accumulator = args.Count == 1 ? default(IDynamic) : initialValue;
-        //    //var index = length;
-        //    //var present = false;
-
-        //    //while (--index >= 0)
-        //    //{
-        //    //    if ((present = obj.HasProperty(index.ToString())))
-        //    //    {
-        //    //        accumulator = obj.Get(index.ToString());
-        //    //        break;
-        //    //    }
-        //    //}
-
-        //    //if (!present)
-        //    //{
-        //    //    throw new TypeError("An accumulator value could not be found.");
-        //    //}
-
-        //    //while (--index >= 0)
-        //    //{
-        //    //    if (obj.HasProperty(index.ToString()))
-        //    //    {
-        //    //        callArgs[0] = accumulator;
-        //    //        callArgs[1] = obj.Get(index.ToString());
-        //    //        callArgs[2] = new NumberPrimitive(index);
-        //    //        callArgs[3] = obj;
-        //    //        accumulator = callback.Call(new UndefinedPrimitive(), callArgs);
-        //    //    }
-        //    //}
-
-        //    //return accumulator;
+            uint k = len - 1;
+            var accumulator = args[1];
+            if (args.Count < 2)
+            {
+                var found = false;
+                for (;; k--)
+                {
+                    var key = k.ToString();
+                    if (o.HasProperty(key))
+                    {
+                        found = true;
+                        accumulator = o.Get(key);
+                        k--;
+                        break;
+                    }
+                    if (k == 0) break;
+                }
+                if (!found)
+                    throw environment.CreateTypeError("");
+            }
+            for (;; k--)
+            {
+                var key = k.ToString();
+                if (o.HasProperty(key))
+                {
+                    var callArgs = environment.CreateArgs(new[] { accumulator, o.Get(key), environment.CreateNumber(k), o });
+                    accumulator = callbackfn.Call(environment, environment.Undefined, callArgs);
+                }
+                if (k == 0) break;
+            }
+            return accumulator;
         }
 
         private static bool IsSparse(IObject o)

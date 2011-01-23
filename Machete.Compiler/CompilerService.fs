@@ -321,9 +321,12 @@ type CompilerService (environment:IEnvironment) as this =
                 let! e = attempt (skipIgnorableTokens >>. evalAssignmentExpression)
                 return pad, e
             }
-            let! first = p
-            let! r = many (attempt (skipToken "," >>. p))
-            return first::r
+            let! first = opt p
+            match first with
+            | Some first ->
+                let! r = many (attempt (skipComma >>. p)) 
+                return first::r
+            | None -> return []
         }) state
 
     and evalMemberExpression state =
@@ -1252,7 +1255,6 @@ type CompilerService (environment:IEnvironment) as this =
             let! formalParameterList = evalFormalParameterList
             do! skipToken ")"
             do! skipToken "{"
-            do! skipIgnorableTokens
             let! functionBody = evalFunctionBody
             do! skipToken "}"
             let! (newState:CompileState) = getUserState
@@ -1262,6 +1264,7 @@ type CompilerService (environment:IEnvironment) as this =
             let exC = ExecutableCode (functionBody.Compile(), variableDeclarations, functionDeclarations, strict)
             let args = [| exp.Constant(exC):>exp; exp.Constant(formalParameterList) :> exp; Expressions.LexicalEnviroment :> exp |]
             let func = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
+            do! setUserState oldState    
             return func
         }) state
 
@@ -1275,13 +1278,15 @@ type CompilerService (environment:IEnvironment) as this =
         (parse {            
             let! (oldState:CompileState) = getUserState
             let returnLabel = oldState.labels.Head.["return"]
-            let! e1 = many (attempt evalSourceElement)            
+            let nextState = { strict = [oldState.strict.Head |> fst, false]; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }
+            do! setUserState nextState
+            let! e1 = many (attempt evalSourceElement)        
             let body = exp.Block (e1 @ [ returnLabel.labelExpression :> exp ])
             return exp.Lambda<Code>(body, [| Expressions.Environment; Expressions.Args |])
         }) state
 
     and evalSourceElement state =
-        (evalFunctionDeclaration <|> evalStatement) state
+        (attempt evalFunctionDeclaration <|> evalStatement) state
 
     and evalSourceElements state =
         manyTill (evalSourceElement) eof state      

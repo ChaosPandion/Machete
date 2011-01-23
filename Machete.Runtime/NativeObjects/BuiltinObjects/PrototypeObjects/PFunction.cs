@@ -8,6 +8,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
     public sealed class PFunction : LObject, ICallable
     {
+        public BFunction ToStringBuiltinFunction { get; private set; }
+        public BFunction ApplyBuiltinFunction { get; private set; }
+        public BFunction CallBuiltinFunction { get; private set; }
+        public BFunction BindBuiltinFunction { get; private set; }
+
         public PFunction(IEnvironment environment)
             : base(environment)
         {
@@ -19,10 +24,21 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             Class = "Function";
             Extensible = true;
             Prototype = Environment.ObjectPrototype;
-           
-            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.FunctionConstructor, true, false, true), false);
-            DefineOwnProperty("length", Environment.CreateDataDescriptor(Environment.CreateNumber(0), false, false, false), false);
-            base.Initialize();
+
+            ToStringBuiltinFunction = new BFunction(Environment, ToString, ReadOnlyList<string>.Empty);
+            ApplyBuiltinFunction = new BFunction(Environment, Apply, new ReadOnlyList<string>("thisArg", "argArray"));
+            CallBuiltinFunction = new BFunction(Environment, Call, new ReadOnlyList<string>("thisArg"));
+            BindBuiltinFunction = new BFunction(Environment, Bind, new ReadOnlyList<string>("thisArg"));
+
+            new LObject.Builder(this)
+            .SetAttributes(false, false, false)
+            .AppendDataProperty("length", Environment.CreateNumber(0.0))
+            .SetAttributes(true, false, true)
+            .AppendDataProperty("constructor", Environment.FunctionConstructor)
+            .AppendDataProperty("toString", ToStringBuiltinFunction)
+            .AppendDataProperty("apply", ApplyBuiltinFunction)
+            .AppendDataProperty("call", CallBuiltinFunction)
+            .AppendDataProperty("bind", BindBuiltinFunction);
         }
 
         public IDynamic Call(IEnvironment environment, IDynamic thisBinding, IArgs args)
@@ -30,14 +46,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.Undefined;
         }
 
-        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToString(IEnvironment environment, IArgs args)
+        private static IDynamic ToString(IEnvironment environment, IArgs args)
         {
             return environment.CreateString("[object, Function]");
         }
 
-        [BuiltinFunction("apply", "thisArg", "argArray"), DataDescriptor(true, false, true)]
-        internal static IDynamic Apply(IEnvironment environment, IArgs args)
+        private static IDynamic Apply(IEnvironment environment, IArgs args)
         {
             var callable = environment.Context.ThisBinding as ICallable;
             if (callable == null)
@@ -76,8 +90,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return callable.Call(environment, thisArg, callArgs);
         }
 
-        [BuiltinFunction("call", "thisArg"), DataDescriptor(true, false, true)]
-        internal static IDynamic Call(IEnvironment environment, IArgs args)
+        private static IDynamic Call(IEnvironment environment, IArgs args)
         {
             var callable = environment.Context.ThisBinding as ICallable;
             if (callable == null)
@@ -93,8 +106,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return callable.Call(environment, thisArg, callArgs);
         }
 
-        [BuiltinFunction("bind", "thisArg"), DataDescriptor(true, false, true)]
-        internal static IDynamic Bind(IEnvironment environment, IArgs args)
+        private static IDynamic Bind(IEnvironment environment, IArgs args)
         {
             var callable = environment.Context.ThisBinding as ICallable;
             if (callable == null)
