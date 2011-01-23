@@ -1,8 +1,12 @@
 ﻿namespace Machete.Compiler
 
 open System
+open FParsec
 open FParsec.Primitives
 open FParsec.CharParsers
+open System.Linq.Expressions
+open Machete.Core
+
 
 module InputElementParsers =
 
@@ -41,8 +45,10 @@ module InputElementParsers =
             if not (CharSets.reservedWordSet.Contains r) then
                 return r
         }) state
+
     and evalIdentifierName state =
-        pipe2 evalIdentifierStart (manyStrings evalIdentifierPart) (+) state
+        (pipe2 evalIdentifierStart (manyStrings evalIdentifierPart) (+)) state
+
     and evalIdentifierStart state =
         (
             evalUnicodeLetter <|>
@@ -50,6 +56,7 @@ module InputElementParsers =
             pstring "_" <|>
             (skipChar '\\' >>. evalUnicodeEscapeSequence)
         ) state
+
     and evalIdentifierPart state =
         (
             evalIdentifierStart <|>
@@ -171,29 +178,7 @@ module InputElementParsers =
         (
             (skipChar '\"' >>. evalDoubleStringCharacters .>> skipChar '\"') <|>  
             (skipChar '\'' >>. evalSingleStringCharacters .>> skipChar '\'') 
-        ) state
-//        choice [|
-//            parse {
-//                do! skipChar '\"'
-//                let! e = opt evalDoubleStringCharacters
-//                do! skipChar '\"'
-//                match e with
-//                | Some e ->
-//                    return e
-//                | None ->
-//                    return ""
-//            }
-//            parse {
-//                do! skipChar '''
-//                let! e = opt evalSingleStringCharacters
-//                do! skipChar '''
-//                match e with
-//                | Some e ->
-//                    return e
-//                | None ->
-//                    return ""
-//            }
-//        |] state    
+        ) state   
     and evalDoubleStringCharacters state =
         manyStrings evalDoubleStringCharacter state
     and evalSingleStringCharacters state =

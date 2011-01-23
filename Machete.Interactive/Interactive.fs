@@ -39,8 +39,10 @@ module Interactive =
             let line = ConsoleAgent.readLine()
             if line.EndsWith ";;" then
                 run := false
-            let line = line.TrimEnd ([| ';' |])
-            sb.AppendLine line |> ignore
+                let line = line.Substring(0, line.Length - 2)
+                sb.AppendLine line |> ignore
+            else
+                sb.AppendLine line |> ignore
         sb.ToString().Trim()
 
     let private isExn (o:obj) =

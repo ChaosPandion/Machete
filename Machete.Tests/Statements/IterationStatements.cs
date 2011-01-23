@@ -184,26 +184,27 @@ namespace Machete.Tests
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( var VariableDeclarationListNoIn ; Expression ; Expression ) Statement")]
         public void Test126N()
         {
-            var script = @"
-                for (var n = 1; n !== 256; n *= 2) {
-
-                }
+            ExpectDouble(@"
+                for (var n = 1; n !== 256; n *= 2);
                 return n;
-            ";
-            Assert.Equal(256.0, (double)Engine.ExecuteScript(script));
+            ", 256.0);
+            ExpectDouble(@"
+                var n = 0; 
+                for (var i = 0; i < 1000; ++i)
+                    if (i % 3 === 0 || i % 5 === 0)
+                        n += i;
+                return n;
+            ", 233168.0);
         }
 
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( LeftHandSideExpression in Expression ) Statement")]
         public void Test126O()
         {
-            var script = @"
-                var i = 0, o = { a:1, b:2, c:3 };
-                for ({} in o) {
-                    i++;
-                }
-                return i;
-            ";
-            Assert.Equal(3.0, (double)Engine.ExecuteScript(script));
+            ExpectString(@"
+                var r = {}, o = { a:1, b:2, c:3 };
+                for (r in o) ;
+                return r;
+            ", "c");
         }
 
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( var VariableDeclarationNoIn in Expression ) Statement")]
