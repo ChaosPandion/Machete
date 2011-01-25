@@ -402,12 +402,45 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 
         private static IDynamic Splice(IEnvironment environment, IArgs args)
         {
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var a = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
+            var len = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var start = args[0].ConvertToInteger().BaseValue;
+            var deleteCount = args[1].ConvertToInteger().BaseValue;
+            var actualStart = start < 0 ? (int)Math.Max(len + start, 0) : (int)Math.Min(start, len);
+            var actualDeleteCount = (int)Math.Min(Math.Max(deleteCount, 0), len - actualStart);
+
             throw new NotImplementedException();
         }
 
         private static IDynamic Unshift(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var len = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var argCount = (uint)args.Count;
+            var k = len;
+            while (k > 0)
+            {
+                var from = (k - 1).ToString();
+                var to = (k + argCount - 1).ToString();
+                if (obj.HasProperty(from))
+                {
+                    var fromValue = obj.Get(from);
+                    obj.Put(to, fromValue, true);
+                }
+                else
+                {
+                    obj.Delete(to, true);
+                }
+                k--;
+            }
+            for (int i = 0; i < argCount; i++)
+            {
+                obj.Put(i.ToString(), args[i], true);
+            }
+            var newLength = environment.CreateNumber(len + argCount);
+            obj.Put("length", newLength, true);
+            return newLength;
         }
 
         private static IDynamic IndexOf(IEnvironment environment, IArgs args)

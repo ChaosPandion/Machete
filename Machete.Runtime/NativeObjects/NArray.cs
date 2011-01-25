@@ -47,7 +47,7 @@ namespace Machete.Runtime.NativeObjects
                     return base.DefineOwnProperty(p, newLenDesc, @throw); 
                 }
 
-                if (oldLenDesc.Writable ?? false)
+                if (!(oldLenDesc.Writable ?? false))
                 {
                     if (!@throw) return false;
                     throw Environment.CreateTypeError("");
@@ -75,7 +75,7 @@ namespace Machete.Runtime.NativeObjects
                     --ol;
 
                     var cannotDelete = Delete(ol.ToString(), false);
-                    if (cannotDelete)
+                    if (!cannotDelete)
                     {
                         newLenDesc.Value = Environment.CreateNumber(ol + 1.0);
                         if (!newWritable)

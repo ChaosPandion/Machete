@@ -59,11 +59,88 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
 
         public IDynamic Value
         {
-            get { return _base.Get(_referencedName, _strictReference); }
+            get 
+            {
+                if (IsUnresolvableReference)
+                {
+                    throw _environment.CreateReferenceError("");
+                }
+                else if (!IsPropertyReference)
+                {
+                    return ((IEnvironmentRecord)_base).GetBindingValue(_referencedName, _strictReference);
+                }
+                else
+                {
+                    if (!HasPrimitiveBase)
+                    {
+                        return ((IObject)_base).Get(_referencedName);
+                    }
+                    var o = ((IDynamic)_base).ConvertToObject();
+                    var desc = o.GetProperty(_referencedName);
+                    if (desc == null)
+                    {
+                        return _environment.Undefined;
+                    }
+                    else if (desc.IsDataDescriptor)
+                    {
+                        return desc.Value;
+                    }
+                    else if (desc.Get == null)
+                    {
+                        return _environment.Undefined;
+                    }
+                    else
+                    {
+                        return ((ICallable)desc.Get).Call(_environment, (IDynamic)_base, _environment.EmptyArgs);
+                    }
+                }
+            }
             set
             {
-                StrictReferenceCondition();
-                _base.Set(_referencedName, value, _strictReference); 
+                if (IsUnresolvableReference)
+                {
+                    if (IsStrictReference) 
+                        throw _environment.CreateReferenceError("The name '" + _referencedName + "' could not be resolved.");
+                    _environment.GlobalObject.Put(_referencedName, value, IsStrictReference);                       
+                }
+                else if (!IsPropertyReference)
+                {
+                    ((IEnvironmentRecord)_base).SetMutableBinding(_referencedName, value, _strictReference);
+                }
+                else
+                {
+                    if (!HasPrimitiveBase)
+                    {
+                        ((IObject)_base).Put(_referencedName, value, _strictReference);
+                    }
+                    var o = ((IDynamic)_base).ConvertToObject();
+                    if (!o.CanPut(_referencedName))
+                    {
+                        if (IsStrictReference)
+                            throw _environment.CreateTypeError("");
+                    }
+                    var ownDesc = o.GetOwnProperty(_referencedName);
+                    if (ownDesc.IsDataDescriptor)
+                    {
+                        if (_strictReference)
+                        {
+                            throw _environment.CreateTypeError("");
+                        }
+                        return;
+                    }
+                    var desc = o.GetProperty(_referencedName);
+                    if (desc.IsAccessorDescriptor)
+                    {
+                        desc.Set.Op_Call(new SArgs(_environment, value));
+                    }
+                    else
+                    {
+                        if (_strictReference)
+                        {
+                            throw _environment.CreateTypeError("");
+                        }
+                    }
+                }
             }
         }
 

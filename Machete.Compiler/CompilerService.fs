@@ -472,8 +472,9 @@ type CompilerService (environment:IEnvironment) as this =
         (parse {
             let! e1 = p1
             let e1 = if e1.Type <> typeof<IDynamic> then exp.Convert(e1, typeof<IDynamic>) :> exp else e1
-            let folder e1 (op, e2) = 
-                let args = [| exp.Convert(e2, typeof<IDynamic>) :> exp |]
+            let folder e1 (op, e2:exp) = 
+                let e2 = if e2.Type <> typeof<IDynamic> then exp.Convert(e2, typeof<IDynamic>) :> exp else e2
+                let args = [| e2 |]
                 exp.Call (e1, op, args) :> exp
             let! r = manyFold e1 folder (attempt (tuple2 (skipIgnorableTokens >>. p2) (skipIgnorableTokens >>. p1)))
             return r

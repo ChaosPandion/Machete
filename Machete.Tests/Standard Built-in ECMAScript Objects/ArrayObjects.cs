@@ -80,13 +80,20 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.4.4.8 Array.prototype.reverse ( )")]
         public void Test15448()
         {
-            Assert.True(false);
+            ExpectString(@"[1,2,3].reverse();", "3,2,1");
         }
 
         [Fact(DisplayName = "15.4.4.9 Array.prototype.shift ( )")]
         public void Test15449()
         {
-            Assert.True(false);
+            ExpectString(@"
+                (function() {
+                    var a = [1, 2];
+                    var v = a.shift();
+                    if (v !== 1) return 'Wrong Value: ' + l;
+                    return a; 
+                })();
+            ", "2");
         }
 
         [Fact(DisplayName = "15.4.4.10 Array.prototype.slice (start, end)")]
@@ -110,19 +117,26 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.4.4.13 Array.prototype.unshift ( [ item1 [ , item2 [ , … ] ] ] )")]
         public void Test154413()
         {
-            Assert.True(false);
+            ExpectString(@"
+                (function() {
+                    var a = [3,4];
+                    var l = a.unshift(1, 2);
+                    if (l !== 4) return 'Wrong Length: ' + l;
+                    return a; 
+                })();
+            ", "1,2,3,4");
         }
 
         [Fact(DisplayName = "15.4.4.14 Array.prototype.indexOf ( searchElement [ , fromIndex ] )")]
         public void Test154414()
         {
-            Assert.True(false);
+            ExpectDouble("[1,2,3,4,5].indexOf(3)", 2.0);
         }
 
         [Fact(DisplayName = "15.4.4.15 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )")]
         public void Test154415()
         {
-            Assert.True(false);
+            ExpectDouble("[1,4,3,4,5].lastIndexOf(4)", 3.0);
         }
 
         [Fact(DisplayName = "15.4.4.16 Array.prototype.every ( callbackfn [ , thisArg ] )")]
