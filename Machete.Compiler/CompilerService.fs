@@ -74,7 +74,7 @@ type CompilerService (environment:IEnvironment) as this =
                 return ()
             | Some r -> return ()
             | None ->
-                let! r = opt evalLineTerminator 
+                let! r = opt (evalLineTerminator <|> previousCharSatisfies CharSets.isLineTerminator)
                 match r with
                 | Some r -> return ()
                 | None ->
@@ -800,7 +800,7 @@ type CompilerService (environment:IEnvironment) as this =
                         | _ -> false, true
                     | _ -> false, true
                 | _ -> false, true
-            let! e, currentState = tuple2 (evalExpression .>> skipStatementTerminator) getUserState
+            let! e, currentState = tuple2 (evalExpression .>> skipStatementTerminator) getUserState            
             let strict, endOfPrologue = currentState.strict.Head 
             if not strict && not endOfPrologue then 
                 let strict, endOfPrologue = check e

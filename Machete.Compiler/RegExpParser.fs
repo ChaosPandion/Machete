@@ -71,10 +71,10 @@ module RegExpParser =
             
     let private characterRange (a:string) (b:string) (parseState:ParseState) =
         let notOneCharFormat = "The value '{0}' cannot {1} a character class range."
-        if a.Length > 0 then
+        if a.Length > 1 then
             let msg = String.Format (notOneCharFormat, a, "start")
             raise (parseState.environment.CreateSyntaxError msg)
-        elif b.Length > 0 then
+        elif b.Length > 1 then
             let msg = String.Format (notOneCharFormat, a, "end")
             raise (parseState.environment.CreateSyntaxError msg)
         let a = a.[0]
@@ -227,8 +227,8 @@ module RegExpParser =
             let! min, max = evalQuantifierPrefix
             let! c = opt (pchar '?')
             match c with
-            | Some _ -> return { min = min; max = max; greedy = true }
-            | None -> return { min = min; max = max; greedy = false }
+            | Some _ -> return { min = min; max = max; greedy = false }
+            | None -> return { min = min; max = max; greedy = true }
         }) state
         
     and private evalQuantifierPrefix state = 
@@ -321,14 +321,7 @@ module RegExpParser =
         }) state
         
     and private evalPatternCharacter state =  
-        (parse {
-            let! c = opt (anyOf "^$\\.*+?()[]{}|")
-            match c with
-            | None ->
-                let! c = anyChar
-                return c
-            | _ -> ()
-        }) state
+        (noneOf "^$\\.*+?()[]{}|") state
         
     and private evalAtomEscape state = 
         let outOfRangeFormat = "The number {0} is not a valid capturing group{1}."
@@ -488,15 +481,7 @@ module RegExpParser =
         (pstring "-" <|> evalClassAtomNoDash) state
         
     and private evalClassAtomNoDash state = 
-        (parse {
-            let! c = opt (anyOf "\\]-")
-            match c with
-            | None -> return c |> string
-            | Some '\\' ->
-                let! r = evalClassEscape
-                return r
-            | _ -> ()
-        }) state
+        ((noneOf "\\]-" |>> string) <|> (skipChar '\\' >>. evalClassEscape)) state
         
     and private evalClassEscape state =
         let decimalEscape state =
@@ -513,7 +498,7 @@ module RegExpParser =
         (decimalEscape <|> pstring "b" <|> evalCharacterEscape <|> evalCharacterClassEscape) state
 
     let private evalFlags (environment:IEnvironment) (flags:string) =
-        let tooManyCharacters = "There cannot be more than 3 characters in the flags parameter: '{1}'"
+        let tooManyCharacters = "There cannot be more than 3 characters in the flags parameter: '{0}'"
         let multipleFlagFormat = "The '{0}' flag cannot appear more than once: '{1}'"
         if flags.Length > 3 then raise (environment.CreateSyntaxError (String.Format (tooManyCharacters, flags)))
         let result = flags |> Seq.countBy id |> Map.ofSeq

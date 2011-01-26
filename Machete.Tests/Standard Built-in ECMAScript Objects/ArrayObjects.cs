@@ -99,19 +99,33 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.4.4.10 Array.prototype.slice (start, end)")]
         public void Test154410()
         {
-            Assert.True(false);
+            ExpectString(@"
+                (function() {
+                    var a = [1, 2, 3, 4, 5];
+                    var r = a.slice(2, 4);
+                    return a.toString() + ',' + r.toString();
+                })();
+            ", "1,2,3,4,5,3,4");
         }
 
         [Fact(DisplayName = "15.4.4.11 Array.prototype.sort (comparefn)")]
         public void Test154411()
         {
-            Assert.True(false);
+            ExpectString(@"[3, 2, 1].sort(function(x, y) { return x - y; });", "1,2,3");
         }
 
         [Fact(DisplayName = "15.4.4.12 Array.prototype.splice (start, deleteCount [ , item1 [ , item2 [ , … ] ] ] )")]
         public void Test154412()
         {
-            Assert.True(false);
+            ExpectString(@"
+                (function() {
+                    var a = [1, 2, 3, 4, 5];
+                    var d = a.splice(4, 2, 99);
+                    if (d.length !== 1 || d[0] !== 5)
+                        return 'The deleted array is incorrect: ' + d;
+                    return a;
+                })();
+            ", "1,2,3,4,99");
         }
 
         [Fact(DisplayName = "15.4.4.13 Array.prototype.unshift ( [ item1 [ , item2 [ , … ] ] ] )")]

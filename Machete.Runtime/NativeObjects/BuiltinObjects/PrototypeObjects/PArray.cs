@@ -3,6 +3,8 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System;
 using System.Text;
 using System.Globalization;
+using System.Linq.Expressions;
+using System.Collections.Generic;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -319,85 +321,128 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 
         private static IDynamic Slice(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-        //    throw new NotImplementedException();
-        //    //var result = (ArrayObject)ArrayConstructor.Instance.Value.Construct(Args.Empty);
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var start = Math.Floor(args[0].ToNumberPrimitive().Value);
-        //    //var end = args[1].IsUndefined ? length : Math.Floor(args[1].ToNumberPrimitive().Value);
-        //    //var currentIndex = (int)(start < 0 ? Math.Max(length + start, 0) : Math.Min(start, length)) - 1;
-        //    //var endIndex = (int)(end < 0 ? Math.Max(length + end, 0) : Math.Min(end, length));
-        //    //var splicedIndex = 0;
+            var result = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var length = (uint)obj.Get("length").ConvertToNumber().BaseValue;
+            var start = Math.Floor(args[0].ConvertToNumber().BaseValue);
+            var end = args[1] is IUndefined ? length : Math.Floor(args[1].ConvertToNumber().BaseValue);
+            var currentIndex = (int)(start < 0 ? Math.Max(length + start, 0) : Math.Min(start, length)) - 1;
+            var endIndex = (int)(end < 0 ? Math.Max(length + end, 0) : Math.Min(end, length));
+            var splicedIndex = 0;
 
-        //    //while (++currentIndex < endIndex)
-        //    //{
-        //    //    if (obj.HasProperty(currentIndex.ToString()))
-        //    //    {
-        //    //        result.DefineOwnProperty((splicedIndex++).ToString(), Property.Create(obj.Get(currentIndex.ToString()), true, true, true), false);
-        //    //    }
-        //    //}
+            while (++currentIndex < endIndex)
+            {
+                if (obj.HasProperty(currentIndex.ToString()))
+                {
+                    var key = currentIndex.ToString();
+                    var value = obj.Get(key);
+                    var desc = environment.CreateDataDescriptor(value, true, true,true);
+                    result.DefineOwnProperty((splicedIndex++).ToString(), desc, false);
+                }
+            }
 
-        //    //return result;
+            return result;
         }
 
         private static IDynamic Sort(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
+            var obj = environment.Context.ThisBinding.ConvertToObject();
+            var len = (uint)obj.Get("length").ConvertToUInt32().BaseValue;
+            var comparefn = args[0];
 
-        //    //var obj = engine.Context.ThisBinding.ToObject();
-        //    //var length = (uint)obj.Get("length").ToNumberPrimitive().Value;
-        //    //var callback = args[0]; // function(x, y) { }
-        //    //var isSparse = false;
-        //    //var hasNonConfigurable = false;
-        //    //var hasAccessor = false;
-        //    //var hasNonWritable = false;
-        //    //var protoHasProp = false;
-        //    //var defined = false;
+            var sortCompare = new Func<uint, uint, IDynamic>((j, k) =>
+            {
+                var jString = j.ToString();
+                var kString = k.ToString();
+                var hasJ = obj.HasProperty(jString);
+                var hasK = obj.HasProperty(kString);
+                if (!hasJ || !hasK)
+                {
+                    if (!hasJ && !hasK) return environment.CreateNumber(0);
+                    else if (!hasJ) return environment.CreateNumber(1);
+                    else return environment.CreateNumber(-1);
+                }
+                var x = obj.Get(jString);
+                var y = obj.Get(kString);
+                if (x is IUndefined || y is IUndefined)
+                {
+                    if (x is IUndefined && y is IUndefined) return environment.CreateNumber(0);
+                    else if (x is IUndefined) return environment.CreateNumber(1);
+                    else return environment.CreateNumber(-1);
+                }
 
-        //    //for (int i = 0; i < length; i++)
-        //    //{
-        //    //    var prop = obj.GetOwnProperty(i.ToString());
-        //    //    if (prop.IsUndefined)
-        //    //    {
-        //    //        isSparse = true;
-        //    //    }
-        //    //    else
-        //    //    {
-        //    //        if (prop.IsData)
-        //    //        {
-        //    //            if (!prop.Configurable.ToBooleanPrimitive())
-        //    //            {
-        //    //                hasNonConfigurable = true;
-        //    //            }
-        //    //            if (!prop.Writable.ToBooleanPrimitive())
-        //    //            {
-        //    //                hasNonWritable = true;
-        //    //            }
-        //    //        }
-        //    //        else if (prop.IsAccessor)
-        //    //        {
-        //    //            hasAccessor = true;
-        //    //        }
-        //    //    }
-        //    //}
+                if (comparefn.TypeCode != LanguageTypeCode.Undefined)
+                {
+                    var callable = comparefn as ICallable;
+                    if (callable == null)
+                    {
+                        throw environment.CreateTypeError("");
+                    }
+                    return callable.Call(environment, environment.Undefined, environment.CreateArgs(new[] { x, y }));
+                }
 
-        //    //if (!callback.IsUndefined)
-        //    //{
-        //    //    var proto = obj.Prototype;
-        //    //    if (proto != null)
-        //    //    {
-        //    //        for (int i = 0; i < length; i++)
-        //    //        {
-        //    //            if (proto.HasProperty(i.ToString()))
-        //    //            {
-        //    //                protoHasProp = true;
-        //    //            }
-        //    //        }
-        //    //    }
-        //    //}
+                var xString = x.ConvertToString();
+                var yString = y.ConvertToString();
+                var xLess = xString.Op_Lessthan(yString);
+                if (((IBoolean)xLess).BaseValue) return environment.CreateNumber(-1);
+                var yLess = yString.Op_Lessthan(xString);
+                if (((IBoolean)yLess).BaseValue) return environment.CreateNumber(1);
+                return environment.CreateNumber(0);
+            });
 
-        //    //defined = (isSparse && (hasNonConfigurable || hasNonWritable || hasAccessor || protoHasProp));
+            var items = new List<IDynamic>();
+            for (uint i = 0; i < len; i++)
+            {
+                var key = i.ToString();
+                if (obj.HasProperty(key))
+                {
+                    var value = obj.Get(key);
+                    items.Add(value);
+                    obj.Delete(key, true);
+                }
+            }
+
+            items.Sort((x, y) =>
+            {
+                if (x is IUndefined || y is IUndefined)
+                {
+                    if (x is IUndefined && y is IUndefined) return 0;
+                    else if (x is IUndefined) return 1;
+                    else return -1;
+                }
+
+                if (comparefn.TypeCode != LanguageTypeCode.Undefined)
+                {
+                    var callable = comparefn as ICallable;
+                    if (callable == null)
+                    {
+                        throw environment.CreateTypeError("");
+                    }
+                    var result = callable.Call(environment, environment.Undefined, environment.CreateArgs(new[] { x, y }));
+                    var number = result.ConvertToInteger();
+                    if (double.IsNaN(number.BaseValue) || double.IsInfinity(number.BaseValue))
+	                {
+		                return 0;
+	                }
+                    return (int)number.BaseValue;
+                }
+
+                var xString = x.ConvertToString();
+                var yString = y.ConvertToString();
+                var xLess = xString.Op_Lessthan(yString);
+                if (((IBoolean)xLess).BaseValue) return -1;
+                var yLess = yString.Op_Lessthan(xString);
+                if (((IBoolean)yLess).BaseValue) return 1;
+                return 0;
+            });
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                var key = i.ToString();
+                obj.Put(key, items[i], true);
+            }
+
+            return obj;
         }
 
         private static IDynamic Splice(IEnvironment environment, IArgs args)
@@ -410,7 +455,71 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             var actualStart = start < 0 ? (int)Math.Max(len + start, 0) : (int)Math.Min(start, len);
             var actualDeleteCount = (int)Math.Min(Math.Max(deleteCount, 0), len - actualStart);
 
-            throw new NotImplementedException();
+            for (var k = 0; k < actualDeleteCount; k++)
+            {
+                var from = (actualStart + k).ToString();
+                if (obj.HasProperty(from))
+                {
+                    var fromValue = obj.Get(from);
+                    var desc = environment.CreateDataDescriptor(fromValue, true, true, true);
+                    var key = k.ToString();
+                    a.DefineOwnProperty(key, desc, false);
+                }
+            }
+
+            var itemCount = 0;
+            if (args.Count > 2)
+            {
+                itemCount = args.Count;
+            }
+
+            if (itemCount < actualDeleteCount)
+            {
+                var limit = len - actualDeleteCount;
+                for (var k = 0; k < limit; k++)
+                {
+                    var from = (k + actualDeleteCount).ToString();
+                    var to = (k + itemCount).ToString();
+                    if (!obj.HasProperty(from))
+                    {
+                        obj.Delete(to, true);
+                    }
+                    else
+                    {
+                        var fromValue = obj.Get(from);
+                        obj.Put(to, fromValue, true);
+                    }
+                }
+                var deleteLimit = len - actualDeleteCount + itemCount;
+                for (var k = len; k > deleteLimit; k--)
+                {
+                    obj.Delete((k - 1).ToString(), true);
+                }
+            }
+            else if (itemCount > actualDeleteCount)
+            {
+                for (var k = len - actualDeleteCount; k > actualStart; k--)
+                {
+                    var from = (k + actualDeleteCount - 1).ToString();
+                    var to = (k + itemCount - 1).ToString();
+                    if (!obj.HasProperty(from))
+                    {
+                        obj.Delete(to, true);
+                    }
+                    else
+                    {
+                        var fromValue = obj.Get(from);
+                        obj.Put(to, fromValue, true);
+                    }
+                }
+            }
+
+            for (int k = actualStart, i = 2; i < args.Count; k++, i++)
+            {
+                obj.Put(k.ToString(), args[i], true);
+            }
+
+            return a;
         }
 
         private static IDynamic Unshift(IEnvironment environment, IArgs args)

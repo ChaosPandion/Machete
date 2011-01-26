@@ -288,13 +288,13 @@ module InputElementParsers =
         }) state
     and evalRegularExpressionFirstChar state =
         choice [|
-            satisfy (fun c -> c <> '*' && c <> '\\' && c <> '/' && c <> ']') |>> string
+            satisfy (fun c -> c <> '*' && c <> '\\' && c <> '/' && c <> '[') |>> string
             evalRegularExpressionBackslashSequence
             evalRegularExpressionClass
         |] state
     and evalRegularExpressionChar state =
         choice [|
-            satisfy (fun c -> c <> '\\' && c <> '/' && c <> ']') |>> string
+            satisfy (fun c -> c <> '\\' && c <> '/' && c <> '[') |>> string
             evalRegularExpressionBackslashSequence
             evalRegularExpressionClass
         |] state
@@ -302,7 +302,7 @@ module InputElementParsers =
         (parse {
             do! skipChar '\\'
             let! r = evalRegularExpressionNonTerminator
-            return r |> string
+            return "\\" + r |> string
         }) state
     and evalRegularExpressionNonTerminator state =
         (parse {
@@ -315,7 +315,7 @@ module InputElementParsers =
             do! skipChar '['
             let! r = evalRegularExpressionClassChars
             do! skipChar ']'
-            return r
+            return "[" + r + "]"
         }) state
     and evalRegularExpressionClassChars state =
         (parse {

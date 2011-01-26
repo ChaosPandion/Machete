@@ -92,14 +92,15 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             array.DefineOwnProperty("input", environment.CreateDataDescriptor(environment.CreateString(s), true, true, true), true);
             array.DefineOwnProperty("length", environment.CreateDataDescriptor(environment.CreateNumber(n + 1), null, null, null), true);
 
-            var str = environment.CreateString(result.matchState.input.Substring(beginIndex, result.matchState.endIndex - beginIndex));
-            var desc = environment.CreateDataDescriptor(str, true, true, true);
+            IDynamic value = environment.CreateString(result.matchState.input.Substring(beginIndex, result.matchState.endIndex - beginIndex));
+            var desc = environment.CreateDataDescriptor(value, true, true, true);
             array.DefineOwnProperty("0", desc, true);
 
             for (int index = 0; index < n; index++)
             {
-                str = environment.CreateString(captures[index]);
-                desc = environment.CreateDataDescriptor(str, true, true, true);
+                var v = captures[index];
+                value = v == null ? (IDynamic)environment.Undefined : (IDynamic)environment.CreateString(v);
+                desc = environment.CreateDataDescriptor(value, true, true, true);
                 array.DefineOwnProperty((index + 1).ToString(), desc, true);
             }
 

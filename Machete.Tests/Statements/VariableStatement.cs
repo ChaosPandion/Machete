@@ -56,12 +56,5 @@ namespace Machete.Tests
             Assert.True((bool)Engine.ExecuteScript("delete y"));
             Assert.True((bool)Engine.ExecuteScript("delete z"));
         }
-
-        [Fact(DisplayName = "12.2.1 Strict Mode Restrictions")]
-        public void Test1221()
-        {
-            Assert.IsAssignableFrom<Exception>(Engine.ExecuteScript("'use strict'; var eval = 1;"));
-            Assert.IsAssignableFrom<Exception>(Engine.ExecuteScript("'use strict'; var arguments = 1;"));
-        }
     }
 }
