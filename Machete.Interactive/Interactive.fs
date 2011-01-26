@@ -24,7 +24,7 @@ module Interactive =
     
     let private engine = new Machete.Engine()
     let private newLine = "\n"  
-    let private message = "Machete Interactive 1.0.0.0\n\n"
+    let private message = "Machete Interactive " + Machete.AssemblyInfo.Version + "\n\n"
     let private tab = "    "
     let private messageColor = ConsoleColor.Cyan
     let private defaultColor = ConsoleColor.Gray
