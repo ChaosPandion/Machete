@@ -153,6 +153,18 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
             return environment.CreateString(Encode(environment, componentString, unescapedURIComponentSet));
         }
 
+        [BuiltinFunction("assert", "condition", "message"), DataDescriptor(false, false, false)]
+        internal static IDynamic Assert(IEnvironment environment, IArgs args)
+        {
+            var condition = args[0].ConvertToBoolean().BaseValue;
+            if (!condition)
+            {
+                var message = args[1].ConvertToString().BaseValue;
+                throw environment.CreateError(message);
+            }
+            return environment.Undefined;
+        }
+
         internal static string Encode(IEnvironment environment, string value, string unescapedSet)
         {
             byte[] octets;

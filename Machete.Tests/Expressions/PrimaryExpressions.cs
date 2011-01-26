@@ -32,11 +32,117 @@ namespace Machete.Tests
             Assert.Equal("1,2,3,4,5,,", (string)Engine.ExecuteScript("[1, 2, 3, 4, 5,,,]"));
         }
 
-        [Fact(DisplayName = "11.1.5 Object Initialiser")]
-        public void Test1115()
+        [Fact(DisplayName = "11.1.5 Object Initialiser - Empty")]
+        public void Test1115A()
         {
             Assert.Equal("object", (string)Engine.ExecuteScript("typeof ({})"));
             Assert.True((bool)Engine.ExecuteScript("({}) instanceof Object"));
+        }
+
+        [Fact(DisplayName = "11.1.5 Object Initialiser - Data")]
+        public void Test1115B()
+        {
+            ExpectString(@"
+                (function() {
+                    var o = {
+                        a: 1,
+                        b: 2,
+                        c: 3
+                    };
+                    return Object.keys(o);
+                })();
+            ", "a,b,c");
+        }
+
+        [Fact(DisplayName = "11.1.5 Object Initialiser - Data With Dupe")]
+        public void Test1115C()
+        {
+            ExpectDouble(@"
+                (function() {
+                    var o = {
+                        a: 1,
+                        b: 2,
+                        c: 3,
+                        a: 4
+                    };
+                    return o.a;
+                })();
+            ", 4.0);
+        }
+
+        [Fact(DisplayName = "11.1.5 Object Initialiser - Getter")]
+        public void Test1115D()
+        {
+            ExpectDouble(@"
+                (function() {
+                    var num = 10,
+                        o = {
+                            get a() {
+                                return num;
+                            }
+                        };
+                    return o.a;
+                })();
+            ", 10.0);
+        }
+
+        [Fact(DisplayName = "11.1.5 Object Initialiser - Setter")]
+        public void Test1115E()
+        {
+            ExpectDouble(@"
+                (function() {
+                    var num = 10,
+                        o = {
+                            set a(v) {
+                                num = v;
+                            }
+                        };
+                    o.a = 100;
+                    return num;
+                })();
+            ", 100.0);
+        }
+
+        [Fact(DisplayName = "11.1.5 Object Initialiser - Getter and Setter")]
+        public void Test1115F()
+        {
+            ExpectDouble(@"
+                (function() {
+                    var num = 10,
+                        o = {
+                            get a() {
+                                return num;
+                            },
+                            set a(v) {
+                                num = v;
+                            }
+                        };
+                    var r = o.a;
+                    o.a = 40;
+                    return o.a + r;
+                })();
+            ", 50.0);
+        }
+
+        [Fact(DisplayName = "11.1.5 Object Initialiser - Getter, Setter, Data ")]
+        public void Test1115G()
+        {
+            ExpectDouble(@"
+                (function() {
+                    var o = {
+                        num: 10,
+                        get a() {
+                            return this.num;
+                        },
+                        set a(v) {
+                            this.num = v;
+                        }
+                    };
+                    var r = o.a;
+                    o.a = 40;
+                    return o.num + o.a + r;
+                })();
+            ", 90.0);
         }
 
         [Fact(DisplayName = "11.1.6 The Grouping Operator")]

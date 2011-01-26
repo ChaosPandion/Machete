@@ -223,61 +223,10 @@ namespace Machete.Runtime
             return new SReference(this, @base, name, strict);
         }
 
-
-        //public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code)
-        //{
-        //    return CreateFunction(formalParameterList, strict, code, GlobalEnvironment);
-        //}
-
-        //public IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope)
-        //{
-        //    // 13.2 Creating Function Objects 
-
-        //    var f = new NFunction(this);
-        //    {
-        //        f.FormalParameterList = formalParameterList;
-        //        f.Code = code;
-        //        f.Strict = strict;
-        //        f.Scope = scope;
-        //        f.Initialize();
-        //    }
-        //    return f;
-        //}
-
-
-
-
-
-        //public IPropertyDescriptor CreateGenericDescriptor()
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //public IPropertyDescriptor CreateGenericDescriptor(bool? enumerable)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
         public IPropertyDescriptor CreateGenericDescriptor(bool? enumerable, bool? configurable)
         {
             throw new NotImplementedException();
         }
-
-
-        //public IPropertyDescriptor CreateDataDescriptor(IDynamic value)
-        //{
-        //    return CreateDataDescriptor(value, false, false, false);
-        //}
-
-        //public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable)
-        //{
-        //    return CreateDataDescriptor(value, writable, false, false);
-        //}
-
-        //public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable)
-        //{
-        //    return CreateDataDescriptor(value, writable, enumerable, false);
-        //}
 
         public IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable, bool? configurable)
         {
@@ -290,17 +239,6 @@ namespace Machete.Runtime
             };
         }
 
-
-        //public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set)
-        //{
-        //    return CreateAccessorDescriptor(get, set, false, false);
-        //}
-
-        //public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable)
-        //{
-        //    return CreateAccessorDescriptor(get, set, enumerable, false);
-        //}
-
         public IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable, bool? configurable)
         {
             return new SPropertyDescriptor()
@@ -311,8 +249,6 @@ namespace Machete.Runtime
                 Configurable = configurable
             };
         }
-
-
 
         public IExecutionContext EnterContext()
         {
@@ -329,80 +265,6 @@ namespace Machete.Runtime
         {
             throw new MacheteRuntimeException(thrown);
         }
-
-
-
-
-        //public IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict)
-        //{
-        //    return null;
-        //    //var obj = new NArguments(this);
-        //    //var len = CreateNumber(args.Count);
-        //    //var lenDesc = CreateDataDescriptor(len, true, false, true);
-        //    //var map = ObjectConstructor.Op_Construct(EmptyArgs);
-        //    //var mappedNames = new List<string>();
-        //    //var index = args.Count - 1;
-
-        //    //obj.Class = "Arguments";
-        //    //obj.Extensible = true;
-        //    //obj.Prototype = ObjectPrototype;
-        //    //obj.DefineOwnProperty("length", lenDesc, false);
-
-        //    //while (--index >= 0)
-        //    //{
-        //    //    var val = args[index];
-        //    //    var valDesc = CreateDataDescriptor(val, true, true, true);
-
-        //    //    obj.DefineOwnProperty(index.ToString(), valDesc, false);
-        //    //    if (index < formalParameterList.Count)
-        //    //    {
-        //    //        var name = formalParameterList[index];
-        //    //        if (!strict)
-        //    //        {
-        //    //            //var g = MakeArgGetter(name);
-        //    //            //var p = MakeArgSetter(name);
-        //    //            //var desc = CreateAccessorDescriptor(g, p, false, true);
-
-        //    //            //map.DefineOwnProperty(name, desc, false);
-        //    //            mappedNames.Add(name);
-        //    //        }
-        //    //    }
-        //    //}
-
-        //    //if (mappedNames.Count > 0)
-        //    //{
-        //    //    obj.ParameterMap = map;
-        //    //}
-
-        //    //if (!strict)
-        //    //{
-        //    //    var desc = CreateDataDescriptor(Context.CurrentFunction, true, false, true);
-        //    //    obj.DefineOwnProperty("callee", desc, false);
-        //    //}
-        //    //else
-        //    //{
-        //    //    var desc = CreateAccessorDescriptor(ThrowTypeErrorFunction, ThrowTypeErrorFunction, false, false);
-        //    //    obj.DefineOwnProperty("caller", desc, false);
-        //    //    obj.DefineOwnProperty("callee", desc, false);
-        //    //}
-
-        //    //return obj;
-        //}
-
-        //private IObject MakeArgGetter(string name)
-        //{
-        //    var fpl = ReadOnlyList<string>.Empty;
-        //    var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, "return " + name + ";"));
-        //    return CreateFunction(fpl, true, code, Context.VariableEnviroment);
-        //}
-
-        //private IObject MakeArgSetter(string name)
-        //{
-        //    var param = name + "_arg";
-        //    var fpl = new ReadOnlyList<string>(param);
-        //    var code = new Lazy<Code>(() => _compiler.CompileFunctionCode(fpl, name + " = " + param + ";"));
-        //    return CreateFunction(fpl, true, code, Context.VariableEnviroment);
-        //}
 
         public IDynamic FromPropertyDescriptor(IPropertyDescriptor desc)
         {
@@ -594,61 +456,6 @@ namespace Machete.Runtime
                     throw CreateTypeError("'" + value + "' cannot be coerced into an object.");
             }
         }
-
-
-
-
-        //public void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
-        //{
-        //    BindFunctionDeclarations(functionDeclarations, strict, true);
-        //    BindVariableDeclarations(variableDeclarations, strict, true);
-        //}
-
-        //public void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict)
-        //{
-        //    BindFunctionDeclarations(functionDeclarations, strict, false);
-        //    BindVariableDeclarations(variableDeclarations, strict, false);
-        //}
-
-        //public void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args)
-        //{
-        //    //var currentFunction = Context.CurrentFunction;
-        //    //var formalParameterList = currentFunction.FormalParameterList;
-        //    //var strict = currentFunction.Strict;
-        //    //var record = (IDeclarativeEnvironmentRecord)Context.VariableEnviroment.Record;
-        //    //{
-        //    //    for (int i = 0; i < formalParameterList.Count; i++)
-        //    //    {
-        //    //        var name = formalParameterList[i];
-        //    //        if (!record.HasBinding(name))
-        //    //        {
-        //    //            record.CreateMutableBinding(name, false);
-        //    //        }
-        //    //        record.SetMutableBinding(name, args[i], strict);
-        //    //    }
-        //    //}
-
-        //    //BindFunctionDeclarations(functionDeclarations, strict, true);
-
-        //    //if (!record.HasBinding("arguments"))
-        //    //{
-        //    //    var argumentsObj = CreateArguments(formalParameterList, args, strict);                
-        //    //    if (strict) 
-        //    //    {
-        //    //        record.CreateImmutableBinding ("arguments");
-        //    //        record.InitializeImmutableBinding ("arguments", argumentsObj);
-        //    //    }
-        //    //    else
-        //    //    {
-        //    //        record.CreateMutableBinding ("arguments", false);
-        //    //        record.SetMutableBinding("arguments", argumentsObj, false);
-        //    //    }
-        //    //}
-
-        //    //BindVariableDeclarations(variableDeclarations, strict, true);
-        //}
-
-
 
         public void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings)
         {

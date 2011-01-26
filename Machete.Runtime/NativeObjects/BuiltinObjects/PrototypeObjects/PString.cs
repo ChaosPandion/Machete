@@ -277,29 +277,28 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         [BuiltinFunction("search", "regexp"), DataDescriptor(true, false, true)]
         internal static IDynamic Search(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-            //var o = environment.Context.ThisBinding;
-            //environment.CheckObjectCoercible(o);
-            //var s = o.ConvertToString().BaseValue;
-            //var regexpArg = args[0];
-            //var regexpObj = regexpArg as NRegExp;
-            //if (regexpObj == null)
-            //{
-            //    var constructor = (IConstructable)environment.RegExpConstructor;
-            //    var pattern = regexpArg.ConvertToString();
-            //    regexpObj = (NRegExp)constructor.Construct(environment, environment.CreateArgs(pattern));
-            //}
-            //var regExp = regexpObj.RegExp;
-            //var index = 0;
-            //do
-            //{
-            //    var result = regExp.Match(s, index);
-            //    if (result.Succeeded)
-            //    {
-            //        return environment.CreateNumber(index);
-            //    }
-            //} while (++index < s.Length);
-            //return environment.CreateNumber(-1);
+            var o = environment.Context.ThisBinding;
+            environment.CheckObjectCoercible(o);
+            var s = o.ConvertToString().BaseValue;
+            var regexpArg = args[0];
+            var regexpObj = regexpArg as NRegExp;
+            if (regexpObj == null)
+            {
+                var constructor = (IConstructable)environment.RegExpConstructor;
+                var pattern = regexpArg.ConvertToString();
+                regexpObj = (NRegExp)constructor.Construct(environment, environment.CreateArgs(new [] { pattern }));
+            }
+            var regExp = regexpObj.RegExpMatcher;
+            var index = 0;
+            do
+            {
+                var result = regExp(s, index);
+                if (result.success)
+                {
+                    return environment.CreateNumber(index);
+                }
+            } while (++index < s.Length);
+            return environment.CreateNumber(-1);
         }
 
         [BuiltinFunction("slice", "start", "end"), DataDescriptor(true, false, true)]

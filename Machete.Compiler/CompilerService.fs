@@ -156,12 +156,12 @@ type CompilerService (environment:IEnvironment) as this =
                 let rec build result items (dataSet:Set<string>) (getterSet:Set<string>) (setterSet:Set<string>) =
                     match items with
                     | [] -> result
-                    | (propType, name, formalParams:option<ReadOnlyList<string>>, expression:option<exp>, functionBody:option<Expression<Code>>, strict)::rest ->
+                    | (propType, name, expression)::rest ->
                         match propType with
                         | "data" when s.strict.Head |> fst && dataSet.Contains name ->
                             raise (environment.CreateSyntaxError "")
                         | "data" ->
-                            let getValue = exp.Property (expression.Value, Reflection.IDynamicMemberInfo.Value) :> exp
+                            let getValue = exp.Property (expression, Reflection.IDynamicMemberInfo.Value) :> exp
                             let args = [| getValue; Expressions.NullableBoolTrue :> exp; Expressions.NullableBoolTrue :> exp; Expressions.NullableBoolTrue :> exp |]
                             let createDesc = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateDataDescriptor, args) :> exp
                             let result = (defineOwnProperty name createDesc):>exp :: result
@@ -171,12 +171,7 @@ type CompilerService (environment:IEnvironment) as this =
                         | "getter" when getterSet.Contains name ->
                             raise (environment.CreateSyntaxError "")
                         | "getter" ->
-                            let formalParams = exp.Constant (ReadOnlyList<string>.Empty) :> exp
-                            let strict = exp.Constant (strict) :> exp
-                            let code = exp.Constant (lazy(functionBody.Value.Compile)) :> exp
-                            let args = [| formalParams; strict; code; Expressions.LexicalEnviroment :> exp |]  
-                            let createFunction = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
-                            let args = [| createFunction; Expressions.NullableBoolTrue :> exp; Expressions.NullableBoolTrue :> exp; Expressions.NullableBoolTrue :> exp  |]
+                            let args = [| expression; Expressions.IDynamicNull :> exp; Expressions.NullableBoolTrue :> exp; Expressions.NullableBoolTrue :> exp  |]
                             let createDesc = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateAccessorDescriptor, args) :> exp
                             let result = (defineOwnProperty name createDesc):>exp :: result
                             build result items.Tail dataSet (getterSet.Add name) setterSet
@@ -184,15 +179,8 @@ type CompilerService (environment:IEnvironment) as this =
                             raise (environment.CreateSyntaxError "")
                         | "setter" when setterSet.Contains name ->
                             raise (environment.CreateSyntaxError "")
-                        | "setter" when strict && (formalParams.Value.[0] = "eval" || formalParams.Value.[0] = "arguments") ->
-                            raise (environment.CreateSyntaxError "")
                         | "setter" ->
-                            let formalParams = exp.Constant (formalParams.Value) :> exp
-                            let strict = exp.Constant (strict) :> exp
-                            let code = exp.Constant (lazy(functionBody.Value.Compile)) :> exp
-                            let args = [| formalParams; strict; code; Expressions.LexicalEnviroment :> exp |]  
-                            let createFunction = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
-                            let args = [| createFunction; Expressions.NullableBoolTrue :> exp; Expressions.NullableBoolTrue :> exp; Expressions.NullableBoolTrue :> exp  |]
+                            let args = [| Expressions.IDynamicNull :> exp; expression; Expressions.NullableBoolTrue :> exp; Expressions.NullableBoolTrue :> exp  |]
                             let createDesc = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateAccessorDescriptor, args) :> exp
                             let result = (defineOwnProperty name createDesc):>exp :: result
                             build result items.Tail dataSet getterSet (setterSet.Add name)
@@ -204,7 +192,45 @@ type CompilerService (environment:IEnvironment) as this =
         (sepBy (attempt (skipEval evalPropertyAssignment)) (attempt skipComma)) state
 
     and evalPropertyAssignment state =
-        (evalValuePropertyAssignment <|> evalGetPropertyAssignment <|> evalSetPropertyAssignment) state
+        (parse {
+            let! name = opt evalIdentifierName
+            match name with
+            | Some "get" ->
+                let! oldState = getUserState
+                let! name = evalPropertyName .>> skipToken "(" .>> skipToken ")"
+                let! (functionBody:Expression<Code>) = skipToken "{" >>. evalFunctionBody .>> skipToken "}"                
+                let! (newState:CompileState) = getUserState
+                let variableDeclarations = ReadOnlyList<string>(newState.variables |> List.rev)
+                let functionDeclarations = ReadOnlyList<FunctionDeclaration>(newState.functions |> List.rev)
+                let strict = newState.strict.Head |> fst
+                let exC = ExecutableCode (functionBody.Compile(), variableDeclarations, functionDeclarations, strict)
+                let args = [| exp.Constant(exC):>exp; exp.Constant(ReadOnlyList<string>.Empty) :> exp; Expressions.LexicalEnviroment :> exp |]
+                let func = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
+                do! setUserState oldState  
+                return "getter", name, func
+            | Some "set" ->
+                let! oldState = getUserState
+                let! name = evalPropertyName
+                let! formalParameters = betweenParentheses evalPropertySetParameterList
+                let! (functionBody:Expression<Code>) = skipToken "{" >>. evalFunctionBody .>> skipToken "}"               
+                let! (newState:CompileState) = getUserState
+                let variableDeclarations = ReadOnlyList<string>(newState.variables |> List.rev)
+                let functionDeclarations = ReadOnlyList<FunctionDeclaration>(newState.functions |> List.rev)
+                let strict = newState.strict.Head |> fst
+                let exC = ExecutableCode (functionBody.Compile(), variableDeclarations, functionDeclarations, strict)
+                let args = [| exp.Constant(exC):>exp; exp.Constant(formalParameters) :> exp; Expressions.LexicalEnviroment :> exp |]
+                let func = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
+                do! setUserState oldState  
+                return "setter", name, func
+            | Some name ->
+                let! value = skipToken ":" >>. evalAssignmentExpression
+                return "data", name, value
+            | None -> ()
+        }) state
+
+
+
+//        (evalValuePropertyAssignment <|> evalGetPropertyAssignment <|> evalSetPropertyAssignment) state
 
     and evalValuePropertyAssignment state =
         (parse {
@@ -763,6 +789,8 @@ type CompilerService (environment:IEnvironment) as this =
             let reference = exp.Convert (reference, typeof<IDynamic>) :> exp
             let reference = exp.Property (reference, Reflection.IDynamicMemberInfo.Value) :> exp
             let! e2 = skipIgnorableTokens >>. (parser <|> preturn (Expressions.Undefined :> exp))
+            let e2 = exp.Convert (e2, typeof<IDynamic>) :> exp
+            let e2 = exp.Property (e2, Reflection.IDynamicMemberInfo.Value) :> exp
             return exp.Assign (reference, e2) :> exp
         }) state
 

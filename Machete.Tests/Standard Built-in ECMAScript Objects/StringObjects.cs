@@ -93,7 +93,7 @@ namespace Machete.Tests
         {
             Assert.Equal("A", (string)Engine.ExecuteScript("'AAAA'.match('A')"));
             Assert.Equal("A", (string)Engine.ExecuteScript("'AAAA'.match(/A/)"));
-            Assert.Equal("A, A, A, A", (string)Engine.ExecuteScript("'AAAA'.match(/A/g)"));
+            Assert.Equal("A,A,A,A", (string)Engine.ExecuteScript("'AAAA'.match(/A/g)"));
         }
 
         [Fact(DisplayName = "15.5.4.11 String.prototype.replace (searchValue, replaceValue)")]
