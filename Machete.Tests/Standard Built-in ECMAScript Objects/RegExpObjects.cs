@@ -98,6 +98,25 @@ namespace Machete.Tests
             ExpectString("/\\t\\n\\v\\f\\r/.exec('\\u0009\\u000A\\u000B\\u000C\\u000D')", "\u0009\u000A\u000B\u000C\u000D");
         }
 
+        [Fact(DisplayName = "15.10  RegExp (Regular Expression) Objects: IdentityEscape")]
+        public void TestIdentityEscape()
+        {
+            ExpectString(@"/\^/.exec('^')", "^");
+            ExpectString(@"/\$/.exec('$')", "$");
+            ExpectString(@"/\\/.exec('\\')", "\\");
+            ExpectString(@"/\./.exec('.')", ".");
+            ExpectString(@"/\*/.exec('*')", "*");
+            ExpectString(@"/\+/.exec('+')", "+");
+            ExpectString(@"/\?/.exec('?')", "?");
+            ExpectString(@"/\(/.exec('(')", "(");
+            ExpectString(@"/\)/.exec(')')", ")");
+            ExpectString(@"/\[/.exec('[')", "[");
+            ExpectString(@"/\]/.exec(']')", "]");
+            ExpectString(@"/\{/.exec('{')", "{");
+            ExpectString(@"/\}/.exec('}')", "}");
+            ExpectString(@"/\|/.exec('|')", "|");
+        }
+
         [Fact(DisplayName = "15.10  RegExp (Regular Expression) Objects: /\\x0D/")]
         public void TestHexEscapeSequence()
         {

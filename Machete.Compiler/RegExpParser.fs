@@ -398,7 +398,7 @@ module RegExpParser =
         }) state
         
     and private evalIdentityEscape state = 
-        (pstring "\u200C" <|> pstring "\u200D" <|> parse {
+        (anyOf "\u200C\u200D$" |>> string <|> parse {
             let! r = notFollowedBy InputElementParsers.evalIdentifierPart >>. anyChar
             return r |> string
         }) state
