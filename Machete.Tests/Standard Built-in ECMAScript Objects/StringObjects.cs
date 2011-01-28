@@ -118,10 +118,10 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.5.4.14 String.prototype.split (separator, limit) ")]
         public void Test155414()
         {
-            Assert.Equal("A, @, B, @, C", (string)Engine.ExecuteScript("('A@B@C').split(/(@)/)"));
-            Assert.Equal("A, @, B, @", (string)Engine.ExecuteScript("('A@B@C').split(/(@)/, 4)"));
-            Assert.Equal("A, B, C", (string)Engine.ExecuteScript("('A@B@C').split('@')"));
-            Assert.Equal("A, B", (string)Engine.ExecuteScript("('A@B@C').split('@', 2)"));
+            Assert.Equal("A,@,B,@,C", (string)Engine.ExecuteScript("('A@B@C').split(/(@)/)"));
+            Assert.Equal("A,@,B,@", (string)Engine.ExecuteScript("('A@B@C').split(/(@)/, 4)"));
+            Assert.Equal("A,B,C", (string)Engine.ExecuteScript("('A@B@C').split('@')"));
+            Assert.Equal("A,B", (string)Engine.ExecuteScript("('A@B@C').split('@', 2)"));
         }
 
         [Fact(DisplayName = "15.5.4.15 String.prototype.substring (start, end)")]

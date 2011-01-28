@@ -200,6 +200,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //var s = dynS.BaseValue;
             //var searchValueArg = args[0];
             //var replaceValueArg = args[1];
+            //var proto = ((PRegExp)environment.RegExpPrototype);
 
             //var regExpObj = searchValueArg as NRegExp;
             //if (regExpObj != null)
@@ -213,8 +214,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //        var rStr = s;
             //        do
             //        {
-            //            var result = regExpObj.RegExp.Exec(s);
-            //            if (!result.Succeeded) break;
+            //            var callArgs = environment.CreateArgs(new[] { environment.CreateString(rStr) });
+            //            var result = proto.ExecBuiltinFunction.Call(environment, regExpObj, callArgs);
+            //            if (result.TypeCode == LanguageTypeCode.Null)
+            //            {
+            //                break;
+            //            }
             //            rStr = RegExp.Replacer.Replace(rStr, result, replaceValue);
             //            index = result.Index;
             //        } while (index < s.Length);
@@ -320,70 +325,70 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         [BuiltinFunction("split", "separator", "limit"), DataDescriptor(true, false, true)]
         internal static IDynamic Split(IEnvironment environment, IArgs args)
         {
-            throw new NotImplementedException();
-            //var o = environment.Context.ThisBinding;
-            //environment.CheckObjectCoercible(o);
-            //var s = o.ConvertToString().BaseValue;
-            //var separatorArg = args[0];
-            //var limitArg = args[1];
-            //var array = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
+            var o = environment.Context.ThisBinding;
+            environment.CheckObjectCoercible(o);
+            var s = o.ConvertToString().BaseValue;
+            var separatorArg = args[0];
+            var limitArg = args[1];
+            var array = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
 
-            //int limit = 0, lower = 0, upper = 0, count = 0;
-            //IPropertyDescriptor desc;
-            //IString value;
+            int limit = 0, lower = 0, upper = 0, count = 0;
+            IPropertyDescriptor desc;
+            IString value;
 
-            //// Using int32 instead of uint32 due to limitations of .NET arrays.
-            //limit = limitArg is IUndefined ? int.MaxValue : (int)limitArg.ConvertToUInt32().BaseValue;            
-            //if (limit == 0)
-            //{
-            //    return array;
-            //}
+            // Using int32 instead of uint32 due to limitations of .NET arrays.
+            limit = limitArg is IUndefined ? int.MaxValue : (int)limitArg.ConvertToUInt32().BaseValue;
+            if (limit == 0)
+            {
+                return array;
+            }
 
-            //var separatorObj = separatorArg as NRegExp;
-            //if (separatorObj != null)
-            //{
-            //    do
-            //    {
-            //        var result = separatorObj.RegExp.Match(s, upper);
-            //        if (!result.Succeeded)
-            //        {
-            //            upper++;
-            //        }
-            //        else
-            //        {
-            //            upper = result.Index;
-            //            value = environment.CreateString(s.Substring(lower, upper - lower - 1));
-            //            desc = environment.CreateDataDescriptor(value, true, true, true);
-            //            array.DefineOwnProperty(count.ToString(), desc, true);
-            //            if (++count == limit) return array;
-            //            for (int i = 0; i < result.Length; i++)
-            //            {
-            //                value = environment.CreateString(result[i]);
-            //                desc = environment.CreateDataDescriptor(value, true, true, true);
-            //                array.DefineOwnProperty(count.ToString(), desc, true);
-            //                if (++count == limit) return array;
-            //            }
-            //            lower = upper;
-            //        }
-            //    } while (upper < s.Length);
-            //    value = environment.CreateString(s.Substring(lower));
-            //    desc = environment.CreateDataDescriptor(value, true, true, true);
-            //    array.DefineOwnProperty(count.ToString(), desc, true);
-            //}
-            //else
-            //{
-            //    var separatorStr = ((IString)separatorArg).BaseValue;
-            //    var pieces = s.Split(new[] { separatorStr }, StringSplitOptions.None);
-            //    for (int i = 0; i < pieces.Length; i++)
-            //    {
-            //        value = environment.CreateString(pieces[i]);
-            //        desc = environment.CreateDataDescriptor(value, true, true, true);
-            //        array.DefineOwnProperty(i.ToString(), desc, true);
-            //        if (++count == limit) return array;
-            //    }
-            //}
+            var separatorObj = separatorArg as NRegExp;
+            if (separatorObj != null)
+            {
+                do
+                {
+                    var result = separatorObj.RegExpMatcher(s, upper);
+                    if (!result.success)
+                    {
+                        upper++;
+                    }
+                    else
+                    {
+                        upper = result.matchState.endIndex;
+                        value = environment.CreateString(s.Substring(lower, upper - lower - 1));
+                        desc = environment.CreateDataDescriptor(value, true, true, true);
+                        array.DefineOwnProperty(count.ToString(), desc, true);
+                        if (++count == limit) return array;
+                        var captures = result.matchState.captures;
+                        for (int i = 0; i < captures.Length; i++)
+                        {
+                            value = environment.CreateString(captures[i]);
+                            desc = environment.CreateDataDescriptor(value, true, true, true);
+                            array.DefineOwnProperty(count.ToString(), desc, true);
+                            if (++count == limit) return array;
+                        }
+                        lower = upper;
+                    }
+                } while (upper < s.Length);
+                value = environment.CreateString(s.Substring(lower));
+                desc = environment.CreateDataDescriptor(value, true, true, true);
+                array.DefineOwnProperty(count.ToString(), desc, true);
+            }
+            else
+            {
+                var separatorStr = ((IString)separatorArg).BaseValue;
+                var pieces = s.Split(new[] { separatorStr }, StringSplitOptions.None);
+                for (int i = 0; i < pieces.Length; i++)
+                {
+                    value = environment.CreateString(pieces[i]);
+                    desc = environment.CreateDataDescriptor(value, true, true, true);
+                    array.DefineOwnProperty(i.ToString(), desc, true);
+                    if (++count == limit) return array;
+                }
+            }
 
-            //return array;
+            return array;
         }
 
         [BuiltinFunction("substring", "start", "end"), DataDescriptor(true, false, true)]

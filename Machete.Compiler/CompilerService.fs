@@ -196,63 +196,51 @@ type CompilerService (environment:IEnvironment) as this =
             let! name = opt evalIdentifierName
             match name with
             | Some "get" ->
-                let! oldState = getUserState
-                let! name = evalPropertyName .>> skipToken "(" .>> skipToken ")"
-                let! (functionBody:Expression<Code>) = skipToken "{" >>. evalFunctionBody .>> skipToken "}"                
-                let! (newState:CompileState) = getUserState
-                let variableDeclarations = ReadOnlyList<string>(newState.variables |> List.rev)
-                let functionDeclarations = ReadOnlyList<FunctionDeclaration>(newState.functions |> List.rev)
-                let strict = newState.strict.Head |> fst
-                let exC = ExecutableCode (functionBody.Compile(), variableDeclarations, functionDeclarations, strict)
-                let args = [| exp.Constant(exC):>exp; exp.Constant(ReadOnlyList<string>.Empty) :> exp; Expressions.LexicalEnviroment :> exp |]
-                let func = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
-                do! setUserState oldState  
-                return "getter", name, func
+                let! r = opt (attempt (skipToken ":"))
+                match r with
+                | Some _ ->
+                    let! value = evalAssignmentExpression
+                    return "data", "get", value
+                | None ->
+                    let! oldState = getUserState
+                    let! name = evalPropertyName .>> skipToken "(" .>> skipToken ")"
+                    let! (functionBody:Expression<Code>) = skipToken "{" >>. evalFunctionBody .>> skipToken "}"                
+                    let! (newState:CompileState) = getUserState
+                    let variableDeclarations = ReadOnlyList<string>(newState.variables |> List.rev)
+                    let functionDeclarations = ReadOnlyList<FunctionDeclaration>(newState.functions |> List.rev)
+                    let strict = newState.strict.Head |> fst
+                    let exC = ExecutableCode (functionBody.Compile(), variableDeclarations, functionDeclarations, strict)
+                    let args = [| exp.Constant(exC):>exp; exp.Constant(ReadOnlyList<string>.Empty) :> exp; Expressions.LexicalEnviroment :> exp |]
+                    let func = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
+                    do! setUserState oldState  
+                    return "getter", name, func
             | Some "set" ->
-                let! oldState = getUserState
-                let! name = evalPropertyName
-                let! formalParameters = betweenParentheses evalPropertySetParameterList
-                let! (functionBody:Expression<Code>) = skipToken "{" >>. evalFunctionBody .>> skipToken "}"               
-                let! (newState:CompileState) = getUserState
-                let variableDeclarations = ReadOnlyList<string>(newState.variables |> List.rev)
-                let functionDeclarations = ReadOnlyList<FunctionDeclaration>(newState.functions |> List.rev)
-                let strict = newState.strict.Head |> fst
-                let exC = ExecutableCode (functionBody.Compile(), variableDeclarations, functionDeclarations, strict)
-                let args = [| exp.Constant(exC):>exp; exp.Constant(formalParameters) :> exp; Expressions.LexicalEnviroment :> exp |]
-                let func = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
-                do! setUserState oldState  
-                return "setter", name, func
+                let! r = opt (attempt (skipToken ":"))
+                match r with
+                | Some _ ->
+                    let! value = evalAssignmentExpression
+                    return "data", "set", value
+                | None ->
+                    let! oldState = getUserState
+                    let! name = evalPropertyName
+                    let! formalParameters = betweenParentheses evalPropertySetParameterList
+                    let! (functionBody:Expression<Code>) = skipToken "{" >>. evalFunctionBody .>> skipToken "}"               
+                    let! (newState:CompileState) = getUserState
+                    let variableDeclarations = ReadOnlyList<string>(newState.variables |> List.rev)
+                    let functionDeclarations = ReadOnlyList<FunctionDeclaration>(newState.functions |> List.rev)
+                    let strict = newState.strict.Head |> fst
+                    let exC = ExecutableCode (functionBody.Compile(), variableDeclarations, functionDeclarations, strict)
+                    let args = [| exp.Constant(exC):>exp; exp.Constant(formalParameters) :> exp; Expressions.LexicalEnviroment :> exp |]
+                    let func = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp
+                    do! setUserState oldState  
+                    return "setter", name, func
             | Some name ->
                 let! value = skipToken ":" >>. evalAssignmentExpression
                 return "data", name, value
-            | None -> ()
-        }) state
-
-
-
-//        (evalValuePropertyAssignment <|> evalGetPropertyAssignment <|> evalSetPropertyAssignment) state
-
-    and evalValuePropertyAssignment state =
-        (parse {
-            let! e1, e3 = tuple2 (skipEval evalPropertyName) (skipToken ":" >>. evalAssignmentExpression)
-            return "data", e1, None, Some e3, None, false
-        }) state
-       
-    and evalGetPropertyAssignment state =
-        (parse {
-            let! e1 = skipToken "get" >>. evalPropertyName
-            do! skipToken "(" >>. skipToken ")"
-            let! e3 = skipToken "{" >>. evalFunctionBody .>> skipToken "}"
-            return "getter", e1, None, None, Some e3, false
-        }) state
-
-    and evalSetPropertyAssignment state =
-        (parse {
-            do! skipToken "set"
-            let! e1 = evalPropertyName
-            let! e2 = betweenParentheses evalPropertySetParameterList
-            let! e3 = betweenBraces evalFunctionBody
-            return "setter", e1, Some e2, None, Some e3, false
+            | None ->
+                let! name = evalPropertyName
+                let! value = skipToken ":" >>. evalAssignmentExpression
+                return "data", name, value
         }) state
                   
     and evalPropertyName state =
@@ -1299,7 +1287,7 @@ type CompilerService (environment:IEnvironment) as this =
 
     and evalFormalParameterList state =
         (parse {
-            let! r = sepBy (attempt (skipIgnorableTokens >>. evalIdentifier)) (skipToken ",")
+            let! r = sepBy (attempt (skipIgnorableTokens >>. evalIdentifier)) (attempt (skipToken ","))
             return ReadOnlyList<string> r
         }) state
 

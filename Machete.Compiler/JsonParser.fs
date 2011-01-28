@@ -54,30 +54,25 @@ module JsonParser =
         | 't' -> "\u0009"
         
     and private evalJsonNumber (state:FParsec.State<ParseState>) =
-        pipe4 evalSign evalDecimalIntegerLiteral evalJsonFraction evalExponentPart (completeJsonNumber state.UserState.environment) state
+        pipe4 evalSign evalDecimalIntegerLiteral evalJsonFraction (evalExponentPart <|> preturn 1.0) (completeJsonNumber state.UserState.environment) state
             
     and private completeJsonNumber environment signPart integralPart fractionalPart exponentPart  =
-        environment.CreateNumber (signPart * (integralPart + fractionalPart) * (10.0 ** exponentPart)) :> IDynamic
+        environment.CreateNumber (signPart * (integralPart + fractionalPart) * exponentPart) :> IDynamic
 
     and private evalJsonFraction state =
-        (pchar '.' >>. evalDecimalDigits -1.0 1.0) state
+        ((pchar '.' >>. evalDecimalDigits -1.0 1.0) <|> preturn 0.0) state
 
     and private evalSign state =
         ((pchar '-' |>> fun _ -> -1.0) <|> preturn 1.0) state
         
-    and private evalJsonNullLiteral (state:FParsec.State<ParseState>) =
+    and private evalJsonNullLiteralOrBooleanLiteral (state:FParsec.State<ParseState>) =
         (attempt <| parse {
             let! s = evalIdentifierName
             match s with
             | "null" -> return state.UserState.environment.Null :> IDynamic   
-        }) state
-        
-    and private evalJsonBooleanLiteral (state:FParsec.State<ParseState>) =
-        (attempt <| parse {
-            let! s = evalIdentifierName
-            match s with
             | "true" -> return state.UserState.environment.True :> IDynamic
-            | "false" -> return state.UserState.environment.False :> IDynamic  
+            | "false" -> return state.UserState.environment.False :> IDynamic 
+            | _ -> ()
         }) state
 
     let private skipEval parser state =
@@ -88,8 +83,7 @@ module JsonParser =
         
     and private evalJsonValue state =
         choice [|
-            evalJsonNullLiteral
-            evalJsonBooleanLiteral
+            evalJsonNullLiteralOrBooleanLiteral
             evalJsonObject
             evalJsonArray
             evalJsonString
@@ -115,7 +109,7 @@ module JsonParser =
         (tuple2 (skipEval evalJsonString) (skipEval (pchar ':') >>. skipEval evalJsonValue)) state
     
     and private evalJsonMemberList state = 
-        sepBy (skipEval evalJsonMember) (skipEval (pchar ',')) state
+        sepBy (skipEval evalJsonMember) (attempt (skipEval (pchar ','))) state
     
     and private evalJsonArray state = 
         ((skipEval (pchar '[') >>. (skipEval evalJsonElementList) .>> skipEval (pchar ']')) |>> completeJsonArray state.UserState.environment) state
@@ -133,7 +127,7 @@ module JsonParser =
         completeJsonArray 0 elements result
 
     and private evalJsonElementList state =
-        sepBy (skipEval evalJsonValue) (skipEval (pchar ',')) state
+        sepBy (skipEval evalJsonValue) (attempt (skipEval (pchar ','))) state
 
     let rec private walk (environment:IEnvironment) (reviver:ICallable) (holder:IObject) (name:string) : IDynamic =
         let value = holder.Get name

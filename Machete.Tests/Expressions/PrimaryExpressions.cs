@@ -23,13 +23,39 @@ namespace Machete.Tests
             Assert.Equal("test", (string)Engine.ExecuteScript("'test'"));
         }
 
-        [Fact(DisplayName = "11.1.4 Array Initialiser")]
-        public void Test1114()
+        [Fact(DisplayName = "11.1.4 Array Initialiser - Empty")]
+        public void Test1114A()
         {
-            Assert.Equal("1,2,3,4,5", (string)Engine.ExecuteScript("[1, 2, 3, 4, 5]"));
-            Assert.Equal(",,1,2,3,4,5", (string)Engine.ExecuteScript("[,,1, 2, 3, 4, 5]"));
-            Assert.Equal("1,,2,3,4,5", (string)Engine.ExecuteScript("[1,,2, 3, 4, 5]"));
-            Assert.Equal("1,2,3,4,5,,", (string)Engine.ExecuteScript("[1, 2, 3, 4, 5,,,]"));
+            ExpectString("[]", "");
+            ExpectDouble("[].length", 0.0);
+        }
+
+        [Fact(DisplayName = "11.1.4 Array Initialiser - Populated, No Elision")]
+        public void Test1114B()
+        {
+            ExpectString("[1,2,3,4,5]", "1,2,3,4,5");
+            ExpectDouble("[1,2,3,4,5].length", 5.0);
+        }
+
+        [Fact(DisplayName = "11.1.4 Array Initialiser - Populated, Leading Elision")]
+        public void Test1114C()
+        {
+            ExpectString("[,,1,2,3,4,5]", ",,1,2,3,4,5");
+            ExpectDouble("[,,1,2,3,4,5].length", 7.0);
+        }
+
+        [Fact(DisplayName = "11.1.4 Array Initialiser - Populated, Trailing Elision")]
+        public void Test1114D()
+        {
+            ExpectString("[1,2,3,4,5,,,]", "1,2,3,4,5,,");
+            ExpectDouble("[1,2,3,4,5,,,].length", 7.0);
+        }
+
+        [Fact(DisplayName = "11.1.4 Array Initialiser - Populated, Middle Elision")]
+        public void Test1114E()
+        {
+            ExpectString("[1,,2, 3, 4, 5]", "1,,2,3,4,5");
+            ExpectDouble("[1,,2, 3, 4, 5].length", 6.0);
         }
 
         [Fact(DisplayName = "11.1.5 Object Initialiser - Empty")]

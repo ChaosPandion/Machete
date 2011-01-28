@@ -64,7 +64,10 @@ module RegExpParser =
                 then StringComparison.InvariantCultureIgnoreCase 
                 else StringComparison.InvariantCulture
             let found = a.IndexOf (x.CurrentChar |> string, comp) > -1            
-            let success = invert || (found && not (invert && found))
+            let success = 
+                if invert
+                then not found
+                else found
             if success 
             then c (x.Move()) 
             else MatchResult.Failure x
@@ -158,7 +161,7 @@ module RegExpParser =
                 fun x c -> 
                     let d y = m2 y c
                     m1 x d
-            let! ms = many (attempt evalTerm)
+            let! ms = many (evalTerm)
             let result = ms |> List.reduce reduce
             return result
         }) state
@@ -329,7 +332,7 @@ module RegExpParser =
         let decimalEscape state =             
             let run n x c =
                 let cap = x.captures
-                let s = cap.[n]
+                let s = cap.[n - 1]
                 if s = null 
                 then c x
                 else
@@ -368,7 +371,7 @@ module RegExpParser =
             (evalCharacterEscape |>> fun x -> characterSetMatcher x false) state  
         let characterClassEscape state =
             (evalCharacterClassEscape |>> fun x -> characterSetMatcher x false) state  
-        (decimalEscape <|> characterEscape <|> characterClassEscape) state
+        (decimalEscape <|> characterClassEscape <|> characterEscape) state
         
     and private evalCharacterEscape state = 
         (evalControlEscape <|> 
@@ -395,15 +398,9 @@ module RegExpParser =
         }) state
         
     and private evalIdentityEscape state = 
-        (parse {
-            let! r = opt InputElementParsers.evalIdentifierPart
-            match r with
-            | None ->
-                let! r = anyChar
-                return r |> string
-            | Some "\u200C" -> return "\u200C"
-            | Some "\u200D" -> return "\u200D"
-            | _ -> ()
+        (pstring "\u200C" <|> pstring "\u200D" <|> parse {
+            let! r = notFollowedBy InputElementParsers.evalIdentifierPart >>. anyChar
+            return r |> string
         }) state
         
     and private evalDecimalEscape state = 
@@ -495,7 +492,7 @@ module RegExpParser =
                     let! _ = failFatally msg
                     ()
             }) state 
-        (decimalEscape <|> pstring "b" <|> evalCharacterEscape <|> evalCharacterClassEscape) state
+        (decimalEscape <|> (pstring "b" |>> fun _ -> "\u0008") <|> evalCharacterEscape <|> evalCharacterClassEscape) state
 
     let private evalFlags (environment:IEnvironment) (flags:string) =
         let tooManyCharacters = "There cannot be more than 3 characters in the flags parameter: '{0}'"

@@ -5,6 +5,54 @@ namespace Machete.Tests
 {
     public class MathObject : TestBase
     {
+        [Fact(DisplayName = "15.8.1.1  E")]
+        public void Test15811()
+        {
+            ExpectDouble("Math.E", Math.E);
+        }
+
+        [Fact(DisplayName = "15.8.1.2  LN10")]
+        public void Test15812()
+        {
+            ExpectDouble("Math.LN10", Math.Log(10));
+        }
+
+        [Fact(DisplayName = "15.8.1.3  LN2")]
+        public void Test15813()
+        {
+            ExpectDouble("Math.LN2", Math.Log(2));
+        }
+
+        [Fact(DisplayName = "15.8.1.4  LOG2E")]
+        public void Test15814()
+        {
+            ExpectDouble("Math.LOG2E", Math.Log(Math.E, 2));
+        }
+
+        [Fact(DisplayName = "15.8.1.5  LOG10E")]
+        public void Test15815()
+        {
+            ExpectDouble("Math.LOG10E", Math.Log10(Math.E));
+        }
+
+        [Fact(DisplayName = "15.8.1.6  PI")]
+        public void Test15816()
+        {
+            ExpectDouble("Math.PI", Math.PI);
+        }
+
+        [Fact(DisplayName = "15.8.1.7  SQRT1_2")]
+        public void Test15817()
+        {
+            ExpectDouble("Math.SQRT1_2", Math.Sqrt(0.5));
+        }
+
+        [Fact(DisplayName = "15.8.1.7  SQRT2")]
+        public void Test15818()
+        {
+            ExpectDouble("Math.SQRT2", Math.Sqrt(2));
+        }
+
         [Fact(DisplayName = "15.8.2.1  abs (x)")]
         public void Test15821()
         {

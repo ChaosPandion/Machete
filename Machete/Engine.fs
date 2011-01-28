@@ -43,7 +43,6 @@ type Engine () =
                         let result = environment.Execute executableCode
                         let result = 
                             match result.Value with
-                            | :? INull as r -> null :> obj
                             | :? IBoolean as r -> r.BaseValue :> obj
                             | :? INumber as r -> r.BaseValue :> obj
                             | :? IString as r -> r.BaseValue :> obj

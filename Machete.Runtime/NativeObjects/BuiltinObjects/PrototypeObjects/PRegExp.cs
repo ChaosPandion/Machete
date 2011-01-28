@@ -64,11 +64,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             var length = s.Length;
             var global = r.Get("global").ConvertToBoolean().BaseValue;
             var i = !global ? 0 : (int)r.Get("lastIndex").ConvertToInteger().BaseValue;
-            int beginIndex = i;
+            int beginIndex = 0;
             MatchResult result;
 
             while (true)
             {
+                beginIndex = i;
                 if (i < 0 || i > length)
                 {
                     r.Put("length", environment.CreateNumber(0.0), true);

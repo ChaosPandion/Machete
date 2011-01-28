@@ -12,6 +12,36 @@ namespace Machete.Tests
         private static readonly long _negativeZeroBits = BitConverter.DoubleToInt64Bits(-0.0);
         protected readonly Engine Engine = new Engine();
 
+        protected void Expect<T>(string script)
+        {
+            var result = Engine.ExecuteScript(script);
+            Assert.IsAssignableFrom<T>(result);
+        }
+
+        protected void Expect<T>(string script, T expected)
+        {
+            var result = Engine.ExecuteScript(script);
+            Assert.IsAssignableFrom<T>(result);
+            var actual = (T)result;
+            Assert.Equal<T>(expected, actual);
+        }
+
+        protected void ExpectTrue(string script)
+        {
+            var result = Engine.ExecuteScript(script);
+            Assert.IsType<bool>(result);
+            var value = (bool)result;
+            Assert.True(value);
+        }
+
+        protected void ExpectFalse(string script)
+        {
+            var result = Engine.ExecuteScript(script);
+            Assert.IsType<bool>(result);
+            var value = (bool)result;
+            Assert.False(value);
+        }
+
         protected void ExpectBoolean(string script, bool expected)
         {
             var result = Engine.ExecuteScript(script);
