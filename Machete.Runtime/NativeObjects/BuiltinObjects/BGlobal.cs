@@ -8,6 +8,7 @@ using Machete.Runtime.RuntimeTypes.SpecificationTypes;
 using Machete.Core;
 using Machete.Runtime.HostObjects;
 using Machete.Compiler;
+using Machete.Runtime.HostObjects.Iterables;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects
 {
@@ -163,6 +164,40 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects
                 throw environment.CreateError(message);
             }
             return environment.Undefined;
+        }
+
+        [BuiltinFunction("iterate", "iterable", "fn"), DataDescriptor(false, false, false)]
+        internal static IDynamic Iterate(IEnvironment environment, IArgs args)
+        {
+            var iterable = args[0].ConvertToObject();
+            var createIterator = iterable.Get("createIterator") as ICallable;
+            if (createIterator == null)
+                throw environment.CreateTypeError("");
+            var iterator = createIterator.Call(environment, iterable, environment.EmptyArgs).ConvertToObject();
+            if (!iterator.HasProperty("current"))
+                throw environment.CreateTypeError("");
+            var next = iterator.Get("next") as ICallable;
+            if (next == null)
+                throw environment.CreateTypeError("");
+            var fn = args[1] as ICallable;
+            if (fn == null)
+                throw environment.CreateTypeError("");
+            while (next.Call(environment, iterator, environment.EmptyArgs).ConvertToBoolean().BaseValue)
+            {
+                var callArgs = environment.CreateArgs(new[] { iterator.Get("current") });
+                fn.Call(environment, environment.Undefined, callArgs);
+            }
+            return environment.Undefined;
+        }
+
+        [BuiltinFunction("filter", "iterable", "predicate"), DataDescriptor(false, false, false)]
+        internal static IDynamic Filter(IEnvironment environment, IArgs args)
+        {
+            var iterable = args[0].ConvertToObject();
+            var predicate = args[1].ConvertToObject() as ICallable;
+            if (predicate == null)
+                throw environment.CreateTypeError("");
+            return new HFilterIterable(environment, iterable, predicate);
         }
 
         internal static string Encode(IEnvironment environment, string value, string unescapedSet)

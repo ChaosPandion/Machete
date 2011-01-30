@@ -10,6 +10,7 @@ module Program =
         System.Console.WriteLine (r)
 
     let main () =
+        //parseJQuery ()
         Interactive.initialize ()
 
     main()

@@ -56,5 +56,11 @@ namespace Machete.Tests
                 })();
             ", "Success");
         }
+
+        [Fact(DisplayName = "15.12.03  stringify ( value [ , replacer [ , space ] ] )")]
+        public void Test151203()
+        {
+            Assert.True(false);
+        }
     }
 }

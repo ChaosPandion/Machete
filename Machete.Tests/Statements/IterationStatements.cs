@@ -63,7 +63,7 @@ namespace Machete.Tests
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( ; ; Expression ) Statement")]
         public void Test126E()
         {
-            var script = @"
+            Expect(@"
                 var n = 1;
                 for (;; n *= 2) {
                     if (n === 256) {
@@ -71,21 +71,27 @@ namespace Machete.Tests
                     }
                 }
                 return n;
-            ";
-            Assert.Equal(256.0, (double)Engine.ExecuteScript(script));
+            ", 256.0);
         }
 
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( ; Expression ; Expression ) Statement")]
         public void Test126F()
         {
-            var script = @"
+            Expect(@"
                 var n = 1;
                 for (; n !== 256; n *= 2) {
 
                 }
                 return n;
-            ";
-            Assert.Equal(256.0, (double)Engine.ExecuteScript(script));
+            ", 256.0);
+
+            Expect(@"
+                var i = 0, length = 5, s = '';
+                for ( ; i < length; i++ ) {
+                    s += i;
+                }
+                return s;
+            ", "01234");
         }
 
         [Fact(DisplayName = "12.6 Iteration Statements -> for ( ExpressionNoIn ; ; ) Statement")]

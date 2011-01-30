@@ -15,6 +15,9 @@ using Machete.Compiler;
 using System.Diagnostics;
 using System.IO;
 using System.Linq.Expressions;
+using Machete.Core.Generators;
+using Machete.Runtime.HostObjects;
+using Machete.Runtime.HostObjects.Iterables;
 
 namespace Machete.Runtime
 {
@@ -516,6 +519,35 @@ namespace Machete.Runtime
         public IObjectBuilder CreateObjectBuilder()
         {
             throw new NotImplementedException();
+        }
+
+
+        public IObject CreateIterable(ReadOnlyList<GeneratorStep> steps, ILexicalEnvironment scope)
+        {
+            return new HGeneratorIterable(this, steps, scope);
+        }
+
+        public bool CombineGeneratorWithIterator(Generator generator, IDynamic other)
+        {
+            var iterable = other.ConvertToObject();
+            var createIterator = iterable.Get("createIterator") as ICallable;
+            if (createIterator == null)
+                throw CreateTypeError("");
+            var iterator = createIterator.Call(this, iterable, EmptyArgs).ConvertToObject();
+            if (!iterator.HasProperty("current"))
+                throw CreateTypeError("");
+            var next = iterator.Get("next") as ICallable;
+            if (next == null)
+                throw CreateTypeError("");
+            GeneratorStep step = null; step = (_e, _g) =>
+            {
+                if (!next.Call(this, Undefined, EmptyArgs).ConvertToBoolean().BaseValue)
+                    return false;
+                generator.Current = iterator.Get("current");
+                generator.Steps.Enqueue(step);
+                return true;
+            };
+            return step(this, generator);
         }
     }
 }

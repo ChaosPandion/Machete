@@ -11,6 +11,7 @@ open FParsec
 open FParsec.CharParsers
 open FParsec.Primitives
 open Machete.Core
+open Machete.Core.Generators
 open InputElementParsers
     
 
@@ -30,6 +31,7 @@ type Label = {
 
 
 type CompileState = {
+    environment:IEnvironment
     strict : list<bool * bool>
     labels : list<Map<string, Label>>
     functions : list<FunctionDeclaration>
@@ -103,6 +105,7 @@ type CompilerService (environment:IEnvironment) as this =
            
     let rec evalPrimaryExpression state =
         (skipIgnorableTokens >>. (
+            attempt evalGeneratorExpression <|>
             (attempt (skipIdentifierName "this") >>. preturn (Expressions.ThisBinding :> exp)) <|>
             attempt (evalIdentifierReference )<|>
             evalLiteral <|>
@@ -110,6 +113,58 @@ type CompilerService (environment:IEnvironment) as this =
             evalObjectLiteral <|>
             evalGroupingOperator
         )) state
+
+    and evalGeneratorExpression state =
+        (skipIdentifierName "generator" >>. skipToken "{" >>. evalGeneratorBody .>> skipToken "}") state
+
+    and evalGeneratorBody state =
+        (parse {
+            let! steps = evalGeneratorStatements
+            let args = [| exp.Constant steps :> exp; Expressions.LexicalEnviroment :> exp |]
+            return exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateIterable, args) :> exp
+        }) state
+
+    and evalGeneratorStatements state =
+        (parse {
+            let! items = many1 (tuple2 (opt (attempt evalStatementList)) (attempt evalGeneratorStatement))
+            let parameters = [| Expressions.Environment; Expressions.Generator |]
+            let items = items |> List.map (
+                            fun (s, e) ->
+                                match s with
+                                | Some s ->
+                                    let block = exp.Block ([| s; e |])
+                                    exp.Lambda<GeneratorStep>(block, parameters).Compile()  
+                                | None ->
+                                    exp.Lambda<GeneratorStep>(e, parameters).Compile()
+                        )
+            return ReadOnlyList<GeneratorStep>(items)
+        }) state
+
+    and evalGeneratorStatement state =
+        (skipIdentifierName "yield" 
+            >>. (attempt evalYieldBreakStatement <|> attempt evalYieldContinueStatement <|> evalYieldStatement)
+                .>> skipStatementTerminator) state
+
+    and evalYieldStatement state =
+        (parse {
+            let! expression = evalExpression
+            let assignCurrent = exp.Assign(Expressions.Generator_Current, expression)
+            return exp.Block ([| assignCurrent :> exp; exp.Constant (true) :> exp |]) :> exp
+        }) state
+
+    and evalYieldBreakStatement state =
+        (parse {
+            do! skipIdentifierName "break"
+            return exp.Constant (false) :> exp
+        }) state
+        
+    and evalYieldContinueStatement state =
+        (parse {
+            let! expression = skipIdentifierName "continue" >>. evalExpression
+            let args = [| Expressions.Generator :> exp; expression |]
+            let combine = exp.Call(Expressions.Environment, Reflection.IEnvironmentMemberInfo.CombineGeneratorWithIterator, args)
+            return combine :> exp
+        }) state
 
     and evalIdentifierReference state =
         (parse {
@@ -610,7 +665,7 @@ type CompilerService (environment:IEnvironment) as this =
     and evalConditionalExpressionCommon parser1 parser2 state =
         (parse {
             let! e1 = parser1
-            let! e2 = opt (skipToken "?")
+            let! e2 = opt (attempt (skipToken "?"))
             match e2 with
             | Some _ ->
                 do! skipIgnorableTokens 
@@ -911,9 +966,9 @@ type CompilerService (environment:IEnvironment) as this =
                                
                 let evalFor state = 
                     (parse {
-                        let p1 = opt evalExpressionNoIn .>> skipToken ";"
-                        let p2 = opt evalExpression .>> skipToken ";"
-                        let p3 = opt evalExpression .>> skipToken ")"
+                        let p1 = opt (attempt evalExpressionNoIn) .>> skipToken ";"
+                        let p2 = opt (attempt evalExpression) .>> skipToken ";"
+                        let p3 = opt (attempt evalExpression) .>> skipToken ")"
                         let p4 = evalStatement
                         let! e1, e2, e3, s = tuple4 p1 p2 p3 p4
 
@@ -1295,7 +1350,7 @@ type CompilerService (environment:IEnvironment) as this =
         (parse {            
             let! (oldState:CompileState) = getUserState
             let returnLabel = oldState.labels.Head.["return"]
-            let nextState = { strict = [oldState.strict.Head |> fst, false]; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }
+            let nextState = { oldState with strict = [oldState.strict.Head |> fst, false]; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }
             do! setUserState nextState
             let! e1 = many (attempt evalSourceElement)        
             let body = exp.Block (e1 @ [ returnLabel.labelExpression :> exp ])
@@ -1332,12 +1387,12 @@ type CompilerService (environment:IEnvironment) as this =
             return exp.Lambda<Code>(body, [| Expressions.Environment; Expressions.Args |])
         }) state
 
-    let createInitialState (strict:bool) =
+    let createInitialState (environment:IEnvironment) (strict:bool) =
         let returnLabel = { labelExpression = exp.Label(exp.Label(typeof<IDynamic>, "return"), exp.Constant (environment.Undefined)) }
-        { strict = [strict, false]; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }        
+        { environment = environment; strict = [strict, false]; labels = [ Map.ofArray [| "return", returnLabel |] ]; functions = []; variables = [] }        
 
     let compile (parser:Parser<Expression<Code>, CompileState>) (input:string) (strict:bool) (streamName:string) =
-        let initialState = createInitialState strict
+        let initialState = createInitialState environment strict
         let input = input.Trim()
         stopwatch.Restart ()
         let result = runParserOnString parser initialState streamName input
@@ -1364,7 +1419,7 @@ type CompilerService (environment:IEnvironment) as this =
         compile evalFunctionBody input strict "FunctionCode"
         
     member this.CompileFormalParameterList (input:string) =  
-        let initialState = createInitialState false   
+        let initialState = createInitialState environment false   
         let result = runParserOnString evalFormalParameterList initialState "FormalParameterList" input
         match result with
         | Success (result, finalState, position) -> result

@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Machete.Core.Generators;
 
 namespace Machete.Core
 {
     public interface IEnvironment
     {
         Output Output { get; }
-
         IExecutionContext Context { get; }
         ILexicalEnvironment GlobalEnvironment { get; }
         IArgs EmptyArgs { get; }
@@ -48,26 +48,18 @@ namespace Machete.Core
         IObject UriErrorConstructor { get; }
         IObject UriErrorPrototype { get; }
         IObject JsonObject { get; }
-
         IFunction ThrowTypeErrorFunction { get; } 
-
         IReference CreateReference(string name, IReferenceBase @base, bool strict);
         IBoolean CreateBoolean(bool value);
         IString CreateString(string value);
         INumber CreateNumber(double value);
-
         IArgs CreateArgs(IEnumerable<IDynamic> values);
         IArgs ConcatArgs(IArgs first, IArgs second);
-
         IDynamic FromPropertyDescriptor(IPropertyDescriptor desc);
         IPropertyDescriptor ToPropertyDescriptor(IObject obj);
-
         IObjectBuilder CreateObjectBuilder();
-
         IObject CreateArray();
         IObject CreateObject();
-        IObject CreateRegExp(string pattern, string flags);
-
         MacheteRuntimeException CreateError(string message);
         MacheteRuntimeException CreateEvalError(string message);
         MacheteRuntimeException CreateRangeError(string message);
@@ -75,30 +67,19 @@ namespace Machete.Core
         MacheteRuntimeException CreateSyntaxError(string message);
         MacheteRuntimeException CreateTypeError(string message);
         MacheteRuntimeException CreateUriError(string message);
-
-        //IObject CreateArguments(ReadOnlyList<string> formalParameterList, IArgs args, bool strict);
-
-        //IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code);
-        //IFunction CreateFunction(ReadOnlyList<string> formalParameterList, bool strict, Lazy<Code> code, ILexicalEnvironment scope);
+        IObject CreateRegExp(string pattern, string flags);
         IObject CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameters, ILexicalEnvironment scope);
-
-
+        IObject CreateIterable(ReadOnlyList<GeneratorStep> steps, ILexicalEnvironment scope);
+        bool CombineGeneratorWithIterator(Generator generator, IDynamic other);
         IPropertyDescriptor CreateGenericDescriptor(bool? enumerable, bool? configurable);
         IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable, bool? configurable);
         IPropertyDescriptor CreateAccessorDescriptor(IDynamic get, IDynamic set, bool? enumerable, bool? configurable);
-
         IExecutionContext EnterContext();
-
         void ThrowRuntimeException(IDynamic thrown);
         void CheckObjectCoercible(IDynamic value);
-
         bool Instanceof(IDynamic left, IDynamic right);
         IDynamic Execute(ExecutableCode executableCode);
         void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings);
         void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings);
-
-        //void EnterGlobalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
-        //void EnterEvalCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict);
-        //void EnterFunctionCode(ReadOnlyList<string> variableDeclarations, ReadOnlyList<FunctionDeclaration> functionDeclarations, IArgs args);
     }
 }

@@ -7,38 +7,14 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
     public sealed class PRegExp : LObject
     {
-        private BFunction _exec;
-        private BFunction _test;
-        private BFunction _toString;
+        public BFunction ExecBuiltinFunction { get; private set; }
+        public BFunction TestBuiltinFunction { get; private set; }
+        public BFunction ToStringBuiltinFunction { get; private set; }
         
         public PRegExp(IEnvironment environment)
             : base(environment)
         {
 
-        }
-
-        /// <summary>
-        /// 15.10.6.2  RegExp.prototype.exec(string) 
-        /// </summary>
-        public BFunction ExecBuiltinFunction
-        {
-            get { return _exec; }
-        }
-
-        /// <summary>
-        /// 15.10.6.3  RegExp.prototype.test(string) 
-        /// </summary>
-        public BFunction TestBuiltinFunction
-        {
-            get { return _test; }
-        }
-
-        /// <summary>
-        /// 15.10.6.4  RegExp.prototype.toString() 
-        /// </summary>
-        public BFunction ToStringBuiltinFunction
-        {
-            get { return _toString; }
         }
 
         public override void Initialize()
@@ -47,14 +23,14 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             Extensible = true;
             Prototype = Environment.ObjectPrototype;
 
-            _exec = new BFunction(Environment, Exec, new ReadOnlyList<string>("string"));
-            _test = new BFunction(Environment, Test, new ReadOnlyList<string>("string"));
-            _toString = new BFunction(Environment, ToString, new ReadOnlyList<string>());
+            ExecBuiltinFunction = new BFunction(Environment, Exec, new ReadOnlyList<string>("string"));
+            TestBuiltinFunction = new BFunction(Environment, Test, new ReadOnlyList<string>("string"));
+            ToStringBuiltinFunction = new BFunction(Environment, ToString, new ReadOnlyList<string>());
 
             DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.RegExpConstructor, true, false, true), false);
-            DefineOwnProperty("exec", Environment.CreateDataDescriptor(_exec, true, false, true), false);
-            DefineOwnProperty("test", Environment.CreateDataDescriptor(_toString, true, false, true), false);
-            DefineOwnProperty("toString", Environment.CreateDataDescriptor(_toString, true, false, true), false);
+            DefineOwnProperty("exec", Environment.CreateDataDescriptor(ExecBuiltinFunction, true, false, true), false);
+            DefineOwnProperty("test", Environment.CreateDataDescriptor(TestBuiltinFunction, true, false, true), false);
+            DefineOwnProperty("toString", Environment.CreateDataDescriptor(ToStringBuiltinFunction, true, false, true), false);
         }
 
         private static IDynamic Exec(IEnvironment environment, IArgs args)

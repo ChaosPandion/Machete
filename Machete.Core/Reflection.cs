@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using Machete.Core.Generators;
 
 namespace Machete.Core
 {
@@ -260,6 +261,8 @@ namespace Machete.Core
             public static readonly MethodInfo CreateSyntaxError = Type.GetMethod("CreateSyntaxError");
             public static readonly MethodInfo CreateTypeError = Type.GetMethod("CreateTypeError");
             public static readonly MethodInfo CreateUriError = Type.GetMethod("CreateUriError");
+            public static readonly MethodInfo CreateIterable = Type.GetMethod("CreateIterable");
+            public static readonly MethodInfo CombineGeneratorWithIterator = Type.GetMethod("CombineGeneratorWithIterator");
             public static readonly MethodInfo CreateFunction = Type.GetMethod("CreateFunction");
             public static readonly MethodInfo CreateGenericDescriptor = Type.GetMethod("CreateGenericDescriptor");
             public static readonly MethodInfo CreateDataDescriptor = Type.GetMethod("CreateDataDescriptor");
@@ -318,6 +321,16 @@ namespace Machete.Core
             public static readonly MethodInfo AppendDataProperty = Type.GetMethod("AppendDataProperty");
             public static readonly MethodInfo AppendAccessorProperty = Type.GetMethod("AppendAccessorProperty");
             public static readonly MethodInfo ToObject = Type.GetMethod("ToObject");
+        }
+
+        public static class GeneratorMemberInfo
+        {
+            public static readonly Type Type = typeof(Generator);
+            public static readonly ConstructorInfo Constructor = Type.GetConstructor(new[] { typeof(GeneratorSteps) });
+            public static readonly PropertyInfo Steps = Type.GetProperty("Steps");
+            public static readonly PropertyInfo Current = Type.GetProperty("Current");
+            public static readonly PropertyInfo Complete = Type.GetProperty("Complete");
+            public static readonly PropertyInfo Initialized = Type.GetProperty("Initialized");
         }
     }
 }

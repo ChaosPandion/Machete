@@ -63,7 +63,7 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             {
                 if (IsUnresolvableReference)
                 {
-                    throw _environment.CreateReferenceError("");
+                    throw _environment.CreateReferenceError("The name '" + _referencedName + "' could not be resolved.");
                 }
                 else if (!IsPropertyReference)
                 {
@@ -91,7 +91,11 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                     }
                     else
                     {
-                        return ((ICallable)desc.Get).Call(_environment, (IDynamic)_base, _environment.EmptyArgs);
+                        return ((ICallable)desc.Get).Call(
+                            _environment, 
+                            (IDynamic)_base, 
+                            _environment.EmptyArgs
+                        );
                     }
                 }
             }
@@ -116,17 +120,14 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                     var o = ((IDynamic)_base).ConvertToObject();
                     if (!o.CanPut(_referencedName))
                     {
-                        if (IsStrictReference)
-                            throw _environment.CreateTypeError("");
+                        if (!IsStrictReference) return;
+                        throw _environment.CreateTypeError("");
                     }
                     var ownDesc = o.GetOwnProperty(_referencedName);
                     if (ownDesc.IsDataDescriptor)
                     {
-                        if (_strictReference)
-                        {
-                            throw _environment.CreateTypeError("");
-                        }
-                        return;
+                        if (!IsStrictReference) return;
+                        throw _environment.CreateTypeError("");
                     }
                     var desc = o.GetProperty(_referencedName);
                     if (desc.IsAccessorDescriptor)
@@ -135,10 +136,8 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
                     }
                     else
                     {
-                        if (_strictReference)
-                        {
-                            throw _environment.CreateTypeError("");
-                        }
+                        if (!IsStrictReference) return;
+                        throw _environment.CreateTypeError("");
                     }
                 }
             }

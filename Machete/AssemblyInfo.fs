@@ -4,7 +4,7 @@ open System.Reflection
 open System.Runtime.InteropServices
 
 module AssemblyInfo =
-    let [<Literal>] Version = "0.2.1.1"
+    let [<Literal>] Version = "0.3.1.1"
     let [<Literal>] Title = "Machete"
     let [<Literal>] Description = "Machete - A scripting runtime for .NET"
     let [<Literal>] Configuration = ""

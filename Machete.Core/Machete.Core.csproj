@@ -75,10 +75,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code.cs" />
+    <Compile Include="Generators\GeneratorSteps.cs" />
     <Compile Include="DataDescriptorAttribute.cs" />
     <Compile Include="ExecutableCode.cs" />
     <Compile Include="Expressions.cs" />
     <Compile Include="FunctionDeclaration.cs" />
+    <Compile Include="Generators\GeneratorStep.cs" />
+    <Compile Include="Generators\Generator.cs" />
     <Compile Include="IArgs.cs" />
     <Compile Include="IBoolean.cs" />
     <Compile Include="IBuiltinFunction.cs" />

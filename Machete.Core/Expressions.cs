@@ -12,6 +12,7 @@ namespace Machete.Core
 
         public static readonly ParameterExpression Environment = Expression.Parameter(Reflection.IEnvironmentMemberInfo.Type, "environment");
         public static readonly ParameterExpression Args = Expression.Parameter(Reflection.IArgsMemberInfo.Type, "args");
+        public static readonly ParameterExpression Generator = Expression.Parameter(Reflection.GeneratorMemberInfo.Type, "generator");
 
         public static readonly MemberExpression Context = Expression.Property(Environment, Reflection.IEnvironmentMemberInfo.Context);
         public static readonly MemberExpression ThisBinding = Expression.Property(Context, Reflection.IExecutionContextMemberInfo.ThisBinding);
@@ -61,5 +62,12 @@ namespace Machete.Core
         public static readonly MemberExpression UriErrorPrototype = Expression.Property(Environment, Reflection.IEnvironmentMemberInfo.UriErrorPrototype);
         public static readonly MemberExpression JsonObject = Expression.Property(Environment, Reflection.IEnvironmentMemberInfo.JsonObject);
         public static readonly MemberExpression ThrowTypeErrorFunction = Expression.Property(Environment, Reflection.IEnvironmentMemberInfo.ThrowTypeErrorFunction);
+
+
+
+        public static readonly MemberExpression Generator_Steps = Expression.Property(Generator, Reflection.GeneratorMemberInfo.Steps);
+        public static readonly MemberExpression Generator_Current = Expression.Property(Generator, Reflection.GeneratorMemberInfo.Current);
+        public static readonly MemberExpression Generator_Complete = Expression.Property(Generator, Reflection.GeneratorMemberInfo.Complete);
+        public static readonly MemberExpression Generator_Initialized = Expression.Property(Generator, Reflection.GeneratorMemberInfo.Initialized);
     }
 }

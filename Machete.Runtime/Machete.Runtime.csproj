@@ -103,7 +103,13 @@
   <ItemGroup>
     <Compile Include="Environment.cs" />
     <Compile Include="ExecutionContext.cs" />
+    <Compile Include="HostObjects\Iterables\HFilterIterator.cs" />
+    <Compile Include="HostObjects\Iterables\HGeneratorIterable.cs" />
+    <Compile Include="HostObjects\Iterables\HGeneratorIterator.cs" />
+    <Compile Include="HostObjects\Iterables\HIterable.cs" />
+    <Compile Include="HostObjects\Iterables\HIterator.cs" />
     <Compile Include="HostObjects\HOutput.cs" />
+    <Compile Include="HostObjects\Iterables\HFilterIterable.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\BFunction.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CBoolean.cs" />
