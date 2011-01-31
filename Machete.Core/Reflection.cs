@@ -261,7 +261,7 @@ namespace Machete.Core
             public static readonly MethodInfo CreateSyntaxError = Type.GetMethod("CreateSyntaxError");
             public static readonly MethodInfo CreateTypeError = Type.GetMethod("CreateTypeError");
             public static readonly MethodInfo CreateUriError = Type.GetMethod("CreateUriError");
-            public static readonly MethodInfo CreateIterable = Type.GetMethod("CreateIterable");
+            public static readonly MethodInfo CreateIterableFromGenerator = Type.GetMethod("CreateIterableFromGenerator");
             public static readonly MethodInfo CombineGeneratorWithIterator = Type.GetMethod("CombineGeneratorWithIterator");
             public static readonly MethodInfo CreateFunction = Type.GetMethod("CreateFunction");
             public static readonly MethodInfo CreateGenericDescriptor = Type.GetMethod("CreateGenericDescriptor");

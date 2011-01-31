@@ -10,14 +10,16 @@ using Machete.Core.Generators;
 namespace Machete.Runtime.HostObjects.Iterables
 {
     public sealed class HGeneratorIterable : HIterable
-    {        
+    {
         public ReadOnlyList<GeneratorStep> Steps { get; private set; }
+        public ReadOnlyList<string> VariableDeclarations { get; private set; }
         public ILexicalEnvironment Scope { get; private set; }
 
-        public HGeneratorIterable(IEnvironment environment, ReadOnlyList<GeneratorStep> steps, ILexicalEnvironment scope)
+        public HGeneratorIterable(IEnvironment environment, ReadOnlyList<GeneratorStep> steps, ReadOnlyList<string> variableDeclarations, ILexicalEnvironment scope)
             : base(environment)
         {
             Steps = steps;
+            VariableDeclarations = variableDeclarations;
             Scope = scope;
         }
 
@@ -25,7 +27,7 @@ namespace Machete.Runtime.HostObjects.Iterables
         {
             var scope = Scope.NewDeclarativeEnvironment();
             var generator = new Generator(new GeneratorSteps(Steps));
-            var iterator = new HGeneratorIterator(environment, generator, scope);
+            var iterator = new HGeneratorIterator(environment, generator, VariableDeclarations, scope);
             return iterator;
         }
     }

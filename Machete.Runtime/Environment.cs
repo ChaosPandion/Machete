@@ -522,9 +522,9 @@ namespace Machete.Runtime
         }
 
 
-        public IObject CreateIterable(ReadOnlyList<GeneratorStep> steps, ILexicalEnvironment scope)
+        public IObject CreateIterableFromGenerator(ReadOnlyList<GeneratorStep> steps, ReadOnlyList<string> variableDeclarations, ILexicalEnvironment scope)
         {
-            return new HGeneratorIterable(this, steps, scope);
+            return new HGeneratorIterable(this, steps, variableDeclarations, scope);
         }
 
         public bool CombineGeneratorWithIterator(Generator generator, IDynamic other)

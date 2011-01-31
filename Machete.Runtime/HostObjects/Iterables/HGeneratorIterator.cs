@@ -12,12 +12,14 @@ namespace Machete.Runtime.HostObjects.Iterables
     public sealed class HGeneratorIterator : HIterator
     {
         public Generator Generator { get; private set; }
+        public ReadOnlyList<string> VariableDeclarations { get; private set; }
         public ILexicalEnvironment Scope { get; private set; }
 
-        public HGeneratorIterator(IEnvironment environment, Generator generator, ILexicalEnvironment scope)
+        public HGeneratorIterator(IEnvironment environment, Generator generator, ReadOnlyList<string> variableDeclarations, ILexicalEnvironment scope)
             : base(environment)
         {
             Generator = generator;
+            VariableDeclarations = variableDeclarations;
             Scope = scope;
         }
 
@@ -32,13 +34,16 @@ namespace Machete.Runtime.HostObjects.Iterables
         {
             if (Generator.Complete)
                 return environment.CreateBoolean(false);
-            var step = Generator.Steps.Dequeue();
-            var old = environment.Context.LexicalEnviroment;
             environment.Context.LexicalEnviroment = Scope;
+            environment.Context.VariableEnviroment = Scope;
+            if (!Generator.Initialized)
+            {
+                environment.BindVariableDeclarations(VariableDeclarations, true, true);
+                Generator.Initialized = true;
+            }
+            var step = Generator.Steps.Dequeue();
             var iterated = step(environment, Generator);
             Generator.Complete = !iterated || Generator.Steps.Count == 0;
-            environment.Context.LexicalEnviroment = old;
-            Generator.Initialized = true;
             return environment.CreateBoolean(iterated);
         }
     }

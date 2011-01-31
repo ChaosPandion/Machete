@@ -119,9 +119,13 @@ type CompilerService (environment:IEnvironment) as this =
 
     and evalGeneratorBody state =
         (parse {
+            let! oldState = getUserState
+            let newState = { oldState with strict = [oldState.strict.Head |> fst, false]; variables = []; functions = []; labels = [] }
+            do! setUserState newState
             let! steps = evalGeneratorStatements
-            let args = [| exp.Constant steps :> exp; Expressions.LexicalEnviroment :> exp |]
-            return exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateIterable, args) :> exp
+            let variableDeclarations = ReadOnlyList<string>(newState.variables |> List.rev)
+            let args = [| exp.Constant steps :> exp; exp.Constant variableDeclarations :> exp; Expressions.LexicalEnviroment :> exp |]
+            return exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateIterableFromGenerator, args) :> exp
         }) state
 
     and evalGeneratorStatements state =

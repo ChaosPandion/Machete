@@ -69,7 +69,7 @@ namespace Machete.Core
         MacheteRuntimeException CreateUriError(string message);
         IObject CreateRegExp(string pattern, string flags);
         IObject CreateFunction(ExecutableCode executableCode, ReadOnlyList<string> formalParameters, ILexicalEnvironment scope);
-        IObject CreateIterable(ReadOnlyList<GeneratorStep> steps, ILexicalEnvironment scope);
+        IObject CreateIterableFromGenerator(ReadOnlyList<GeneratorStep> steps, ReadOnlyList<string> variableDeclarations, ILexicalEnvironment scope);
         bool CombineGeneratorWithIterator(Generator generator, IDynamic other);
         IPropertyDescriptor CreateGenericDescriptor(bool? enumerable, bool? configurable);
         IPropertyDescriptor CreateDataDescriptor(IDynamic value, bool? writable, bool? enumerable, bool? configurable);
