@@ -66,7 +66,11 @@ module Interactive =
         
 
     let initialize () =
+        Console.OutputEncoding <- System.Text.Encoding.UTF8
+        let message = "Machete Interactive " + AssemblyInfo.Version + "\n"
         engine.RegisterOutputHandler (fun s -> ConsoleAgent.writeLine s outputColor)
+        ConsoleAgent.write ("Machete " + Machete.Core.AssemblyInfo.Version + "\n") messageColor
         ConsoleAgent.write message messageColor
+        ConsoleAgent.write (Machete.Core.AssemblyInfo.Copyright + "\n\n") messageColor
         Console.Title <- message
         loop ()

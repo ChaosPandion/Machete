@@ -118,7 +118,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
 
             if (k <= n && n <= 21)
             {
-                return Environment.CreateString(s.ToString().Substring(0, k).PadRight((2 * k) - n, '0'));
+                return Environment.CreateString(s.ToString().Substring(0, k) + "".PadRight(n - k, '0'));
             }
             else if (n > 0 && n <= 21)
             {

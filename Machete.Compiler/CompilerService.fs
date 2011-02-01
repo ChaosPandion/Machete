@@ -105,6 +105,7 @@ type CompilerService (environment:IEnvironment) as this =
            
     let rec evalPrimaryExpression state =
         (skipIgnorableTokens >>. (
+            evalLambdaExpression <|>
             attempt evalGeneratorExpression <|>
             (attempt (skipIdentifierName "this") >>. preturn (Expressions.ThisBinding :> exp)) <|>
             attempt (evalIdentifierReference )<|>
@@ -113,6 +114,26 @@ type CompilerService (environment:IEnvironment) as this =
             evalObjectLiteral <|>
             evalGroupingOperator
         )) state
+
+    and evalLambdaExpression state =
+        (parse {
+            let! currentState, formalParameterList, expression = 
+                tuple3 getUserState (skipToken "\\" >>. skipToken "(" >>. evalFormalParameterList .>> skipToken ")") evalExpression
+            let formalParameterList = exp.Constant formalParameterList :> exp
+            let variableDeclarations = ReadOnlyList<string>.Empty
+            let functionDeclarations = ReadOnlyList<FunctionDeclaration>.Empty
+            let strict = currentState.strict.Head |> fst
+            let returnLabel = currentState.labels.Head.["return"]   
+            let returnLabelExpression = returnLabel.labelExpression  
+            let returnExpression = exp.Return (returnLabelExpression.Target, expression, typeof<IDynamic>) :> exp
+            let body = exp.Block ([ returnExpression; returnLabelExpression :> exp ])
+            let lambda = exp.Lambda<Code>(body, [| Expressions.Environment; Expressions.Args |])
+            let executableCode = ExecutableCode (lambda.Compile(), variableDeclarations, functionDeclarations, strict)
+            let executableCode = exp.Constant executableCode :> exp
+            let args = [| executableCode; formalParameterList; Expressions.LexicalEnviroment :> exp |]
+            let func = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateFunction, args) :> exp 
+            return func
+        }) state
 
     and evalGeneratorExpression state =
         (skipIdentifierName "generator" >>. skipToken "{" >>. evalGeneratorBody .>> skipToken "}") state
