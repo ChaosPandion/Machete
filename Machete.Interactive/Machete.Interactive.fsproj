@@ -51,7 +51,6 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Command.fs" />
     <Compile Include="CommandParser.fs" />
-    <Compile Include="ConsoleAgent.fs" />
     <Compile Include="Interactive.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

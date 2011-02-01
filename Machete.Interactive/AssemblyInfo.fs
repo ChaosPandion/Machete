@@ -4,7 +4,7 @@ open System.Reflection
 open System.Runtime.InteropServices
 
 module internal AssemblyInfo =
-    let [<Literal>] Version = "0.1.0.1106"
+    let [<Literal>] Version = "0.1.1.1743"
  
 [<assembly: AssemblyTitle("Machete.Interactive")>]
 [<assembly: AssemblyDescription("An interactive REPL for the Machete scripting runtime.")>]

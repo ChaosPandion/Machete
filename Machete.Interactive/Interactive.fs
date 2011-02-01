@@ -7,36 +7,38 @@ open System.Text.RegularExpressions
 open FParsec.CharParsers
 
 module Interactive =
-
-    type private Text = {
-        value : string
-        color : ConsoleColor
-        lineLength : int   
-    }
-
-    type private State = {
-        history:list<list<Text>>
-        historyUp:list<list<Text>> 
-        historyDown:list<list<Text>>
-        currentLeft:list<Text>
-        currentRight:list<Text>
-    }
     
     let private engine = new Machete.Engine()
-    let private newLine = "\n"  
-    let private message = "Machete Interactive " + Machete.Core.AssemblyInfo.Version + "\n\n"
-    let private tab = "    "
     let private messageColor = ConsoleColor.Cyan
     let private defaultColor = ConsoleColor.Gray
     let private outputColor = ConsoleColor.DarkCyan
     let private statusColor = ConsoleColor.DarkGray
     let private errorColor = ConsoleColor.Red
+    
+    let write text color =
+        lock 
+            engine 
+            (fun () ->
+                let oldColor = Console.ForegroundColor
+                Console.ForegroundColor <- color
+                Console.Write (text:string)
+                Console.ForegroundColor <- oldColor)
+        
+
+    let writeLine text color =
+        lock 
+            engine
+            (fun () ->
+                let oldColor = Console.ForegroundColor
+                Console.ForegroundColor <- color
+                Console.WriteLine (text:string)
+                Console.ForegroundColor <- oldColor)        
           
     let rec private read () =
         let sb = StringBuilder()
         let run = ref true
         while !run do
-            let line = ConsoleAgent.readLine()
+            let line = Console.ReadLine ()
             if line.EndsWith ";;" then
                 run := false
                 let line = line.Substring(0, line.Length - 2)
@@ -57,20 +59,24 @@ module Interactive =
                 let sw = Stopwatch.StartNew()
                 let r = engine.ExecuteScript text
                 sw.Stop ()
-                let result, color = if isExn r then (r:?>exn).Message, errorColor else r |> string, outputColor
-                ConsoleAgent.writeLine (result) color
-                ConsoleAgent.writeLine (sw.Elapsed.ToString() + "\n") statusColor
+                let result, color = 
+                    match r with
+                    | :? Exception as r -> r.Message, errorColor
+                    | _ -> r |> string, outputColor
+                System.Threading.Thread.Sleep 100
+                writeLine (result) color
+                writeLine (sw.Elapsed.ToString() + "\n") statusColor
             with 
             | e ->
-                ConsoleAgent.writeLine e.Message errorColor 
+                writeLine e.Message errorColor 
         
 
     let initialize () =
         Console.OutputEncoding <- System.Text.Encoding.UTF8
         let message = "Machete Interactive " + AssemblyInfo.Version + "\n"
-        engine.RegisterOutputHandler (fun s -> ConsoleAgent.writeLine s outputColor)
-        ConsoleAgent.write ("Machete " + Machete.Core.AssemblyInfo.Version + "\n") messageColor
-        ConsoleAgent.write message messageColor
-        ConsoleAgent.write (Machete.Core.AssemblyInfo.Copyright + "\n\n") messageColor
+        engine.RegisterOutputHandler (fun s -> writeLine s outputColor)
+        write ("Machete " + Machete.Core.AssemblyInfo.Version + "\n") messageColor
+        write message messageColor
+        write (Machete.Core.AssemblyInfo.Copyright + "\n\n") messageColor
         Console.Title <- message
         loop ()
