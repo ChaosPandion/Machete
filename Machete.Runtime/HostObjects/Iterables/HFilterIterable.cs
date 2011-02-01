@@ -8,7 +8,7 @@ using Machete.Runtime.NativeObjects.BuiltinObjects;
 
 namespace Machete.Runtime.HostObjects.Iterables
 {
-    public sealed class HFilterIterable : HIterable
+    public sealed class HFilterIterable : HIterableBase
     {
         private readonly IObject _iterable;
         private readonly ICallable _predicate;

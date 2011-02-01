@@ -9,7 +9,7 @@ using Machete.Core.Generators;
 
 namespace Machete.Runtime.HostObjects.Iterables
 {
-    public sealed class HGeneratorIterable : HIterable
+    public sealed class HGeneratorIterable : HIterableBase
     {
         public ReadOnlyList<GeneratorStep> Steps { get; private set; }
         public ReadOnlyList<string> VariableDeclarations { get; private set; }

@@ -6,7 +6,7 @@ using Machete.Core;
 
 namespace Machete.Runtime.HostObjects.Iterables
 {
-    public sealed class HFilterIterator : HIterator
+    public sealed class HFilterIterator : HIteratorBase
     {
         private readonly IObject _iterator;
         private readonly ICallable _next;

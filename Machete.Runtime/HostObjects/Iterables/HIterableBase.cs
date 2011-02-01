@@ -9,11 +9,11 @@ using Machete.Runtime.NativeObjects.BuiltinObjects;
 
 namespace Machete.Runtime.HostObjects.Iterables
 {
-    public abstract class HIterable : LObject
+    public abstract class HIterableBase : LObject
     {
         public BFunction CreateIteratorBuiltinFunction { get; private set; }
 
-        public HIterable(IEnvironment environment)
+        public HIterableBase(IEnvironment environment)
             : base(environment)
         {
             Class = "Iterable";

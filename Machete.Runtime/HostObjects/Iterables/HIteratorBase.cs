@@ -5,12 +5,12 @@ using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.HostObjects
 {
-    public abstract class HIterator : LObject
+    public abstract class HIteratorBase : LObject
     {
         public BFunction CurrentBuiltinFunction { get; private set; }
         public BFunction NextBuiltinFunction { get; private set; }
         
-        public HIterator(IEnvironment environment)
+        public HIteratorBase(IEnvironment environment)
             : base(environment)
         {
             Class = "Iterator";
