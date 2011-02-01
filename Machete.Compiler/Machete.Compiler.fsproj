@@ -75,6 +75,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="CharSets.fs" />
     <Compile Include="InputElementParsers.fs" />
     <Compile Include="CompilerService.fs" />
