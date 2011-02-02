@@ -118,7 +118,7 @@ type CompilerService (environment:IEnvironment) as this =
     and evalLambdaExpression state =
         (parse {
             let! currentState, formalParameterList, expression = 
-                tuple3 getUserState (skipToken "\\" >>. skipToken "(" >>. evalFormalParameterList .>> skipToken ")") evalExpression
+                tuple3 getUserState (skipToken "\\" >>. skipToken "(" >>. evalFormalParameterList .>> skipToken ")") evalAssignmentExpression
             let formalParameterList = exp.Constant formalParameterList :> exp
             let variableDeclarations = ReadOnlyList<string>.Empty
             let functionDeclarations = ReadOnlyList<FunctionDeclaration>.Empty

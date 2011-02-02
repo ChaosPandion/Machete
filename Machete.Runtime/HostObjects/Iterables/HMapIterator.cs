@@ -1,30 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Machete.Core;
+﻿using Machete.Core;
 
 namespace Machete.Runtime.HostObjects.Iterables
 {
-    public sealed class HFilterIterator : HIteratorBase
+    public sealed class HMapIterator : HIteratorBase
     {
         private readonly Iterator _iterator;
-        private readonly ICallable _predicate;
+        private readonly ICallable _mapping;
+        private IDynamic _current;
         private bool _initialized;
         private bool _complete;
-        
-        public HFilterIterator(IEnvironment environment, Iterator iterator, ICallable predicate)
+
+        public HMapIterator(IEnvironment environment, Iterator iterator, ICallable mapping)
             : base(environment)
         {
             _iterator = iterator;
-            _predicate = predicate;
+            _mapping = mapping;
         }
 
         public override IDynamic Current(IEnvironment environment, IArgs args)
         {
             if (!_initialized)
                 throw environment.CreateTypeError("");
-            return _iterator.Current;
+            return _current;
         }
 
         public override IDynamic Next(IEnvironment environment, IArgs args)
@@ -35,8 +32,8 @@ namespace Machete.Runtime.HostObjects.Iterables
             while (_iterator.Next())
             {
                 var callArgs = environment.CreateArgs(new[] { _iterator.Current });
-                if (_predicate.Call(environment, environment.Undefined, callArgs).ConvertToBoolean().BaseValue)
-                    return environment.True;
+                _current = _mapping.Call(environment, environment.Undefined, callArgs);
+                return environment.True;
             }
             _complete = true;
             return environment.False;

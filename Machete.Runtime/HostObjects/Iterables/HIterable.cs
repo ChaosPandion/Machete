@@ -12,6 +12,7 @@ namespace Machete.Runtime.HostObjects.Iterables
     {
         public BFunction IterateBuiltinFunction { get; private set; }
         public BFunction FilterStringBuiltinFunction { get; private set; }
+        public BFunction MapStringBuiltinFunction { get; private set; }
 
         public HIterable(IEnvironment environment)
             : base(environment)
@@ -20,33 +21,26 @@ namespace Machete.Runtime.HostObjects.Iterables
             Prototype = environment.ObjectPrototype;
             Extensible = true;
 
-            IterateBuiltinFunction = new BFunction(environment, Iterate, new ReadOnlyList<string>("iterable", "callback"));
-            FilterStringBuiltinFunction = new BFunction(environment, Filter, new ReadOnlyList<string>("iterable", "predicate"));
+            IterateBuiltinFunction = new BFunction(environment, Iterate, new ReadOnlyList<string>("callback", "iterable"));
+            FilterStringBuiltinFunction = new BFunction(environment, Filter, new ReadOnlyList<string>("predicate", "iterable"));
+            MapStringBuiltinFunction = new BFunction(environment, Map, new ReadOnlyList<string>("mapping", "iterable"));
 
             new LObject.Builder(this)
             .SetAttributes(false, false, false)
             .AppendDataProperty("iterate", IterateBuiltinFunction)
-            .AppendDataProperty("filter", FilterStringBuiltinFunction);
+            .AppendDataProperty("filter", FilterStringBuiltinFunction)
+            .AppendDataProperty("map", MapStringBuiltinFunction);
         }
 
         internal static IDynamic Iterate(IEnvironment environment, IArgs args)
         {
-            var iterable = args[0].ConvertToObject();
-            var createIterator = iterable.Get("createIterator") as ICallable;
-            if (createIterator == null)
-                throw environment.CreateTypeError("");
-            var iterator = createIterator.Call(environment, iterable, environment.EmptyArgs).ConvertToObject();
-            if (!iterator.HasProperty("current"))
-                throw environment.CreateTypeError("");
-            var next = iterator.Get("next") as ICallable;
-            if (next == null)
-                throw environment.CreateTypeError("");
-            var callback = args[1] as ICallable;
+            var iterator = new Iterator(environment, args[1]);
+            var callback = args[0] as ICallable;
             if (callback == null)
-                throw environment.CreateTypeError("");
-            while (next.Call(environment, iterator, environment.EmptyArgs).ConvertToBoolean().BaseValue)
+                throw environment.CreateTypeError("The argument 'callback' must be a callable function.");
+            while (iterator.Next())
             {
-                var callArgs = environment.CreateArgs(new[] { iterator.Get("current") });
+                var callArgs = environment.CreateArgs(new[] { iterator.Current });
                 callback.Call(environment, environment.Undefined, callArgs);
             }
             return environment.Undefined;
@@ -54,11 +48,24 @@ namespace Machete.Runtime.HostObjects.Iterables
 
         internal static IDynamic Filter(IEnvironment environment, IArgs args)
         {
-            var iterable = args[0].ConvertToObject();
-            var predicate = args[1].ConvertToObject() as ICallable;
+            if (args.Count < 2)
+                throw environment.CreateTypeError("The arguments 'iterable' and 'predicate' are required.");
+            var iterable = args[1].ConvertToObject();
+            var predicate = args[0].ConvertToObject() as ICallable;
             if (predicate == null)
-                throw environment.CreateTypeError("");
+                throw environment.CreateTypeError("The argument 'predicate' must be a callable function.");
             return new HFilterIterable(environment, iterable, predicate);
+        }
+
+        internal static IDynamic Map(IEnvironment environment, IArgs args)
+        {
+            if (args.Count < 2)
+                throw environment.CreateTypeError("The arguments 'iterable' and 'mapping' are required.");
+            var iterable = args[1].ConvertToObject();
+            var mapping = args[0].ConvertToObject() as ICallable;
+            if (mapping == null)
+                throw environment.CreateTypeError("The argument 'mapping' must be a callable function.");
+            return new HMapIterable(environment, iterable, mapping);
         }
     }
 }

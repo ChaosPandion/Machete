@@ -22,16 +22,8 @@ namespace Machete.Runtime.HostObjects.Iterables
 
         public override IDynamic CreateIterator(IEnvironment environment, IArgs args)
         {
-            var createIterator = _iterable.Get("createIterator") as ICallable;
-            if (createIterator == null)
-                throw environment.CreateTypeError("");
-            var iterator = createIterator.Call(environment, _iterable, environment.EmptyArgs).ConvertToObject();
-            if (!iterator.HasProperty("current"))
-                throw environment.CreateTypeError("");
-            var next = iterator.Get("next") as ICallable;
-            if (next == null)
-                throw environment.CreateTypeError("");
-            return new HFilterIterator(environment, iterator, next, _predicate);
+            var iterator = new Iterator(environment, _iterable);
+            return new HFilterIterator(environment, iterator, _predicate);
         }
     }
 }
