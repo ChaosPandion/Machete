@@ -57,7 +57,7 @@ namespace Machete.Core
         IArgs ConcatArgs(IArgs first, IArgs second);
         IDynamic FromPropertyDescriptor(IPropertyDescriptor desc);
         IPropertyDescriptor ToPropertyDescriptor(IObject obj);
-        IObjectBuilder CreateObjectBuilder();
+        IObjectBuilder CreateObjectBuilder(IObject o);
         IObject CreateArray();
         IObject CreateObject();
         MacheteRuntimeException CreateError(string message);

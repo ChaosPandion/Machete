@@ -516,9 +516,9 @@ namespace Machete.Runtime
         }
 
 
-        public IObjectBuilder CreateObjectBuilder()
+        public IObjectBuilder CreateObjectBuilder(IObject o)
         {
-            throw new NotImplementedException();
+            return new LObject.Builder(o);
         }
 
 

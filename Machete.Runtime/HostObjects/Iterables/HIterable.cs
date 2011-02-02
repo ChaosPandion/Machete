@@ -10,6 +10,7 @@ namespace Machete.Runtime.HostObjects.Iterables
 {
     public sealed class HIterable : LObject
     {
+        public BFunction ToArrayBuiltinFunction { get; private set; }
         public BFunction IterateBuiltinFunction { get; private set; }
         public BFunction FilterStringBuiltinFunction { get; private set; }
         public BFunction MapStringBuiltinFunction { get; private set; }
@@ -21,15 +22,35 @@ namespace Machete.Runtime.HostObjects.Iterables
             Prototype = environment.ObjectPrototype;
             Extensible = true;
 
+            ToArrayBuiltinFunction = new BFunction(environment, ToArray, new ReadOnlyList<string>("iterable"));
             IterateBuiltinFunction = new BFunction(environment, Iterate, new ReadOnlyList<string>("callback", "iterable"));
             FilterStringBuiltinFunction = new BFunction(environment, Filter, new ReadOnlyList<string>("predicate", "iterable"));
             MapStringBuiltinFunction = new BFunction(environment, Map, new ReadOnlyList<string>("mapping", "iterable"));
 
             new LObject.Builder(this)
             .SetAttributes(false, false, false)
+            .AppendDataProperty("toArray", ToArrayBuiltinFunction)
             .AppendDataProperty("iterate", IterateBuiltinFunction)
             .AppendDataProperty("filter", FilterStringBuiltinFunction)
             .AppendDataProperty("map", MapStringBuiltinFunction);
+        }
+
+        internal static IDynamic ToArray(IEnvironment environment, IArgs args)
+        {
+            var array = ((IConstructable)environment.ArrayConstructor).Construct(environment, environment.EmptyArgs);
+            var builder = environment.CreateObjectBuilder(array).SetAttributes(true, true, true);
+            var iterator = new Iterator(environment, args[0]);
+
+            uint index = 0;
+            while (iterator.Next())
+            {
+                builder.AppendDataProperty(index.ToString(), iterator.Current);
+                index++;
+            }
+
+            array.Put("length", environment.CreateNumber(index), true);
+
+            return array;
         }
 
         internal static IDynamic Iterate(IEnvironment environment, IArgs args)
