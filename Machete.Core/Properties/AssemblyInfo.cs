@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using Machete.Core;
 
 [assembly: AssemblyTitle("Machete.Core")]
-[assembly: AssemblyDescription(AssemblyInfo.Configuration)]
+[assembly: AssemblyDescription(AssemblyInfo.Description)]
 [assembly: AssemblyConfiguration(AssemblyInfo.Configuration)]
 [assembly: AssemblyCompany(AssemblyInfo.Company)]
 [assembly: AssemblyProduct(AssemblyInfo.Product)]
