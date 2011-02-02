@@ -4,6 +4,7 @@ using System.Text;
 using Machete.Core;
 using Machete.Runtime.RuntimeTypes.LanguageTypes;
 using System.Collections.Generic;
+using Machete.Runtime.HostObjects.Iterables;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -452,6 +453,13 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             var s = o.ConvertToString().BaseValue;
             s = s.Trim(Machete.Compiler.CharSets.trimCharacters);
             return environment.CreateString(s);
+        }
+
+        [BuiltinFunction("createIterator"), DataDescriptor(false, false, false)]
+        internal static IDynamic CreateIterator(IEnvironment environment, IArgs args)
+        {
+            var s = environment.Context.ThisBinding.ConvertToString();
+            return new HStringIterator(environment, s);
         }
     }
 }

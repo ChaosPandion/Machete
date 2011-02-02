@@ -114,6 +114,7 @@
     <Compile Include="HostObjects\Iterables\HFilterIterable.cs" />
     <Compile Include="HostObjects\Iterables\HMapIterable.cs" />
     <Compile Include="HostObjects\Iterables\HMapIterator.cs" />
+    <Compile Include="HostObjects\Iterables\HStringIterator.cs" />
     <Compile Include="HostObjects\Iterables\Iterator.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\BFunction.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
