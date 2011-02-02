@@ -5,6 +5,7 @@ using System.Text;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Collections.Generic;
+using Machete.Runtime.HostObjects.Iterables;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -31,6 +32,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
         public BFunction FilterBuiltinFunction { get; private set; }
         public BFunction ReduceBuiltinFunction { get; private set; }
         public BFunction ReduceRightBuiltinFunction { get; private set; }
+        public BFunction CreateIteratorBuiltinFunction { get; private set; }
         
         public PArray(IEnvironment environment)
             : base(environment)
@@ -65,6 +67,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             FilterBuiltinFunction = new BFunction(Environment, Filter, new ReadOnlyList<string>("comparefn"));
             ReduceBuiltinFunction = new BFunction(Environment, Reduce, new ReadOnlyList<string>("comparefn"));
             ReduceRightBuiltinFunction = new BFunction(Environment, ReduceRight, new ReadOnlyList<string>("comparefn"));
+            CreateIteratorBuiltinFunction = new BFunction(Environment, CreateIterator, ReadOnlyList<string>.Empty);
 
             new LObject.Builder(this)
             .SetAttributes(false, false, false)
@@ -91,7 +94,8 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             .AppendDataProperty("map", MapBuiltinFunction)
             .AppendDataProperty("filter", FilterBuiltinFunction)
             .AppendDataProperty("reduce", ReduceBuiltinFunction)
-            .AppendDataProperty("reduceRight", ReduceRightBuiltinFunction);
+            .AppendDataProperty("reduceRight", ReduceRightBuiltinFunction)
+            .AppendDataProperty("createIterator", CreateIteratorBuiltinFunction);
         }
 
         private static IDynamic ToString(IEnvironment environment, IArgs args)
@@ -855,6 +859,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
                 if (k == 0) break;
             }
             return accumulator;
+        }
+
+        private static IDynamic CreateIterator(IEnvironment environment, IArgs args)
+        {
+            var array = environment.Context.ThisBinding.ConvertToObject();
+            return new HArrayIterator(environment, array);
         }
 
         private static bool IsSparse(IObject o)
