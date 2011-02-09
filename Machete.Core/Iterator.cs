@@ -1,6 +1,4 @@
-﻿using Machete.Core;
-
-namespace Machete.Runtime.HostObjects.Iterables
+﻿namespace Machete.Core
 {
     public sealed class Iterator
     {

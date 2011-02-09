@@ -288,6 +288,7 @@ namespace Machete.Core
             public static readonly MethodInfo CreateRegExp = Type.GetMethod("CreateRegExp");
             public static readonly MethodInfo CreateError = Type.GetMethod("CreateError");
             public static readonly MethodInfo CreateEvalError = Type.GetMethod("CreateEvalError");
+            public static readonly MethodInfo ForeachLoop = Type.GetMethod("ForeachLoop");
         }
 
         public static class IArgsMemberInfo

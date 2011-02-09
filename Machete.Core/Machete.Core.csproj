@@ -105,6 +105,7 @@
     <Compile Include="IReference.cs" />
     <Compile Include="IReferenceBase.cs" />
     <Compile Include="IString.cs" />
+    <Compile Include="Iterator.cs" />
     <Compile Include="IUndefined.cs" />
     <Compile Include="LanguageTypeCode.cs" />
     <Compile Include="MacheteException.cs" />

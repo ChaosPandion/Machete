@@ -549,5 +549,30 @@ namespace Machete.Runtime
             };
             return step(this, generator);
         }
+
+        public void ForeachLoop(string identifier, IDynamic iterable, Code loopBodyCode)
+        {
+            var emptyArgs = EmptyArgs;
+            var iterator = new Iterator(this, iterable);
+            var oldEnv = Context.LexicalEnviroment;
+            var newEnv = oldEnv.NewDeclarativeEnvironment();
+            var newRec = newEnv.Record;
+ 
+            newRec.CreateMutableBinding(identifier, false);
+            Context.LexicalEnviroment = newEnv;
+
+            try
+            {
+                while (iterator.Next())
+                {
+                    newRec.SetMutableBinding(identifier, iterator.Current, true);
+                    loopBodyCode(this, emptyArgs);
+                }
+            }
+            finally
+            {
+                Context.LexicalEnviroment = oldEnv;
+            }
+        }
     }
 }

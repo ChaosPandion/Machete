@@ -790,6 +790,7 @@ type CompilerService (environment:IEnvironment) as this =
                     | "do" -> evalDoWhileIterationStatement
                     | "while" -> evalWhileIterationStatement
                     | "for" -> evalForIterationStatement
+                    | "foreach" -> evalForeachIterationStatement
                     | "continue" -> evalContinueStatement
                     | "break" -> evalBreakStatement
                     | "return" -> evalReturnStatement
@@ -1100,6 +1101,66 @@ type CompilerService (environment:IEnvironment) as this =
             let! r = evalForIterationStatements
             do! setUserState currentState
             return exp.Block ([| r; Expressions.Undefined :> exp |]) :> exp
+        }) state
+
+    and evalForeachIterationStatement state =
+        (parse {           
+            let breakLabelExp = exp.Label(exp.Label(typeof<Void>, "breakLoop"))              
+            let breakLabel = { labelExpression = breakLabelExp }
+            let continueLabelExp = exp.Label(exp.Label(typeof<Void>, "continueLoop"))   
+            let continueLabel = { labelExpression = continueLabelExp }
+            let breakExpression = exp.Break (breakLabel.labelExpression.Target)
+                  
+            let! currentState = getUserState
+            let labels = currentState.labels.Head.Add("breakLoop", breakLabel).Add("continueLoop", continueLabel)
+            do! setUserState { currentState with labels = labels::currentState.labels } 
+            let first = skipIdentifierName "foreach" >>. skipToken "(" >>. skipIdentifierName "var" >>. evalIdentifier
+            let second = skipIdentifierName "in" >>. evalExpression .>> skipToken ")"
+            let third = skipToken "{" >>. evalStatement .>> skipToken "}"
+            let! identifier, expression, statement = tuple3 first second third
+            do! setUserState currentState
+
+            let body = exp.Constant(exp.Lambda<Code>(statement, [| Expressions.Environment; Expressions.Args |]).Compile()) :> exp
+            let args = [| exp.Constant identifier :> exp; expression; body |]
+            let call = exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.ForeachLoop, args) :> exp            
+            return exp.Block ([| call; Expressions.Undefined :> exp |]) :> exp
+
+//            // scope vars
+//            let oldEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "oldEnv")
+//            let foreachEnvVar = exp.Variable(typeof<ILexicalEnvironment>, "foreachEnv")
+//            let foreachRecVar = exp.Variable(typeof<IEnvironmentRecord>, "foreachRec")
+//
+//            // iterable vars
+//            let iterableVar = exp.Variable(typeof<IObject>, "iterable")
+//            let iteratorVar = exp.Variable(typeof<IObject>, "iterator")
+//            let nextVar = exp.Variable(typeof<ICallable>, "next")
+//
+//            // prepare foreach body
+//            let convertToObject = exp.Call (expression, Reflection.IDynamicMemberInfo.ConvertToObject, Array.empty)
+//            let assignIterable = exp.Assign (iterableVar, convertToObject) 
+//            let createIteratorName = exp.Constant ("createIterator") :> exp
+//            let createIteratorArgs = [| createIteratorName |]
+//            let hasCreateIterator = exp.Call (convertToObject, Reflection.IObjectMemberInfo.HasProperty, createIteratorArgs)
+//            let hasCreateIteratorIsFalseArgs = [| exp.Constant ("The foreach loop requires an object containing a createIterator property.") :> exp |]
+//            let hasCreateIteratorIsFalse = exp.Throw (exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateTypeError, hasCreateIteratorIsFalseArgs))
+            
+
+//            let assignOldEnv = exp.Assign (oldEnvVar, Expressions.LexicalEnviroment :> exp) :> exp
+//            let newEnv = exp.Call (oldEnvVar, Reflection.ILexicalEnvironmentMemberInfo.NewDeclarativeEnvironment, Array.empty) :> exp 
+//            let assignNewEnv = exp.Assign (catchEnvVar, newEnv) :> exp
+//            let getRec = exp.Property (foreachEnvVar, Reflection.ILexicalEnvironmentMemberInfo.Record) :> exp 
+//            let assignRec = exp.Assign (foreachRecVar, exp.Convert(getRec, typeof<IEnvironmentRecord>)) :> exp
+//            let identifier = exp.Constant (identifier) :> exp
+//            let boolFalse = exp.Constant (false) :> exp
+//            let createBinding = exp.Call (catchRecVar, Reflection.IEnvironmentRecordMemberInfo.CreateMutableBinding, [| identifier; boolFalse |]) :> exp 
+//            let getThrown = exp.Call (catchVar, typeof<MacheteRuntimeException>.GetMethod "get_Thrown", Array.empty) :> exp 
+//            let setBinding = exp.Call (catchRecVar, Reflection.IEnvironmentRecordMemberInfo.SetMutableBinding, [| identifier; getThrown; boolFalse |]) :> exp
+//            let assignEnv = exp.Assign (Expressions.LexicalEnviroment :> exp,  catchEnvVar) :> exp 
+//            let tryBody = exp.Block ([| assignOldEnv; assignCatchEnv; assignCatchRec; createBinding; setBinding; assignEnv; block |]) :> exp
+//            let assignOldEnv = exp.Assign (Expressions.LexicalEnviroment :> exp,  oldEnvVar) :> exp 
+//            let finallyBody = exp.Block ([| assignOldEnv |]) :> exp      
+//            let body = exp.Block ([| oldEnvVar; catchEnvVar; catchRecVar |], exp.TryFinally (tryBody, finallyBody)) :> exp   
+            
         }) state
 
     and evalContinueStatement state =

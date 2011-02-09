@@ -103,6 +103,7 @@
   <ItemGroup>
     <Compile Include="Environment.cs" />
     <Compile Include="ExecutionContext.cs" />
+    <Compile Include="HostObjects\HFileSystem.cs" />
     <Compile Include="HostObjects\Iterables\HArrayIterator.cs" />
     <Compile Include="HostObjects\Iterables\HFilterIterator.cs" />
     <Compile Include="HostObjects\Iterables\HGeneratorIterable.cs" />

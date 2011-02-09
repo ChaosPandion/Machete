@@ -81,5 +81,6 @@ namespace Machete.Core
         IDynamic Execute(ExecutableCode executableCode);
         void BindFunctionDeclarations(ReadOnlyList<FunctionDeclaration> functionDeclarations, bool strict, bool configurableBindings);
         void BindVariableDeclarations(ReadOnlyList<string> variableDeclarations, bool strict, bool configurableBindings);
+        void ForeachLoop(string identifier, IDynamic iterable, Code loopBodyCode);
     }
 }
