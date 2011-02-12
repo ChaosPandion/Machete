@@ -164,7 +164,14 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.08.02.16  sin (x)")]
         public void Test15080216()
         {
-            Assert.True(false);
+            dynamic math = Engine.ExecuteScriptToDynamic("Math");
+            Assert.True(double.IsNaN((double)math.sin(double.NaN)));
+            Assert.Equal((double)math.sin(0.0), 0.0);
+            Assert.True(IsNegativeZero((double)math.sin(-0.0)));
+            Assert.True(double.IsNaN((double)math.sin(double.PositiveInfinity)));
+            Assert.True(double.IsNaN((double)math.sin(double.NegativeInfinity)));
+            Assert.Equal((double)math.sin(1.0), Math.Sin(1.0));
+            Assert.Equal((double)math.sin(-1.0), Math.Sin(-1.0));
         }
 
         [Fact(DisplayName = "15.08.02.17  sqrt (x)")]

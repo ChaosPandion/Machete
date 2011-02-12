@@ -8,6 +8,7 @@ open Machete.Compiler
 
 type internal Message =
 | ExecuteScript of string * AsyncReplyChannel<obj>
+| ExecuteScriptToDynamic of string * AsyncReplyChannel<IDynamic> 
 | RegisterOutputHandler of Action<string> 
 
 type Engine () = 
@@ -50,6 +51,13 @@ type Engine () =
                         channel.Reply result
                     with | e ->
                         channel.Reply e
+                | ExecuteScriptToDynamic (script, channel) ->
+                    try
+                        let executableCode = compiler.CompileGlobalCode script
+                        let result = environment.Execute executableCode
+                        channel.Reply result
+                    with | e ->
+                        channel.Reply (environment.CreateString e.Message)
             with | e -> ()
     }
     
@@ -58,6 +66,8 @@ type Engine () =
     let buildExecuteScriptMessage script channel = 
         ExecuteScript (script, channel)
 
+    member this.ExecuteScriptToDynamic (script:string) =
+        agent.Value.PostAndReply (fun channel -> ExecuteScriptToDynamic (script, channel))
 
     member this.ExecuteScript (script:string) =
         agent.Value.PostAndReply (buildExecuteScriptMessage script)

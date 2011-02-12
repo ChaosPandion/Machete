@@ -378,7 +378,8 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             switch (binder.Operation)
             {
                 case ExpressionType.Add:
-                    break;
+                    result = this.Op_Addition(MakeDynamic(arg));
+                    return true;
                 case ExpressionType.AddAssign:
                     break;
                 case ExpressionType.AddAssignChecked:
@@ -563,6 +564,87 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
                 callable.Call(Environment, this, callArgs);
             }
             return base.TryInvoke(binder, args, out result);
+        }
+
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+        {
+            var b = this as IReferenceBase;
+            if (b != null)
+            {
+                var r = Environment.CreateReference(binder.Name, b, true);
+                var callArgs = Environment.CreateArgs(args.Select(MakeDynamic));
+                result = r.Op_Call(callArgs);
+                return true;
+            }
+            return base.TryInvokeMember(binder, args, out result);
+        }
+
+        public override bool TryConvert(ConvertBinder binder, out object result)
+        {
+            switch (Type.GetTypeCode(binder.Type))
+            {
+                case System.TypeCode.Boolean:
+                    result = this.ConvertToBoolean().BaseValue;
+                    return true;
+                case System.TypeCode.DateTime:
+                    break;
+                case System.TypeCode.Byte:
+                    result = (byte)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.Decimal:
+                    result = (decimal)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.Double:
+                    result = this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.Int16:
+                    result = (short)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.Int32:
+                    result = (int)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.Int64:
+                    result = (long)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.UInt16:
+                    result = (ushort)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.UInt32:
+                    result = (uint)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.UInt64:
+                    result = (ulong)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.SByte:
+                    result = (sbyte)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.Single:
+                    result = (float)this.ConvertToNumber().BaseValue;
+                    return true;
+                case System.TypeCode.Empty:
+                    {
+                        if (this.TypeCode != LanguageTypeCode.Null)
+                            throw new InvalidCastException();
+                        result = null;
+                        return true;
+                    }
+                case System.TypeCode.Object:
+                    break;
+                case System.TypeCode.Char:
+                    {
+                        var s = this.ConvertToString().BaseValue;
+                        if (string.IsNullOrEmpty(s))
+                            throw new InvalidCastException();
+                        result = s[0];
+                        return true;
+                    }
+                case System.TypeCode.String:
+                    result = this.ConvertToString().BaseValue;
+                    return true;
+                default:
+                    break;
+            }
+            return base.TryConvert(binder, out result);
         }
 
         private IDynamic MakeDynamic(object o)

@@ -106,7 +106,7 @@ namespace Machete.Tests
             Assert.Equal(expected, actual);
         }
 
-        private static bool IsNegativeZero(double x)
+        internal static bool IsNegativeZero(double x)
         {
             return BitConverter.DoubleToInt64Bits(x) == _negativeZeroBits;
         }
