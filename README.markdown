@@ -8,6 +8,4 @@
 
 [FParsec](https://bitbucket.org/fparsec/main/overview)
 
-> © 2007-2008, Stephan Tolksdorf. All rights reserved.
-
 [xUnit.net](http://xunit.codeplex.com/)
