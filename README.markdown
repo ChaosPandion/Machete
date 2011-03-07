@@ -6,8 +6,8 @@
 
 [.NET 4](http://www.microsoft.com/downloads/en/details.aspx?displaylang=en&FamilyID=0a391abd-25c1-4fc0-919f-b21f31ab88b7)
 
-> © 2010 Microsoft Corporation. All rights reserved.
-
 [FParsec](https://bitbucket.org/fparsec/main/overview)
 
 > © 2007-2008, Stephan Tolksdorf. All rights reserved.
+
+[xUnit.net](http://xunit.codeplex.com/)
