@@ -1,38 +1,101 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 using Machete.Core;
-using Machete.Runtime.RuntimeTypes.LanguageTypes;
-using System.Collections.Generic;
 using Machete.Runtime.HostObjects.Iterables;
+using Machete.Runtime.RuntimeTypes.LanguageTypes;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
     public sealed class PString : LObject
     {
+        public BFunction ToStringFunction { get; private set; }
+        public BFunction ValueOfFunction { get; private set; }
+        public BFunction CharAtFunction { get; private set; }
+        public BFunction CharCodeAtFunction { get; private set; }
+        public BFunction ConcatFunction { get; private set; }
+        public BFunction IndexOfFunction { get; private set; }
+        public BFunction LastIndexOfFunction { get; private set; }
+        public BFunction LocaleCompareFunction { get; private set; }
+        public BFunction MatchFunction { get; private set; }
+        public BFunction ReplaceFunction { get; private set; }
+        public BFunction SearchFunction { get; private set; }
+        public BFunction SliceFunction { get; private set; }
+        public BFunction SplitFunction { get; private set; }
+        public BFunction SubstringFunction { get; private set; }
+        public BFunction ToLowerCaseFunction { get; private set; }
+        public BFunction ToLocaleLowerCaseFunction { get; private set; }
+        public BFunction ToUpperCaseFunction { get; private set; }
+        public BFunction ToLocaleUpperCaseFunction { get; private set; }
+        public BFunction TrimFunction { get; private set; }
+        public BFunction CreateIteratorFunction { get; private set; }
+
+
         public PString(IEnvironment environment)
             : base(environment)
         {
 
         }
 
+
         public override void Initialize()
         {
             Class = "String";
             Extensible = true;
             Prototype = Environment.ObjectPrototype;
-            DefineOwnProperty("constructor", Environment.CreateDataDescriptor(Environment.StringConstructor, true, false, true), false);
-            base.Initialize();
+
+            ToStringFunction = new BFunction(Environment, ToString, ReadOnlyList<string>.Empty);
+            ValueOfFunction = new BFunction(Environment, ValueOf, ReadOnlyList<string>.Empty);
+            CharAtFunction = new BFunction(Environment, CharAt, new ReadOnlyList<string>("pos"));
+            CharCodeAtFunction = new BFunction(Environment, CharCodeAt, new ReadOnlyList<string>("pos"));
+            ConcatFunction = new BFunction(Environment, Concat, new ReadOnlyList<string>("string1"));
+            IndexOfFunction = new BFunction(Environment, IndexOf, new ReadOnlyList<string>("searchString"));
+            LastIndexOfFunction = new BFunction(Environment, LastIndexOf, new ReadOnlyList<string>("searchString"));
+            LocaleCompareFunction = new BFunction(Environment, LocaleCompare, new ReadOnlyList<string>("that"));
+            MatchFunction = new BFunction(Environment, Match, new ReadOnlyList<string>("regexp"));
+            ReplaceFunction = new BFunction(Environment, Replace, new ReadOnlyList<string>("searchValue", "replaceValue"));
+            SearchFunction = new BFunction(Environment, Search, new ReadOnlyList<string>("regexp"));
+            SliceFunction = new BFunction(Environment, Slice, new ReadOnlyList<string>("start", "end"));
+            SplitFunction = new BFunction(Environment, Split, new ReadOnlyList<string>("separator", "limit"));
+            SubstringFunction = new BFunction(Environment, Substring, new ReadOnlyList<string>("start", "end"));
+            ToLowerCaseFunction = new BFunction(Environment, ToLowerCase, ReadOnlyList<string>.Empty);
+            ToLocaleLowerCaseFunction = new BFunction(Environment, ToLocaleLowerCase, ReadOnlyList<string>.Empty);
+            ToUpperCaseFunction = new BFunction(Environment, ToUpperCase, ReadOnlyList<string>.Empty);
+            ToLocaleUpperCaseFunction = new BFunction(Environment, ToLocaleUpperCase, ReadOnlyList<string>.Empty);
+            TrimFunction = new BFunction(Environment, Trim, ReadOnlyList<string>.Empty);
+            CreateIteratorFunction = new BFunction(Environment, CreateIterator, ReadOnlyList<string>.Empty);
+
+            new LObject.Builder(this)
+            .SetAttributes(true, false, true)
+            .AppendDataProperty("constructor", Environment.StringConstructor)
+            .AppendDataProperty("toString", ToStringFunction)
+            .AppendDataProperty("valueOf", ValueOfFunction)
+            .AppendDataProperty("charAt", CharAtFunction)
+            .AppendDataProperty("charCodeAt", CharCodeAtFunction)
+            .AppendDataProperty("concat", ConcatFunction)
+            .AppendDataProperty("indexOf", IndexOfFunction)
+            .AppendDataProperty("lastIndexOf", LastIndexOfFunction)
+            .AppendDataProperty("localeCompare", LocaleCompareFunction)
+            .AppendDataProperty("match", MatchFunction)
+            .AppendDataProperty("replace", ReplaceFunction)
+            .AppendDataProperty("search", SearchFunction)
+            .AppendDataProperty("slice", SliceFunction)
+            .AppendDataProperty("split", SplitFunction)
+            .AppendDataProperty("substring", SubstringFunction)
+            .AppendDataProperty("toLowerCase", ToLowerCaseFunction)
+            .AppendDataProperty("toLocaleLowerCase", ToLocaleLowerCaseFunction)
+            .AppendDataProperty("toUpperCase", ToUpperCaseFunction)
+            .AppendDataProperty("toLocaleUpperCase", ToLocaleUpperCaseFunction)
+            .AppendDataProperty("trim", TrimFunction)
+            .SetAttributes(false, false, false)
+            .AppendDataProperty("createIterator", CreateIteratorFunction);
         }
 
-        [BuiltinFunction("toString"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToString(IEnvironment environment, IArgs args)
+        IDynamic ToString(IEnvironment environment, IArgs args)
         {
             return ValueOf(environment, args);
         }
 
-        [BuiltinFunction("valueOf"), DataDescriptor(true, false, true)]
-        internal static IDynamic ValueOf(IEnvironment environment, IArgs args)
+        IDynamic ValueOf(IEnvironment environment, IArgs args)
         {
             var v = environment.Context.ThisBinding;
             switch (v.TypeCode)
@@ -50,8 +113,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             throw environment.CreateTypeError("");
         }
 
-        [BuiltinFunction("charAt", "pos"), DataDescriptor(true, false, true)]
-        internal static IDynamic CharAt(IEnvironment environment, IArgs args)
+        IDynamic CharAt(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -64,8 +126,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s.Substring(position, 1));
         }
 
-        [BuiltinFunction("charCodeAt", "pos"), DataDescriptor(true, false, true)]
-        internal static IDynamic CharCodeAt(IEnvironment environment, IArgs args)
+        IDynamic CharCodeAt(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -78,8 +139,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber((double)s[position]);
         }
 
-        [BuiltinFunction("concat", "string1"), DataDescriptor(true, false, true)]
-        internal static IDynamic Concat(IEnvironment environment, IArgs args)
+        IDynamic Concat(IEnvironment environment, IArgs args)
         {
             var sb = new StringBuilder();
             {
@@ -94,8 +154,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(sb.ToString());
         }
 
-        [BuiltinFunction("indexOf", "searchString"), DataDescriptor(true, false, true)]
-        internal static IDynamic IndexOf(IEnvironment environment, IArgs args)
+        IDynamic IndexOf(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -106,8 +165,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber((double)s.IndexOf(searchString, start));
         }
 
-        [BuiltinFunction("lastIndexOf", "searchString"), DataDescriptor(true, false, true)]
-        internal static IDynamic LastIndexOf(IEnvironment environment, IArgs args)
+        IDynamic LastIndexOf(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -118,8 +176,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber((double)s.LastIndexOf(searchString, start));
         }
 
-        [BuiltinFunction("localeCompare", "that"), DataDescriptor(true, false, true)]
-        internal static IDynamic LocaleCompare(IEnvironment environment, IArgs args)
+        IDynamic LocaleCompare(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -128,8 +185,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber((double)s.CompareTo(that));
         }
 
-        [BuiltinFunction("match", "regexp"), DataDescriptor(true, false, true)]
-        internal static IDynamic Match(IEnvironment environment, IArgs args)
+        IDynamic Match(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -191,8 +247,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             }
         }
 
-        [BuiltinFunction("replace", "searchValue", "replaceValue"), DataDescriptor(true, false, true)]
-        internal static IDynamic Replace(IEnvironment environment, IArgs args)
+        IDynamic Replace(IEnvironment environment, IArgs args)
         {
             throw new NotImplementedException();
             //var o = environment.Context.ThisBinding;
@@ -280,8 +335,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             //return dynS;
         }
 
-        [BuiltinFunction("search", "regexp"), DataDescriptor(true, false, true)]
-        internal static IDynamic Search(IEnvironment environment, IArgs args)
+        IDynamic Search(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -307,8 +361,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateNumber(-1);
         }
 
-        [BuiltinFunction("slice", "start", "end"), DataDescriptor(true, false, true)]
-        internal static IDynamic Slice(IEnvironment environment, IArgs args)
+        IDynamic Slice(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -323,8 +376,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s.Substring(from, span));
         }
 
-        [BuiltinFunction("split", "separator", "limit"), DataDescriptor(true, false, true)]
-        internal static IDynamic Split(IEnvironment environment, IArgs args)
+        IDynamic Split(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -392,8 +444,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return array;
         }
 
-        [BuiltinFunction("substring", "start", "end"), DataDescriptor(true, false, true)]
-        internal static IDynamic Substring(IEnvironment environment, IArgs args)
+        IDynamic Substring(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -409,8 +460,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s.Substring(from, to - from));
         }
 
-        [BuiltinFunction("toLowerCase"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToLowerCase(IEnvironment environment, IArgs args)
+        IDynamic ToLowerCase(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -418,8 +468,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s.ToLowerInvariant());
         }
 
-        [BuiltinFunction("toLocaleLowerCase"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToLocaleLowerCase(IEnvironment environment, IArgs args)
+        IDynamic ToLocaleLowerCase(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -427,8 +476,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s.ToLower());
         }
 
-        [BuiltinFunction("toUpperCase"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToUpperCase(IEnvironment environment, IArgs args)
+        IDynamic ToUpperCase(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -436,8 +484,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s.ToUpperInvariant());
         }
 
-        [BuiltinFunction("toLocaleUpperCase"), DataDescriptor(true, false, true)]
-        internal static IDynamic ToLocaleUpperCase(IEnvironment environment, IArgs args)
+        IDynamic ToLocaleUpperCase(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -445,8 +492,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s.ToUpper());
         }
 
-        [BuiltinFunction("trim"), DataDescriptor(true, false, true)]
-        internal static IDynamic Trim(IEnvironment environment, IArgs args)
+        IDynamic Trim(IEnvironment environment, IArgs args)
         {
             var o = environment.Context.ThisBinding;
             environment.CheckObjectCoercible(o);
@@ -455,8 +501,7 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             return environment.CreateString(s);
         }
 
-        [BuiltinFunction("createIterator"), DataDescriptor(false, false, false)]
-        internal static IDynamic CreateIterator(IEnvironment environment, IArgs args)
+        IDynamic CreateIterator(IEnvironment environment, IArgs args)
         {
             var s = environment.Context.ThisBinding.ConvertToString();
             return new HStringIterator(environment, s);
