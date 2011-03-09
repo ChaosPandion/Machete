@@ -20,7 +20,7 @@ namespace Machete.Core
 {
     public static class AssemblyInfo
     {
-        public const string Version = "0.5.8.1310";
+        public const string Version = "0.5.9.1336";
         public const string Description = "Machete - A scripting runtime for .NET";
         public const string Configuration = "";
         public const string Company = "";

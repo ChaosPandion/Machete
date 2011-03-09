@@ -1,4 +1,5 @@
-﻿namespace Machete.Core
+﻿using System.Dynamic;
+namespace Machete.Core
 {
     public interface IDynamic
     {
@@ -46,8 +47,6 @@
         IDynamic Op_PostfixIncrement();
         IDynamic Op_PostfixDecrement();
 
-        IDynamic Op_GetProperty(IDynamic name);
-        void Op_SetProperty(IDynamic name, IDynamic value);
         IDynamic Op_Call(IArgs args);
         IObject Op_Construct(IArgs args);
         void Op_Throw();

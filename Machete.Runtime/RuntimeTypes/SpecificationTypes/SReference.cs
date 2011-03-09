@@ -355,16 +355,6 @@ namespace Machete.Runtime.RuntimeTypes.SpecificationTypes
             return oldValue;
         }
 
-        public IDynamic Op_GetProperty(IDynamic name)
-        {
-            return Value.Op_GetProperty(name);
-        }
-
-        public void Op_SetProperty(IDynamic name, IDynamic value)
-        {
-            Value.Op_SetProperty(name, value);
-        }
-
         public IDynamic Op_Call(IArgs args)
         {
             var c = Value as ICallable;

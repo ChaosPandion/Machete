@@ -19,7 +19,6 @@ type Engine () =
 
 
     let checkOutput (inbox:MailboxProcessor<Action<string>>) = async {
-        //do! Async.SwitchToNewThread ()
         let! handler = inbox.Receive ()
         while true do
             try
