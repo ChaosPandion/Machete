@@ -111,6 +111,7 @@
     <Compile Include="Statements\ContinueStatement.cs" />
     <Compile Include="Statements\DebuggerStatement.cs" />
     <Compile Include="Statements\EmptyStatement.cs" />
+    <Compile Include="Statements\ForeachStatement.cs" />
     <Compile Include="Statements\IfStatement.cs" />
     <Compile Include="Statements\IterationStatements.cs" />
     <Compile Include="Statements\LabelledStatement.cs" />

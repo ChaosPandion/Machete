@@ -144,6 +144,7 @@ type CompilerService (environment:IEnvironment) as this =
             let newState = { oldState with strict = [oldState.strict.Head |> fst, false]; variables = []; functions = []; labels = [] }
             do! setUserState newState
             let! steps = evalGeneratorStatements
+            do! setUserState oldState
             let variableDeclarations = ReadOnlyList<string>(newState.variables |> List.rev)
             let args = [| exp.Constant steps :> exp; exp.Constant variableDeclarations :> exp; Expressions.LexicalEnviroment :> exp |]
             return exp.Call (Expressions.Environment, Reflection.IEnvironmentMemberInfo.CreateIterableFromGenerator, args) :> exp
@@ -915,9 +916,9 @@ type CompilerService (environment:IEnvironment) as this =
             match r with
             | Some _ ->
                 let! s2 = evalStatement
-                return exp.IfThenElse(e, s1, s2) :> exp
+                return exp.Condition(e, s1, s2, typeof<IDynamic>) :> exp
             | None ->
-                return exp.IfThen(e, s1) :> exp
+                return exp.Condition(e, s1, Expressions.Undefined :> exp, typeof<IDynamic>) :> exp
         }) state
 
     and evalDoWhileIterationStatement state =
@@ -1116,7 +1117,7 @@ type CompilerService (environment:IEnvironment) as this =
             do! setUserState { currentState with labels = labels::currentState.labels } 
             let first = skipIdentifierName "foreach" >>. skipToken "(" >>. skipIdentifierName "var" >>. evalIdentifier
             let second = skipIdentifierName "in" >>. evalExpression .>> skipToken ")"
-            let third = skipToken "{" >>. evalStatement .>> skipToken "}"
+            let third = evalStatement
             let! identifier, expression, statement = tuple3 first second third
             do! setUserState currentState
 
