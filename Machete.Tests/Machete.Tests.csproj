@@ -91,8 +91,11 @@
     <Compile Include="Expressions\PrimaryExpressions.cs" />
     <Compile Include="Expressions\RelationalOperators.cs" />
     <Compile Include="Expressions\UnaryOperators.cs" />
+    <Compile Include="Lexical Conventions\Comments.cs" />
+    <Compile Include="Lexical Conventions\LineTerminators.cs" />
     <Compile Include="Lexical Conventions\NumericLiteral.cs" />
     <Compile Include="Lexical Conventions\StringLiteral.cs" />
+    <Compile Include="Lexical Conventions\WhiteSpace.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\ArrayObjects.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\BooleanObjects.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\DateObjects.cs" />
