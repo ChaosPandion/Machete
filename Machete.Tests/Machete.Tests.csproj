@@ -85,6 +85,7 @@
     <Compile Include="Expressions\CommaOperator.cs" />
     <Compile Include="Expressions\ConditionalOperator.cs" />
     <Compile Include="Expressions\EqualityOperators.cs" />
+    <Compile Include="Expressions\GeneratorExpression.cs" />
     <Compile Include="Expressions\LeftHandSideExpressions.cs" />
     <Compile Include="Expressions\MultiplicativeOperators.cs" />
     <Compile Include="Expressions\PostfixExpressions.cs" />
