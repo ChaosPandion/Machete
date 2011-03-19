@@ -1,5 +1,10 @@
 ﻿namespace Machete.Interactive
 
+open System
+open FParsec
+open FParsec.Primitives
+open FParsec.CharParsers
+
 module Program =
 
     let parseJQuery () =
@@ -10,7 +15,15 @@ module Program =
         System.Console.WriteLine (r)
 
     let main () =
-        //parseJQuery ()
-        Interactive.initialize ()
+
+        let x = run Machete.Parser.InputElementParsers.parseNumericLiteral ".1e1"
+        match x with
+        | Success (a, b, c) ->
+            ()
+        | Failure (a, b, c) ->
+            ()
+        System.Console.ReadLine() |> ignore
+
+        //Interactive.initialize ()
 
     main()

@@ -76,3 +76,10 @@ type SourceElement =
 | YieldStatement
 | YieldBreakStatement
 | YieldContinueStatement
+| FunctionDeclaration
+| FunctionExpression
+| FormalParameterList
+| FunctionBody
+| Program
+| SourceElements
+| SourceElement

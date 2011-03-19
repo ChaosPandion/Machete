@@ -1,67 +1,13 @@
 ﻿namespace Machete.Parser
 
 type InputElement =
-| WhiteSpace
-| LineTerminator
-| LineTerminatorSequence
-| Comment
-| MultiLineComment
-| MultiLineCommentChars
-| PostAsteriskCommentChars
-| MultiLineNotAsteriskChar
-| MultiLineNotForwardSlashOrAsteriskChar
-| SingleLineComment
-| SingleLineCommentChars
-| SingleLineCommentChar
-| Token
-| Identifier
-| IdentifierName
-| IdentifierStart
-| IdentifierPart
-| UnicodeLetter
-| UnicodeCombiningMark
-| UnicodeDigit
-| UnicodeConnectorPunctuation
-| ReservedWord
-| Keyword
-| FutureReservedWord
-| Punctuator
-| DivPunctuator
-| Literal
-| NullLiteral
-| BooleanLiteral
-| NumericLiteral
-| DecimalLiteral
-| DecimalIntegerLiteral
-| DecimalDigits
-| DecimalDigit
-| NonZeroDigit
-| ExponentPart
-| ExponentIndicator
-| SignedInteger
-| HexIntegerLiteral
-| HexDigit
-| StringLiteral
-| DoubleStringCharacters
-| SingleStringCharacters
-| DoubleStringCharacter
-| SingleStringCharacter
-| LineContinuation
-| EscapeSequence
-| CharacterEscapeSequence
-| SingleEscapeCharacter
-| NonEscapeCharacter
-| EscapeCharacter
-| HexEscapeSequence
-| UnicodeEscapeSequence
-| RegularExpressionLiteral
-| RegularExpressionBody
-| RegularExpressionChars
-| RegularExpressionFirstChar
-| RegularExpressionChar
-| RegularExpressionBackslashSequence
-| RegularExpressionNonTerminator
-| RegularExpressionClass
-| RegularExpressionClassChars
-| RegularExpressionClassChar
-| RegularExpressionFlags
+| WhiteSpace of char * ElementData
+| LineTerminator of char * ElementData
+| MultiLineComment of string * bool * ElementData
+| SingleLineComment of string * ElementData
+| IdentifierName of string * ElementData
+| NullLiteral of ElementData
+| BooleanLiteral of bool * ElementData
+| NumericLiteral of double * ElementData
+| StringLiteral of string * ElementData
+| RegularExpressionLiteral of string * string * ElementData

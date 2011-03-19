@@ -65,6 +65,11 @@
       <Project>{eb3133fc-6fd5-4056-a11b-e5dead22a0a3}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Machete.Parser\Machete.Parser.fsproj">
+      <Name>Machete.Parser</Name>
+      <Project>{db5de7d9-9197-4416-8556-61412f78f4ed}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Machete.Runtime\Machete.Runtime.csproj">
       <Name>Machete.Runtime</Name>
       <Project>{c0b1eec3-dd81-4ed6-8896-03b615bb5f90}</Project>
