@@ -5,6 +5,8 @@ module Productions =
     open System
     open System.Globalization
 
+    let lineTerminatorString = "\u000a\u000d\u2028\u2029"
+
     let private whiteSpaceChars = [|
         '\u0009'
         '\u000b'

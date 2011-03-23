@@ -67,7 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Productions.fs" />
-    <Compile Include="Position.fs" />
+    <Compile Include="ElementData.fs" />
     <Compile Include="InputElement.fs" />
     <Compile Include="InputElementParsers.fs" />
     <Compile Include="SourceElement.fs" />

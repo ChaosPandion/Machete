@@ -4,6 +4,8 @@ open System
 open FParsec
 open FParsec.Primitives
 open FParsec.CharParsers
+open Machete.Parser.InputElementParsers
+open Machete.Parser.SourceElementParsers
 
 module Program =
 
@@ -16,7 +18,7 @@ module Program =
 
     let main () =
 
-        let x = run Machete.Parser.InputElementParsers.parseNumericLiteral ".1e1"
+        let x = runParserOnString parseWithStatement null "" "with (x) { }"
         match x with
         | Success (a, b, c) ->
             ()
