@@ -18,7 +18,7 @@ module Program =
 
     let main () =
 
-        let x = runParserOnString parseWithStatement null "" "with (x) { }"
+        let x = runParserOnString Machete.Parser.ExpressionParsers.parseExpression () "" "new 1['2'].x['test']() + 1, 23 - 2"
         match x with
         | Success (a, b, c) ->
             ()

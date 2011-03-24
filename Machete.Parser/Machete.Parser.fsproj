@@ -69,8 +69,9 @@
     <Compile Include="Productions.fs" />
     <Compile Include="ElementData.fs" />
     <Compile Include="InputElement.fs" />
-    <Compile Include="InputElementParsers.fs" />
     <Compile Include="SourceElement.fs" />
+    <Compile Include="InputElementParsers.fs" />
+    <Compile Include="ExpressionParsers.fs" />
     <Compile Include="SourceElementParsers.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />

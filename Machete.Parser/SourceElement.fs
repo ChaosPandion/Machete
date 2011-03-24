@@ -1,32 +1,65 @@
 ﻿namespace Machete.Parser
 
 type PostfixOperator =
-| Simple
+| PostfixIncrement
+| PostfixDecrement
 
 type UnaryOperator =
-| Simple
+| Delete
+| Void
+| Typeof
+| PrefixIncrement
+| PrefixDecrement
+| Plus
+| Minus
+| BitwiseNot
+| LogicalNot
 
 type MultiplicativeOperator =
-| Simple
+| Multiply
+| Divide
+| Remainder
 
 type AdditiveOperator =
-| Simple
+| Add
+| Subtract
 
 type ShiftOperator =
-| Simple
+| LeftShift
+| SignedRightShift
+| UnsignedRightShift
 
 type RelationalOperator =
-| Simple
+| LessThan
+| GreaterThan
+| LessThanOrEqual
+| GreaterThanOrEqual
+| Instanceof
+| In
 
 type EqualityOperator =
-| Simple
+| Equals
+| DoesNotEquals
+| StrictEquals
+| StrictDoesNotEquals
 
 type AssignmentOperator =
 | Simple
+| CompoundMultiply
+| CompoundDivide
+| CompoundRemainder
+| CompoundAdd
+| CompoundSubtract
+| CompoundLeftShift
+| CompoundSignedRightShift
+| CompoundUnsignedRightShift
+| CompoundBitwiseAnd
+| CompoundBitwiseXor
+| CompoundBitwiseOr
 
 type SourceElement =
 
-| PrimaryExpression of SourceElement
+| PrimaryExpression of InputElement
 | ArrayLiteral of SourceElement * SourceElement option
 | ElementList of SourceElement option * SourceElement * SourceElement option
 | Elision of SourceElement option
@@ -36,12 +69,18 @@ type SourceElement =
 | ValuePropertyAssignment of string * SourceElement
 | GetterPropertyAssignment of string * SourceElement
 | SetterPropertyAssignment of string * string * SourceElement
+
 | MemberExpression of SourceElement * SourceElement option
+| MemberExpressionTail of SourceElement * SourceElement option
 | NewExpression of SourceElement
-| CallExpression of SourceElement * SourceElement
+
+| CallExpression of SourceElement * SourceElement option * SourceElement option
+| CallExpressionTail of SourceElement * SourceElement option
+
 | Arguments of SourceElement option
 | ArgumentList of SourceElement * SourceElement option
 | LeftHandSideExpression of SourceElement
+
 | PostfixExpression of SourceElement * PostfixOperator option
 | UnaryExpression of UnaryOperator option * SourceElement
 | MultiplicativeExpression of SourceElement * (MultiplicativeOperator * SourceElement) option
