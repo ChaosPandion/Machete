@@ -65,6 +65,15 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FParsec, Version=0.8.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\References\FParsec.dll</HintPath>
+    </Reference>
+    <Reference Include="FParsecCS, Version=0.8.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\References\FParsecCS.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -97,6 +106,14 @@
     <Compile Include="Lexical Conventions\NumericLiteral.cs" />
     <Compile Include="Lexical Conventions\StringLiteral.cs" />
     <Compile Include="Lexical Conventions\WhiteSpace.cs" />
+    <Compile Include="Specification\Tests_07_Lexical_Conventions\Tests_07_02_WhiteSpace.cs" />
+    <Compile Include="Specification\Tests_07_Lexical_Conventions\Tests_07_03_LineTerminators.cs" />
+    <Compile Include="Specification\Tests_07_Lexical_Conventions\Tests_07_04_Comments.cs" />
+    <Compile Include="Specification\Tests_07_Lexical_Conventions\Tests_07_05_Tokens.cs" />
+    <Compile Include="Specification\Tests_07_Lexical_Conventions\Tests_07_06_Identifier_Names_and_Identifiers.cs" />
+    <Compile Include="Specification\Tests_07_Lexical_Conventions\Tests_07_07_Punctuators.cs" />
+    <Compile Include="Specification\Tests_07_Lexical_Conventions\Tests_07_08_Literals.cs" />
+    <Compile Include="Specification\Tests_07_Lexical_Conventions\Tests_07_09_Automatic_Semicolon_Insertion.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\ArrayObjects.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\BooleanObjects.cs" />
     <Compile Include="Standard Built-in ECMAScript Objects\DateObjects.cs" />
@@ -132,11 +149,16 @@
       <Project>{EB3133FC-6FD5-4056-A11B-E5DEAD22A0A3}</Project>
       <Name>Machete.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Machete.Parser\Machete.Parser.fsproj">
+      <Project>{DB5DE7D9-9197-4416-8556-61412F78F4ED}</Project>
+      <Name>Machete.Parser</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Machete\Machete.fsproj">
       <Project>{882914A4-65AF-444B-9C79-362361998E70}</Project>
       <Name>Machete</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

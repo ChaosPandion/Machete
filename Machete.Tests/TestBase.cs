@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using Xunit;
 using System.Linq.Expressions;
+using FParsec;
+using Microsoft.FSharp.Core;
 
 namespace Machete.Tests
 {
@@ -104,6 +106,15 @@ namespace Machete.Tests
             Assert.IsType<string>(result);
             var actual = (string)result;
             Assert.Equal(expected, actual);
+        }
+
+        public T RunParser<T>(Func<State<Unit>, Primitives.Reply<T, Unit>> parser, string text)
+        {
+            var f = FuncConvert.ToFSharpFunc<State<Unit>, Primitives.Reply<T, Unit>>(s => parser(s));
+            var r = CharParsers.run<T>(f, text);
+            if (r.IsSuccess)
+                return ((CharParsers.ParserResult<T, Unit>.Success)r).Item1;
+            return default(T);
         }
 
         internal static bool IsNegativeZero(double x)
