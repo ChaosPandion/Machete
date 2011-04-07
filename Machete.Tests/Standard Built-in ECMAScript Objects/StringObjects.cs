@@ -99,7 +99,13 @@ namespace Machete.Tests
         [Fact(DisplayName = "15.5.4.11 String.prototype.replace (searchValue, replaceValue)")]
         public void Test155411()
         {
-            Assert.Equal("XXXXXXXX", (string)Engine.ExecuteScript("'XXXX'.replace(/(X)(X)/g, '$&$&')"));
+            Assert.Equal("BBB", (string)Engine.ExecuteScript("'AAA'.replace(/A/g, 'B')"));
+            Assert.Equal("$_$", (string)Engine.ExecuteScript("'A_A'.replace(/A/g, '$$')"));
+            Assert.Equal("ABCABC", (string)Engine.ExecuteScript("'ABC'.replace(/ABC/g, '$&$&')"));
+            Assert.Equal("AAC", (string)Engine.ExecuteScript("'A_C'.replace(/_/g, '$`')"));
+            Assert.Equal("ABB", (string)Engine.ExecuteScript("'A_B'.replace(/_/g, '$\\'')"));
+            Assert.Equal("100", (string)Engine.ExecuteScript("'10'.replace(/(0)/g, '$1$1')"));
+            Assert.Equal("100", (string)Engine.ExecuteScript("'10'.replace(/(0)/g, '$01$01')"));
         }
 
         [Fact(DisplayName = "15.5.4.12 String.prototype.search (regexp)")]

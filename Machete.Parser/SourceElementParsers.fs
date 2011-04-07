@@ -295,7 +295,7 @@ module SourceElementParsers =
         fun state -> 
             (skipOver >>. e) state
 
-    let rec parseStatement state =
+    and parseStatement state =
         (parse {
             return Statement
         }) state
@@ -312,87 +312,87 @@ module SourceElementParsers =
 
     and parseVariableStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseVariableDeclarationList state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseVariableDeclarationListNoIn state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseVariableDeclaration state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseVariableDeclarationNoIn state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseInitialiser state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseInitialiserNoIn state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseEmptyStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseExpressionStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
         
     and parseIfStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseForeachIterationStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
      
     and parseYieldStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseYieldBreakStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
         
     and parseYieldContinueStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseContinueStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseBreakStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseReturnStatement state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseWithStatement state =
@@ -494,35 +494,38 @@ module SourceElementParsers =
             do! skipIdentifierName "debugger"
             do! skipStatementTerminator
             return DebuggerStatement
-        }) state
-    
+        }) state    
 
-    let rec parseFunctionDeclaration state =
+    and parseFunctionDeclaration state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseFormalParameterList state =
         (parse {
-            return ()
+            return Program None
         }) state
 
     and parseFunctionBody state =
         (parse {
-            return ()
+            return Program None
         }) state
 
-    let rec parseSourceElement state =
+    and parseSourceElement state =
         (parse {
-            return ()
+            let! r = parseFunctionDeclaration <|> parseStatement
+            return SourceElement r
         }) state
 
     and parseSourceElements state =
         (parse {
-            return ()
+            let! first = parseSourceElement
+            let! rest = many1Fold first (fun a b -> SourceElements (a, b)) (opt parseSourceElement)
+            return rest
         }) state
          
     and parseProgram state =
         (parse {
-            return ()
+            let! s = opt parseSourceElements 
+            return Program s
         }) state

@@ -145,6 +145,6 @@ type SourceElement =
 | LambdaExpression
 | FormalParameterList
 | FunctionBody
-| Program of SourceElement
+| Program of SourceElement option
 | SourceElements of SourceElement * SourceElement option
 | SourceElement of SourceElement
