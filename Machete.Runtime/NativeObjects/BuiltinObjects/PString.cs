@@ -331,19 +331,11 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
                     }
                     else
                     {
-                        var nConst = Expression.Constant(n);
-                        e = Expression.Call(
-                            e, 
-                            appendMethod,
-                            Expression.Condition(
-                                Expression.GreaterThan(
-                                    capturesLengthProp,
-                                    nConst
-                                ),
-                                Expression.ArrayIndex(capturesProp, nConst),
-                                t
-                            )
-                        );  
+                        var nc = Expression.Constant(n);
+                        var gt = Expression.GreaterThan(capturesLengthProp, nc);
+                        var ai = Expression.ArrayIndex(capturesProp, nc);
+                        var cnd = Expression.Condition(gt, ai, t);
+                        e = Expression.Call(e, appendMethod, cnd);  
                     }
                 }
             }
