@@ -1,6 +1,7 @@
 ﻿namespace Machete.Compiler
 
 open System
+open System.Linq.Expressions
 open FParsec.Primitives
 open FParsec.CharParsers
 open Machete.Core
@@ -53,6 +54,32 @@ module RegExpParser =
     type private Matcher = MatchState -> Continuation -> MatchResult 
 
     type private AssertionTester = MatchState -> bool
+
+    let private toLowerMethodInfo = typeof<char>.GetMethod("ToLower", [| typeof<char> |])
+
+    let private characterSetMatcher2 (cs:char seq) (invert:bool) (ignoreCase:bool) =
+        let cs = 
+            if ignoreCase 
+            then cs |> Seq.map Char.ToLower 
+            else cs
+        let cParam = Expression.Parameter(typeof<char>, "c")
+        let switchValue = 
+            if not ignoreCase 
+            then cParam :> Expression 
+            else Expression.Call(null, toLowerMethodInfo, cParam) :> Expression
+        let cases = cs |> Seq.map (fun c -> Expression.Constant(c) :> Expression)
+        let trueCase = Expression.SwitchCase(Expression.Constant(true), cases)
+        let cSwitch = Expression.Switch(switchValue, Expression.Constant(false), trueCase)
+        let lambda = Expression.Lambda<Func<char, bool>>(cSwitch, cParam)
+        let matcher = lambda.Compile()
+        fun (x:MatchState) (c:Continuation) ->
+            if x.EndOfInput then 
+                MatchResult.Failure x 
+            else 
+                let success = matcher.Invoke x.CurrentChar
+                let success = if invert then not success else success
+                if success then c (x.Move ()) else MatchResult.Failure x
+
     
     let private characterSetMatcher (a:string) (invert:bool) (x:MatchState) (c:Continuation) =
         if x.EndOfInput 
@@ -317,10 +344,12 @@ module RegExpParser =
                 let! r = opt evalPatternCharacter
                 match r with
                 | Some c ->
-                    return characterSetMatcher (c.ToString()) false
+                    return characterSetMatcher2 (c.ToString()) false state.UserState.ignoreCaseFlag
+                    //return characterSetMatcher (c.ToString()) false
                 | None ->
                     let! chars, invert = evalCharacterClass
-                    return characterSetMatcher chars invert
+                    return characterSetMatcher2 chars invert state.UserState.ignoreCaseFlag
+                    //return characterSetMatcher chars invert
         }) state
         
     and private evalPatternCharacter state =  
@@ -353,7 +382,10 @@ module RegExpParser =
             (parse {
                 let! r = evalDecimalEscape
                 match r with
-                | 0.0 -> return characterSetMatcher "\u0000" false
+                | 0.0 -> 
+                    let! s = getUserState
+                    return characterSetMatcher2 "\u0000" false s.ignoreCaseFlag
+                    //return characterSetMatcher "\u0000" false
                 | num ->
                     let! s = getUserState
                     let n = num |> int
@@ -367,10 +399,12 @@ module RegExpParser =
                         ()
                     else return run n
             }) state
-        let characterEscape state =
-            (evalCharacterEscape |>> fun x -> characterSetMatcher x false) state  
-        let characterClassEscape state =
-            (evalCharacterClassEscape |>> fun x -> characterSetMatcher x false) state  
+        let characterEscape (state:FParsec.State<ParseState>) =
+            //(evalCharacterEscape |>> fun x -> characterSetMatcher x false) state  
+            (evalCharacterEscape |>> fun x -> characterSetMatcher2 x false state.UserState.ignoreCaseFlag) state  
+        let characterClassEscape (state:FParsec.State<ParseState>) =
+            //(evalCharacterClassEscape |>> fun x -> characterSetMatcher x false) state  
+            (evalCharacterClassEscape |>> fun x -> characterSetMatcher2 x false state.UserState.ignoreCaseFlag) state  
         (decimalEscape <|> characterClassEscape <|> characterEscape) state
         
     and private evalCharacterEscape state = 
