@@ -2,16 +2,34 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{5c16b94b-c4cd-49e8-a153-856a4db43993}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>Machete.Interactive</RootNamespace>
-    <AssemblyName>Machete.Interactive</AssemblyName>
+    <ProjectGuid>{b5b1baa9-e70b-48c5-b8e5-23f69b6aa299}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Machete.RegExp</RootNamespace>
+    <AssemblyName>Machete.RegExp</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <Name>Machete.Interactive</Name>
+    <Name>Machete.RegExp</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Machete.RegExp.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Machete.RegExp.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,8 +39,8 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Machete.RegExp.XML</DocumentationFile>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Debug\Machete.Interactive.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -31,8 +49,8 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Machete.RegExp.XML</DocumentationFile>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Release\Machete.Interactive.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FParsec">
@@ -48,43 +66,19 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Command.fs" />
-    <Compile Include="CommandParser.fs" />
-    <Compile Include="Interactive.fs" />
-    <Compile Include="Program.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Machete.Compiler\Machete.Compiler.fsproj">
-      <Name>Machete.Compiler</Name>
-      <Project>{f4056a29-8845-4dfa-b551-35d7b27d5954}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Machete.Core\Machete.Core.csproj">
-      <Name>Machete.Core</Name>
-      <Project>{eb3133fc-6fd5-4056-a11b-e5dead22a0a3}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Machete.Parser\Machete.Parser.fsproj">
-      <Name>Machete.Parser</Name>
-      <Project>{db5de7d9-9197-4416-8556-61412f78f4ed}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Machete.RegExp\Machete.RegExp.fsproj">
-      <Name>Machete.RegExp</Name>
-      <Project>{b5b1baa9-e70b-48c5-b8e5-23f69b6aa299}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Machete.Runtime\Machete.Runtime.csproj">
-      <Name>Machete.Runtime</Name>
-      <Project>{c0b1eec3-dd81-4ed6-8896-03b615bb5f90}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Machete\Machete.fsproj">
-      <Name>Machete</Name>
-      <Project>{882914a4-65af-444b-9c79-362361998e70}</Project>
-      <Private>True</Private>
-    </ProjectReference>
+    <Compile Include="RegExpFlags.fs" />
+    <Compile Include="RegExpInfo.fs" />
+    <Compile Include="Captures.fs" />
+    <Compile Include="MatchState.fs" />
+    <Compile Include="MatchResult.fs" />
+    <Compile Include="FunctionTypes.fs" />
+    <Compile Include="Limit.fs" />
+    <Compile Include="Characters.fs" />
+    <Compile Include="Matchers.fs" />
+    <Compile Include="RegExpTree.fs" />
+    <Compile Include="Parser.fs" />
+    <Compile Include="Interpreter.fs" />
+    <Compile Include="RegExp.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
