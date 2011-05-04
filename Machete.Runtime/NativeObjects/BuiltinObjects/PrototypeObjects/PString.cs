@@ -8,6 +8,7 @@ using Machete.Compiler;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Collections.Concurrent;
 
 namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 {
@@ -252,19 +253,34 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             }
         }
 
-        
-        static Func<string, RegExpParser.MatchState, string> MakeReplacer(string format)
-        {
-            var tokens =
-                new Regex(@"[^\$]*(\$[\$&`']|\$\d{1,2})")
-                .Matches(format)
-                .Cast<Match>()
-                .Select(m => (Capture)m.Groups[1])
-                .ToList();
 
-            if (tokens.Count == 0)
+        delegate string Replacer(string matchedSubstring, RegExpParser.MatchState state);
+
+        static readonly ConcurrentDictionary<string, Replacer> _replacerMap = new ConcurrentDictionary<string, Replacer>();
+
+        static Replacer MakeReplacer(string format)
+        {
+            Replacer replacer;
+
+            if (_replacerMap.TryGetValue(format, out replacer))
+                return replacer;
+
+            var items =
+                Regex.Matches(format, @"([^\$]*)(\$[\$&`']|\$\d{1,2})")
+                .Cast<Match>()
+                .Select(m => 
+                    new {
+                        TextBefore = m.Groups[1].Value,
+                        Token = m.Groups[2].Value
+                    }
+                )
+                .ToArray();
+
+            if (items.Length == 0)
             {
-                return (value, state) => format;
+                replacer = (value, state) => format;
+                _replacerMap.TryAdd(format, replacer);
+                return replacer;
             }
 
             var appendMethod = typeof(StringBuilder).GetMethod("Append", new[] { typeof(string) });
@@ -281,85 +297,74 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
             var capturesLengthProp = Expression.Property(capturesProp, "Length");
             var endIndexProp = Expression.Property(stateVariable, "endIndex");
             var inputProp = Expression.Property(stateVariable, "input");
-            var appendDollarSign = Expression.Call(sbVariable, appendMethod, Expression.Constant("$"));
             var getMatchedSubstring = Expression.ArrayIndex(capturesProp, zero);
-            var appendMatchedSubstring = Expression.Call(sbVariable, appendMethod, getMatchedSubstring);
             var getBeforeSubstring = Expression.Call(inputProp, substringWithLengthMethod, zero, Expression.Subtract(endIndexProp, one));
-            var appendBeforeSubstring = Expression.Call(sbVariable, appendMethod, getBeforeSubstring);
             var getAfterSubstring = Expression.Call(inputProp, substringMethod, endIndexProp);
-            var appendAfterSubstring = Expression.Call(sbVariable, appendMethod, getAfterSubstring);
+            
             var e = (Expression)Expression.New(typeof(StringBuilder));
-            var index = 0;
-
-            foreach (var token in tokens)
+            foreach (var item in items)
             {
-                if (token.Index > 0)
-                {
-                    e = Expression.Call(e, appendMethod, Expression.Constant(format.Substring(index, token.Index - index)));                   
-                }
-                index = token.Index + token.Length;
-                if (token.Value == "$$")
+                e = Expression.Call(e, appendMethod, Expression.Constant(item.TextBefore));
+                if (item.Token == "$$")
                 {
                     e = Expression.Call(e, appendMethod, dollarSign);
                 }
-                else if (token.Value == "$&")
+                else if (item.Token == "$&")
                 {
                     e = Expression.Call(e, appendMethod, valueVariable);
                 }
-                else if (token.Value == "$`")
+                else if (item.Token == "$`")
                 {
                     e = Expression.Call(e, appendMethod, getBeforeSubstring);
                 }
-                else if (token.Value == "$'")
+                else if (item.Token == "$'")
                 {
                     e = Expression.Call(e, appendMethod, getAfterSubstring);
                 }
                 else
                 {
-                    var n = token.Value.Substring(1);
-                    if (n.Length == 2 && n[0] == '0')
-                    {
-                        n = n.Substring(1);
-                    }
-                    var i = int.Parse(n) - 1;
-                    var nConst = Expression.Constant(i);
-                    var t = Expression.Constant(token.Value);
-                    if (i < 0)
+                    var n = int.Parse(item.Token.Substring(1)) - 1;
+                    var t = Expression.Constant(item.Token);
+                    if (n < 0)
                     {
                         e = Expression.Call(e, appendMethod, t);  
                     }
                     else
                     {
-                        var cond =
+                        var nConst = Expression.Constant(n);
+                        e = Expression.Call(
+                            e, 
+                            appendMethod,
                             Expression.Condition(
                                 Expression.GreaterThan(
                                     capturesLengthProp,
                                     nConst
                                 ),
                                 Expression.ArrayIndex(capturesProp, nConst),
-                                t                                
-                            );
-                        e = Expression.Call(e, appendMethod, cond);  
+                                t
+                            )
+                        );  
                     }
                 }
             }
 
-            e = Expression.Call(e, toStringMethod);
-            var lambda = Expression.Lambda<Func<string, RegExpParser.MatchState, string>>(e, valueVariable, stateVariable);
-            return lambda.Compile();
+            var lambda = Expression.Lambda<Replacer>(Expression.Call(e, toStringMethod), valueVariable, stateVariable);
+            replacer = lambda.Compile();
+            _replacerMap.TryAdd(format, replacer);
+            return replacer;
         }
-
-
+        
         IDynamic Replace(IEnvironment environment, IArgs args)
         {
-            var o = environment.Context.ThisBinding;
-            var so = o.ConvertToString();
+            var so = environment.Context.ThisBinding.ConvertToString();
             var s = so.BaseValue;
-            var matches = new List<Tuple<int, int, Func<string, string>>>();
+            var sb = new StringBuilder();
             var searchValueArg = args[0];
             var replaceValueArg = args[1];
             var replaceValueFunc = replaceValueArg as ICallable;
             var replaceValueString = replaceValueArg.ConvertToString();
+            var matchSubstring = "";
+            var i = 0;
 
             if (searchValueArg is NRegExp)
             {
@@ -372,19 +377,12 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
                 {
                     makeReplacer =
                         (startIndex, state) =>
-                            _ =>
+                            v =>
                             {
-                                var nullArg = (IDynamic)environment.Null;
                                 var cArgs = new List<IDynamic>();
-                                foreach (var c in state.captures)
-                                {
-                                    if (c == null)
-                                    {
-                                        cArgs.Add(environment.Null);
-                                        continue;
-                                    }
-                                    cArgs.Add(c == null ? nullArg : environment.CreateString(c));
-                                }
+                                cArgs.Add(environment.CreateString(v));
+                                foreach (var c in state.captures) 
+                                    cArgs.Add(c == null ? (IDynamic)environment.Null : environment.CreateString(c));
                                 cArgs.Add(environment.CreateNumber(startIndex));
                                 cArgs.Add(so);
                                 var result = 
@@ -399,54 +397,27 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
                 else
                 {
                     var replacer = MakeReplacer(replaceValueString.BaseValue);
-                    makeReplacer =
-                        (_, state) =>
-                            v => replacer(v, state);
+                    makeReplacer = (_, state) => v => replacer(v, state);
                 }
 
-                if (!regExpObj.Flags.Contains("g"))
+                var global = regExpObj.Flags.Contains("g");
+                i = global ? (int)regExpObj.Get("lastIndex").ConvertToNumber().BaseValue : 0;
+
+                do
                 {
-                    var index = 0;
-                    do
+                    var r = matcher(s, i);
+                    if (!r.success)
                     {
-                        var r = matcher(s, index);
-                        if (!r.success)
-                        {
-                            index++;
-                            continue;
-                        }
-                        matches.Add(
-                            Tuple.Create(
-                                index,
-                                r.matchState.endIndex - index,
-                                makeReplacer(index, r.matchState)
-                            )
-                        );
+                        sb.Append(s[i++]);
+                        continue;
+                    }
+                    matchSubstring = s.Substring(i, r.matchState.endIndex - i);
+                    sb.Append(makeReplacer(i, r.matchState)(matchSubstring));
+                    if (!global)
                         break;
-                    } while (index < s.Length);
-                }
-                else
-                {
-                    var index = (int)regExpObj.Get("lastIndex").ConvertToNumber().BaseValue;
-                    do
-                    {
-                        var r = matcher(s, index);
-                        if (!r.success)
-                        {
-                            index++;
-                            continue;
-                        }
-                        matches.Add(
-                            Tuple.Create(
-                                index,
-                                r.matchState.endIndex - index,
-                                makeReplacer(index, r.matchState)                                
-                            )
-                        );
-                        index = r.matchState.endIndex;
-                        regExpObj.Put("lastIndex", environment.CreateNumber(index), false);
-                    } while (index < s.Length);
-                }
+                    i = r.matchState.endIndex;
+                    regExpObj.Put("lastIndex", environment.CreateNumber(i), false);
+                } while (i < s.Length);
             }
             else
             {
@@ -454,22 +425,21 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
 
                 if (replaceValueFunc == null)
                 {
-                    replace =  _ => replaceValueString.BaseValue;
+                    replace =  v => replaceValueString.BaseValue;
                 }
                 else
                 {
                     replace = 
-                        v =>
-                        {
-                            var arg = environment.CreateString(v);
-                            var result =
-                                replaceValueFunc.Call(
-                                    environment,
-                                    environment.Undefined,
-                                    environment.CreateArgs(new[] { arg })
-                                );
-                            return result.ConvertToString().BaseValue;
-                        };
+                        v => 
+                            replaceValueFunc.Call(
+                                environment, 
+                                environment.Undefined, 
+                                environment.CreateArgs(
+                                    new[] { environment.CreateString(v) }
+                                )
+                            )
+                            .ConvertToString()
+                            .BaseValue;
                 }
 
                 var searchValue = args[0].ConvertToString().BaseValue;
@@ -480,37 +450,18 @@ namespace Machete.Runtime.NativeObjects.BuiltinObjects.PrototypeObjects
                     var resultIndex = s.IndexOf(searchValue, index);
                     if (resultIndex < 0)
                     {
-                        index++;
-                        continue;
+                        sb.Append(s.Substring(index));
+                        break;
                     }
-                    matches.Add(
-                        Tuple.Create<int, int, Func<string, string>>(
-                            resultIndex, 
-                            searchValue.Length,
-                            replace
-                        )
-                    );
-                    index = resultIndex + 1;
+                    matchSubstring = s.Substring(resultIndex, searchValue.Length);
+                    sb.Append(replace(matchSubstring));
+                    index = resultIndex + searchValue.Length;
                 } while (index < s.Length);
             }
 
-            if (matches.Count == 0)
-                return so;
-            {
-            var sb = new StringBuilder();
-            var startIndex = 0;
-            foreach (var match in matches)
-            {
-                if (match.Item1 > 0) 
-                    sb.Append(s.Substring(startIndex, match.Item1 - startIndex));
-                sb.Append(match.Item3(s.Substring(match.Item1, match.Item2)));
-                startIndex = match.Item1 + match.Item2;
-            }
-            if (startIndex < s.Length)
-                sb.Append(s.Substring(startIndex));
-            return environment.CreateString(sb.ToString());
-                }
+            return environment.CreateString(sb.ToString());                
         }
+
 
         IDynamic Search(IEnvironment environment, IArgs args)
         {
