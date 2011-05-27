@@ -104,6 +104,7 @@
     <Compile Include="Environment.cs" />
     <Compile Include="ExecutionContext.cs" />
     <Compile Include="HostObjects\HFileSystem.cs" />
+    <Compile Include="HostObjects\HLazy.cs" />
     <Compile Include="HostObjects\Iterables\HArrayIterator.cs" />
     <Compile Include="HostObjects\Iterables\HFilterIterator.cs" />
     <Compile Include="HostObjects\Iterables\HGeneratorIterable.cs" />
@@ -117,39 +118,39 @@
     <Compile Include="HostObjects\Iterables\HMapIterator.cs" />
     <Compile Include="HostObjects\Iterables\HStringIterator.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\BFunction.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CArray.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CBoolean.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CDate.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CEvalError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CFunction.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CNumber.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CArray.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CBoolean.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CDate.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CEvalError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CFunction.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CNumber.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\BConstructor.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CRangeError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CReferenceError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CRegExp.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CString.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CSyntaxError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CTypeError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CUriError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\ConstructorObjects\CObject.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PArray.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PBoolean.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PDate.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PEvalError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PFunction.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CRangeError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CReferenceError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CRegExp.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CString.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CSyntaxError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CTypeError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CUriError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\CObject.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PArray.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PBoolean.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PDate.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PEvalError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PFunction.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\BJson.cs" />
     <Compile Include="NativeObjects\BuiltinObjects\BMath.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PNumber.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PRangeError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PReferenceError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PRegExp.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PString.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PSyntaxError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PTypeError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PUriError.cs" />
-    <Compile Include="NativeObjects\BuiltinObjects\PrototypeObjects\PObject.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PNumber.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PRangeError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PReferenceError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PRegExp.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PString.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PSyntaxError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PTypeError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PUriError.cs" />
+    <Compile Include="NativeObjects\BuiltinObjects\PObject.cs" />
     <Compile Include="NativeObjects\NArguments.cs" />
     <Compile Include="NativeObjects\NArray.cs" />
     <Compile Include="NativeObjects\NBoolean.cs" />
@@ -193,6 +194,7 @@
       <Name>Machete.Core</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -53,7 +53,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
         }
 
-        public IPropertyDescriptor GetProperty(string p)
+        public virtual IPropertyDescriptor GetProperty(string p)
         {
             IObject obj = this;
             IPropertyDescriptor value;
@@ -92,7 +92,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             }
         }
 
-        public bool CanPut(string p)
+        public virtual bool CanPut(string p)
         {
             IPropertyDescriptor desc;
             if (_map.TryGetValue(p, out desc))
@@ -160,7 +160,7 @@ namespace Machete.Runtime.RuntimeTypes.LanguageTypes
             DefineOwnProperty(p, newDesc, @throw);
         }
 
-        public bool HasProperty(string p)
+        public virtual bool HasProperty(string p)
         {
             return _map.ContainsKey(p);
         }

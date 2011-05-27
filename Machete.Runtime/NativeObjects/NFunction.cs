@@ -10,6 +10,7 @@ using Machete.Core;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Dynamic;
+using Machete.Runtime.HostObjects;
 
 namespace Machete.Runtime.NativeObjects
 {
@@ -143,57 +144,63 @@ namespace Machete.Runtime.NativeObjects
 
         private IObject CreateArgumentsObject(IArgs args)
         {
-            var obj = new NArguments(Environment);
-            var len = Environment.CreateNumber(args.Count);
-            var lenDesc = Environment.CreateDataDescriptor(len, true, false, true);
-            var map = Environment.ObjectConstructor.Op_Construct(Environment.EmptyArgs);
-            var mappedNames = new List<string>();
-            var index = args.Count - 1;
-
-            obj.Class = "Arguments";
-            obj.Extensible = true;
-            obj.Prototype = Environment.ObjectPrototype;
-            obj.DefineOwnProperty("length", lenDesc, false);
-
-            while (--index >= 0)
-            {
-                var val = args[index];
-                var valDesc = Environment.CreateDataDescriptor(val, true, true, true);
-
-                obj.DefineOwnProperty(index.ToString(), valDesc, false);
-                if (index < FormalParameters.Count)
+            return new HLazy(
+                Environment, 
+                () =>
                 {
-                    var name = FormalParameters[index];
+                    var obj = new NArguments(Environment);
+                    var len = Environment.CreateNumber(args.Count);
+                    var lenDesc = Environment.CreateDataDescriptor(len, true, false, true);
+                    var map = Environment.ObjectConstructor.Op_Construct(Environment.EmptyArgs);
+                    var mappedNames = new List<string>();
+                    var index = args.Count - 1;
+
+                    obj.Class = "Arguments";
+                    obj.Extensible = true;
+                    obj.Prototype = Environment.ObjectPrototype;
+                    obj.DefineOwnProperty("length", lenDesc, false);
+
+                    while (--index >= 0)
+                    {
+                        var val = args[index];
+                        var valDesc = Environment.CreateDataDescriptor(val, true, true, true);
+
+                        obj.DefineOwnProperty(index.ToString(), valDesc, false);
+                        if (index < FormalParameters.Count)
+                        {
+                            var name = FormalParameters[index];
+                            if (!ExecutableCode.Strict)
+                            {
+                                var g = MakeArgGetter(name);
+                                var p = MakeArgSetter(name);
+                                var desc = Environment.CreateAccessorDescriptor(g, p, false, true);
+
+                                map.DefineOwnProperty(name, desc, false);
+                                mappedNames.Add(name);
+                            }
+                        }
+                    }
+
+                    if (mappedNames.Count > 0)
+                    {
+                        obj.ParameterMap = map;
+                    }
+
                     if (!ExecutableCode.Strict)
                     {
-                        var g = MakeArgGetter(name);
-                        var p = MakeArgSetter(name);
-                        var desc = Environment.CreateAccessorDescriptor(g, p, false, true);
-
-                        map.DefineOwnProperty(name, desc, false);
-                        mappedNames.Add(name);
+                        var desc = Environment.CreateDataDescriptor(this, true, false, true);
+                        obj.DefineOwnProperty("callee", desc, false);
                     }
+                    else
+                    {
+                        var desc = Environment.CreateAccessorDescriptor(Environment.ThrowTypeErrorFunction, Environment.ThrowTypeErrorFunction, false, false);
+                        obj.DefineOwnProperty("caller", desc, false);
+                        obj.DefineOwnProperty("callee", desc, false);
+                    }
+
+                    return obj;
                 }
-            }
-
-            if (mappedNames.Count > 0)
-            {
-                obj.ParameterMap = map;
-            }
-
-            if (!ExecutableCode.Strict)
-            {
-                var desc = Environment.CreateDataDescriptor(this, true, false, true);
-                obj.DefineOwnProperty("callee", desc, false);
-            }
-            else
-            {
-                var desc = Environment.CreateAccessorDescriptor(Environment.ThrowTypeErrorFunction, Environment.ThrowTypeErrorFunction, false, false);
-                obj.DefineOwnProperty("caller", desc, false);
-                obj.DefineOwnProperty("callee", desc, false);
-            }
-
-            return obj;
+            );
         }
 
         private IObject MakeArgGetter(string name)
