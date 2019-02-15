@@ -918,7 +918,8 @@ type CompilerService (environment:IEnvironment) as this =
                 let! s2 = evalStatement
                 return exp.Condition(e, s1, s2, typeof<IDynamic>) :> exp
             | None ->
-                return exp.Condition(e, s1, Expressions.Undefined :> exp, typeof<IDynamic>) :> exp
+                let undefined = Expressions.Undefined :> exp
+                return exp.Condition(e, exp.Block([| s1; undefined |]) , undefined, typeof<IDynamic>) :> exp
         }) state
 
     and evalDoWhileIterationStatement state =

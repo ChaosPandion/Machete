@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.329
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Machete.Compiler", "Machete.Compiler\Machete.Compiler.fsproj", "{F4056A29-8845-4DFA-B551-35D7B27D5954}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Machete.Runtime", "Machete.Runtime\Machete.Runtime.csproj", "{C0B1EEC3-DD81-4ED6-8896-03B615BB5F90}"
@@ -126,5 +128,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {330737A9-38A9-4B88-88FF-9B5240985A1D}
 	EndGlobalSection
 EndGlobal

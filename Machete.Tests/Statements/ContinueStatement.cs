@@ -12,8 +12,9 @@ namespace Machete.Tests
                 var i = 0, run = true;
                 while (run) {
                     i++;
-                    if (i === 1)
+                    if (i === 1) 
                         continue;
+                    
                     run = false;
                 }
                 return i;

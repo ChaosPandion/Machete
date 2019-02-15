@@ -44,3 +44,5 @@ _ReSharper*/
 
 # Office Temp Files
 ~$*
+
+.vs/
