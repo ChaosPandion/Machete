@@ -196,10 +196,12 @@ module SourceElementParsers =
                     let e = PrimaryExpression (StringLiteral (s, d))
                     let! t = opt parseMemberExpressionTail
                     return MemberExpressionTail (e, t)
+                | _ -> raise (exn())
             | '[' ->
                 let! e = skipOver >>. parseExpression .>> skipOver .>> skipChar ']'
                 let! t = opt parseMemberExpressionTail
-                return MemberExpressionTail (e, t)
+                return MemberExpressionTail (e, t)            
+            | _ -> raise (exn())
         }
         ) state
 
@@ -480,6 +482,7 @@ module SourceElementParsers =
             match i with
             | IdentifierName (s, d) ->
                 return Catch (s, b)
+            | _ -> raise (exn())
         }) state    
 
     and parseFinally state =
